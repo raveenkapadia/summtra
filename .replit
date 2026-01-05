@@ -1,8 +1,9 @@
 run = "npx serve -s . -l 3000"
 entrypoint = "index.html"
+modules = ["web", "nodejs-20", "nix"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 
 [deployment]
 run = ["sh", "-c", "npx serve -s . -l 3000"]
