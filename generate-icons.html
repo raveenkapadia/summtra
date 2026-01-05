@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summtra Icon Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { color: #d4a854; }
+    .icons { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 30px 0; }
+    .icon-box { background: #0a1628; padding: 20px; border-radius: 12px; }
+    .icon-box canvas { display: block; margin: 10px auto; }
+    .icon-box p { margin: 10px 0 0; font-size: 14px; color: #8a9bb0; }
+    button {
+      background: linear-gradient(135deg, #d4a854, #b8923a);
+      color: #0a1628;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover { transform: scale(1.05); }
+    .instructions {
+      background: #0a1628;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 30px auto;
+      text-align: left;
+    }
+    .instructions h3 { color: #d4a854; }
+    .instructions ol { color: #8a9bb0; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>🧭 Summtra Icon Generator</h1>
+  <p>Generate PWA icons in all required sizes</p>
+  
+  <div class="icons" id="icons"></div>
+  
+  <button onclick="downloadAll()">📥 Download All Icons</button>
+  
+  <div class="instructions">
+    <h3>📋 Instructions</h3>
+    <ol>
+      <li>Click "Download All Icons" to get a ZIP of all sizes</li>
+      <li>Or right-click each icon and "Save Image As"</li>
+      <li>Place all PNG files in your <code>/icons/</code> folder</li>
+      <li>Required sizes: 72, 96, 128, 144, 152, 192, 384, 512</li>
+    </ol>
+  </div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    const container = document.getElementById('icons');
+    
+    function drawIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Background
+      const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+      bgGrad.addColorStop(0, '#0a1628');
+      bgGrad.addColorStop(1, '#1a2d4a');
+      
+      // Rounded rectangle background
+      const radius = size * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      ctx.fillStyle = bgGrad;
+      ctx.fill();
+      
+      const cx = size / 2;
+      const cy = size / 2;
+      const scale = size / 512;
+      
+      // Stars
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      [[80,100,3],[420,80,2],[60,400,2],[400,420,3]].forEach(([x,y,r]) => {
+        ctx.beginPath();
+        ctx.arc(x*scale, y*scale, r*scale, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.fillStyle = 'rgba(212,168,84,0.6)';
+      [[450,200,3],[100,300,2]].forEach(([x,y,r]) => {
+        ctx.beginPath();
+        ctx.arc(x*scale, y*scale, r*scale, 0, Math.PI*2);
+        ctx.fill();
+      });
+      
+      // Compass ring
+      ctx.strokeStyle = '#d4a854';
+      ctx.lineWidth = 8 * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 180*scale, 0, Math.PI*2);
+      ctx.stroke();
+      
+      ctx.lineWidth = 2 * scale;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 160*scale, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      
+      // Cardinal directions
+      ctx.fillStyle = '#d4a854';
+      ctx.font = `bold ${36*scale}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('N', cx, 100*scale);
+      ctx.fillText('S', cx, 412*scale);
+      ctx.fillText('E', 400*scale, cy);
+      ctx.fillText('W', 112*scale, cy);
+      
+      // Needle - North
+      ctx.fillStyle = '#c45c4a';
+      ctx.beginPath();
+      ctx.moveTo(cx, 100*scale);
+      ctx.lineTo(cx - 16*scale, cy);
+      ctx.lineTo(cx, cy - 16*scale);
+      ctx.lineTo(cx + 16*scale, cy);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Needle - South
+      ctx.fillStyle = '#8a9bb0';
+      ctx.beginPath();
+      ctx.moveTo(cx, 412*scale);
+      ctx.lineTo(cx - 16*scale, cy);
+      ctx.lineTo(cx, cy + 16*scale);
+      ctx.lineTo(cx + 16*scale, cy);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Center circle
+      ctx.fillStyle = '#0f1d32';
+      ctx.strokeStyle = '#d4a854';
+      ctx.lineWidth = 4 * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 50*scale, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Globe in center
+      ctx.strokeStyle = '#d4a854';
+      ctx.lineWidth = 2 * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 20*scale, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 20*scale, 8*scale, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - 20*scale, cy);
+      ctx.lineTo(cx + 20*scale, cy);
+      ctx.stroke();
+      
+      return canvas;
+    }
+    
+    // Generate all icons
+    sizes.forEach(size => {
+      const canvas = drawIcon(size);
+      const box = document.createElement('div');
+      box.className = 'icon-box';
+      box.appendChild(canvas);
+      box.innerHTML += `<p>icon-${size}x${size}.png</p>`;
+      
+      canvas.style.cursor = 'pointer';
+      canvas.title = 'Right-click to save';
+      canvas.onclick = () => {
+        const link = document.createElement('a');
+        link.download = `icon-${size}x${size}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      
+      container.appendChild(box);
+    });
+    
+    function downloadAll() {
+      sizes.forEach((size, i) => {
+        setTimeout(() => {
+          const canvas = drawIcon(size);
+          const link = document.createElement('a');
+          link.download = `icon-${size}x${size}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }, i * 500);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628"/>
+      <stop offset="100%" style="stop-color:#1a2d4a"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8c97a"/>
+      <stop offset="100%" style="stop-color:#b8923a"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  
+  <!-- Stars -->
+  <circle cx="80" cy="100" r="3" fill="#fff" opacity="0.6"/>
+  <circle cx="420" cy="80" r="2" fill="#fff" opacity="0.5"/>
+  <circle cx="450" cy="200" r="3" fill="#d4a854" opacity="0.7"/>
+  <circle cx="60" cy="400" r="2" fill="#fff" opacity="0.5"/>
+  <circle cx="100" cy="300" r="2" fill="#d4a854" opacity="0.6"/>
+  <circle cx="400" cy="420" r="3" fill="#fff" opacity="0.5"/>
+  
+  <!-- Compass outer ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#goldGrad)" stroke-width="8"/>
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#d4a854" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Cardinal directions -->
+  <text x="256" y="110" font-family="serif" font-size="36" font-weight="bold" fill="#d4a854" text-anchor="middle">N</text>
+  <text x="256" y="420" font-family="serif" font-size="36" font-weight="bold" fill="#d4a854" text-anchor="middle">S</text>
+  <text x="400" y="265" font-family="serif" font-size="36" font-weight="bold" fill="#d4a854" text-anchor="middle">E</text>
+  <text x="112" y="265" font-family="serif" font-size="36" font-weight="bold" fill="#d4a854" text-anchor="middle">W</text>
+  
+  <!-- Compass needle - North (red) -->
+  <polygon points="256,100 240,256 256,240 272,256" fill="#c45c4a"/>
+  
+  <!-- Compass needle - South (gray) -->
+  <polygon points="256,412 240,256 256,272 272,256" fill="#8a9bb0"/>
+  
+  <!-- Center circle -->
+  <circle cx="256" cy="256" r="50" fill="#0f1d32" stroke="#d4a854" stroke-width="4"/>
+  <circle cx="256" cy="256" r="35" fill="none" stroke="#d4a854" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Globe icon in center -->
+  <circle cx="256" cy="256" r="20" fill="none" stroke="#d4a854" stroke-width="2"/>
+  <ellipse cx="256" cy="256" rx="20" ry="8" fill="none" stroke="#d4a854" stroke-width="1.5"/>
+  <line x1="236" y1="256" x2="276" y2="256" stroke="#d4a854" stroke-width="1.5"/>
+</svg>

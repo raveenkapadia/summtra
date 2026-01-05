@@ -1,0 +1,2859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Summtra">
+  <meta name="description" content="Discover which cities are written in your stars with NASA-grade astrocartography. Find your lucky city in India or worldwide.">
+  <meta name="keywords" content="astrocartography, lucky city, astrology, relocation, birth chart, planetary lines">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Summtra - Find Your Lucky City">
+  <meta property="og:description" content="Discover which cities are written in your stars with NASA-grade astrocartography">
+  <meta property="og:image" content="/icons/icon-512x512.png">
+  
+  <title>Summtra - Find Your Lucky City</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --bg-dark: #0a1628;
+      --bg-card: #0f1d32;
+      --gold: #d4a854;
+      --gold-light: #e8c97a;
+      --gold-dark: #b8923a;
+      --text: #e8e4dc;
+      --text-dim: #8a9bb0;
+      --accent-blue: #4a90b8;
+      --accent-red: #c45c4a;
+      --accent-green: #5ab87a;
+      --accent-orange: #e89830;
+      --phone-width: 375px;
+    }
+    
+    html { background: #1a1a2e; }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    /* ============ NIGHT SKY BACKGROUND ============ */
+    .night-sky {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    @media (min-width: 500px) {
+      .night-sky {
+        top: 20px;
+        bottom: 20px;
+        border-radius: 40px;
+        max-height: 812px;
+      }
+    }
+    
+    /* Stars layers */
+    .stars, .stars2, .stars3 {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-repeat: repeat;
+    }
+    
+    .stars {
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 160px 120px, rgba(212,168,84,0.8), transparent),
+        radial-gradient(1px 1px at 200px 50px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 220px 150px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 260px 90px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 300px 180px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 340px 60px, rgba(212,168,84,0.7), transparent),
+        radial-gradient(1px 1px at 80px 200px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 150px 250px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 250px 220px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 320px 280px, rgba(255,255,255,0.5), transparent);
+      background-size: 375px 350px;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    .stars2 {
+      background-image: 
+        radial-gradient(1px 1px at 70px 100px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 110px 200px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 180px 50px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 240px 140px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 280px 250px, rgba(212,168,84,0.6), transparent),
+        radial-gradient(1px 1px at 350px 100px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 30px 300px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 100px 350px, rgba(255,255,255,0.6), transparent);
+      background-size: 375px 400px;
+      animation: twinkle 5s ease-in-out infinite;
+      animation-delay: -2s;
+    }
+    
+    .stars3 {
+      background-image: 
+        radial-gradient(1.5px 1.5px at 60px 180px, rgba(212,168,84,0.5), transparent),
+        radial-gradient(1px 1px at 140px 90px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 210px 300px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 290px 200px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(2px 2px at 350px 350px, rgba(212,168,84,0.7), transparent);
+      background-size: 375px 450px;
+      animation: twinkle 6s ease-in-out infinite;
+      animation-delay: -4s;
+    }
+    
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    /* Constellation lines */
+    .constellation {
+      position: absolute;
+      opacity: 0.15;
+    }
+    
+    .constellation svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .constellation-1 {
+      top: 80px;
+      left: 20px;
+      width: 120px;
+      height: 100px;
+    }
+    
+    .constellation-2 {
+      top: 250px;
+      right: 30px;
+      width: 100px;
+      height: 80px;
+    }
+    
+    .constellation-3 {
+      top: 450px;
+      left: 40px;
+      width: 90px;
+      height: 70px;
+    }
+    
+    .constellation-4 {
+      top: 600px;
+      right: 20px;
+      width: 110px;
+      height: 90px;
+    }
+    
+    /* Shooting star */
+    .shooting-star {
+      position: absolute;
+      width: 100px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
+      top: 150px;
+      left: -100px;
+      transform: rotate(-45deg);
+      animation: shoot 8s ease-in-out infinite;
+      animation-delay: 3s;
+      opacity: 0;
+    }
+    
+    .shooting-star-2 {
+      top: 400px;
+      animation-delay: 12s;
+    }
+    
+    @keyframes shoot {
+      0% { left: -100px; opacity: 0; }
+      5% { opacity: 1; }
+      15% { left: 400px; opacity: 0; }
+      100% { left: 400px; opacity: 0; }
+    }
+    
+    /* Gradient overlay for readability */
+    .sky-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 22, 40, 0.3) 0%,
+        rgba(10, 22, 40, 0.5) 30%,
+        rgba(10, 22, 40, 0.7) 60%,
+        rgba(10, 22, 40, 0.8) 100%
+      );
+    }
+    
+    /* Nebula glow effects */
+    .nebula {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.15;
+    }
+    
+    .nebula-1 {
+      top: 100px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(212,168,84,0.4) 0%, transparent 70%);
+    }
+    
+    .nebula-2 {
+      top: 400px;
+      left: -80px;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(74,144,184,0.3) 0%, transparent 70%);
+    }
+    
+    .nebula-3 {
+      bottom: 200px;
+      right: -30px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(138,100,180,0.3) 0%, transparent 70%);
+    }
+    
+    /* Ensure content is above sky */
+    .app-container, .onboarding, .loading, .scanning-overlay {
+      position: relative;
+      z-index: 1;
+    }
+    
+    @media (min-width: 500px) {
+      body {
+        margin: 20px auto;
+        border-radius: 40px;
+        box-shadow: 0 0 0 12px #1a1a1a, 0 0 0 14px #333, 0 20px 60px rgba(0,0,0,0.5);
+        min-height: calc(100vh - 40px);
+        max-height: 812px;
+        overflow-y: auto;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 28px;
+        background: #1a1a1a;
+        border-radius: 0 0 20px 20px;
+        z-index: 9999;
+      }
+      body::after {
+        content: '';
+        position: fixed;
+        top: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: #333;
+        border-radius: 50%;
+        z-index: 10000;
+      }
+    }
+    
+    /* ============ ONBOARDING ============ */
+    .onboarding {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      background: rgba(10, 22, 40, 0.95);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .onboarding.hidden {
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+    }
+    @media (min-width: 500px) {
+      .onboarding {
+        top: 20px; bottom: 20px;
+        border-radius: 40px;
+        max-height: 812px;
+      }
+    }
+    
+    .onboarding-slides { flex: 1; overflow: hidden; position: relative; }
+    
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 50px 24px 100px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.5s ease;
+      overflow-y: auto;
+    }
+    .slide.active { opacity: 1; transform: translateX(0); }
+    .slide.prev { transform: translateX(-100%); }
+    
+    .slide-icon { font-size: 56px; text-align: center; margin-bottom: 16px; }
+    .slide-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      color: var(--gold);
+      text-align: center;
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+    .slide-subtitle {
+      font-size: 13px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .slide-content { flex: 1; }
+    
+    /* Cards */
+    .celebrity-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .celebrity-header { display: flex; align-items: center; margin-bottom: 10px; }
+    .celebrity-avatar {
+      width: 45px; height: 45px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-right: 12px;
+    }
+    .celebrity-info h4 { font-size: 15px; color: var(--text); margin-bottom: 2px; }
+    .celebrity-info p { font-size: 11px; color: var(--text-dim); }
+    .celebrity-story {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .celebrity-story strong { color: var(--gold); }
+    .celebrity-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(90, 184, 122, 0.1);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--accent-green);
+    }
+    
+    /* India badge */
+    .india-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(232, 152, 48, 0.15);
+      color: var(--accent-orange);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    /* Timeline */
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px; top: 5px; bottom: 5px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--gold), var(--gold-dark));
+    }
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -24px; top: 5px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--bg-dark);
+    }
+    .timeline-year {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      color: var(--gold);
+      margin-bottom: 3px;
+    }
+    .timeline-text { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+    
+    /* Stat boxes */
+    .stat-boxes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0; }
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      color: var(--gold);
+      margin-bottom: 2px;
+    }
+    .stat-box-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    
+    /* Quote */
+    .quote-box {
+      background: var(--bg-card);
+      border-left: 3px solid var(--gold);
+      padding: 14px 16px;
+      margin: 16px 0;
+      border-radius: 0 12px 12px 0;
+    }
+    .quote-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--text);
+      font-style: italic;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .quote-author { font-size: 11px; color: var(--gold); }
+    
+    /* Problem/Solution */
+    .problem-card {
+      background: rgba(196, 92, 74, 0.1);
+      border: 1px solid rgba(196, 92, 74, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .problem-card h4 { color: var(--accent-red); font-size: 13px; margin-bottom: 6px; }
+    .problem-card p { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+    
+    .solution-card {
+      background: rgba(90, 184, 122, 0.1);
+      border: 1px solid rgba(90, 184, 122, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .solution-card h4 { color: var(--accent-green); font-size: 13px; margin-bottom: 6px; }
+    .solution-card p { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+    
+    /* Feature list */
+    .feature-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-card);
+      border-radius: 10px;
+    }
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(212, 168, 84, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .feature-text h5 { font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    .feature-text p { font-size: 11px; color: var(--text-dim); }
+    
+    /* Onboarding footer */
+    .onboarding-footer { padding: 16px 24px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0)); }
+    .progress-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      opacity: 0.3;
+      transition: all 0.3s;
+    }
+    .dot.active { opacity: 1; background: var(--gold); width: 24px; border-radius: 4px; }
+    
+    .onboarding-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      border: none;
+      border-radius: 12px;
+      color: var(--bg-dark);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(212, 168, 84, 0.3);
+    }
+    .onboarding-btn:active { transform: scale(0.98); }
+    .skip-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-top: 12px;
+      color: var(--text-dim);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    
+    /* ============ PAGES ============ */
+    .page {
+      display: none;
+      min-height: 100vh;
+      padding-bottom: 100px;
+      animation: fadeIn 0.5s ease;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 22, 40, 0.7) 0%,
+        rgba(10, 22, 40, 0.85) 50%,
+        rgba(10, 22, 40, 0.95) 100%
+      );
+    }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* ============ COMPASS ============ */
+    .compass-container { position: relative; width: 240px; height: 240px; margin: 0 auto; }
+    .compass { width: 100%; height: 100%; position: relative; }
+    .compass-ring {
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(212, 168, 84, 0.2), inset 0 0 30px rgba(212, 168, 84, 0.1);
+      animation: compassGlow 3s ease-in-out infinite;
+    }
+    .compass-ring::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      opacity: 0.5;
+    }
+    @keyframes compassGlow {
+      0%, 100% { box-shadow: 0 0 30px rgba(212, 168, 84, 0.2); }
+      50% { box-shadow: 0 0 50px rgba(212, 168, 84, 0.4); }
+    }
+    
+    .cardinal {
+      position: absolute;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .cardinal.north { top: 25px; left: 50%; transform: translateX(-50%); }
+    .cardinal.south { bottom: 25px; left: 50%; transform: translateX(-50%); }
+    .cardinal.east { right: 25px; top: 50%; transform: translateY(-50%); }
+    .cardinal.west { left: 25px; top: 50%; transform: translateY(-50%); }
+    
+    .compass-needle {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 6px; height: 160px;
+      transform: translate(-50%, -50%) rotate(0deg);
+      z-index: 5;
+      transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .needle-north {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 70px solid var(--accent-red);
+      filter: drop-shadow(0 0 5px rgba(196, 92, 74, 0.5));
+    }
+    .needle-south {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 70px solid var(--text-dim);
+    }
+    .needle-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px; height: 14px;
+      background: var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(212, 168, 84, 0.5);
+    }
+    .compass-needle.wobble {
+      animation: needleWobble 2s ease-out forwards;
+    }
+    @keyframes needleWobble {
+      0% { transform: translate(-50%, -50%) rotate(-30deg); }
+      20% { transform: translate(-50%, -50%) rotate(20deg); }
+      40% { transform: translate(-50%, -50%) rotate(-10deg); }
+      60% { transform: translate(-50%, -50%) rotate(5deg); }
+      80% { transform: translate(-50%, -50%) rotate(-2deg); }
+      100% { transform: translate(-50%, -50%) rotate(0deg); }
+    }
+    
+    .compass-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px;
+      background: radial-gradient(circle, var(--bg-card) 0%, var(--bg-dark) 100%);
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+    }
+    
+    /* Result compass */
+    .result-compass { width: 160px; height: 160px; }
+    .result-compass .compass-ring { border-width: 2px; }
+    .result-compass .cardinal { font-size: 12px; }
+    .result-compass .cardinal.north { top: 18px; }
+    .result-compass .cardinal.south { bottom: 18px; }
+    .result-compass .cardinal.east { right: 18px; }
+    .result-compass .cardinal.west { left: 18px; }
+    .result-compass .compass-center { width: 40px; height: 40px; }
+    .result-compass .compass-needle { height: 110px; }
+    .result-compass .needle-north { border-bottom-width: 45px; border-left-width: 5px; border-right-width: 5px; }
+    .result-compass .needle-south { border-top-width: 45px; border-left-width: 5px; border-right-width: 5px; }
+    
+    /* ============ HEADER ============ */
+    .header { text-align: center; padding: 35px 20px 15px; }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 4px;
+    }
+    .tagline {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    /* ============ CARDS ============ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 12px;
+      padding: 18px;
+      margin: 15px 20px;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--gold);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    
+    /* ============ BUTTONS ============ */
+    .btn {
+      width: 100%;
+      padding: 15px 24px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: var(--bg-dark);
+      box-shadow: 0 4px 20px rgba(212, 168, 84, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 20px;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+    
+    /* ============ FORM ============ */
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 13px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+    }
+    .form-input:focus { outline: none; border-color: var(--gold); }
+    .form-input::placeholder { color: var(--text-dim); }
+    
+    /* ============ TOGGLE SWITCH ============ */
+    .scope-toggle {
+      display: flex;
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 8px;
+    }
+    .scope-toggle.three-options .scope-option {
+      padding: 10px 6px;
+      font-size: 11px;
+    }
+    .scope-option {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .scope-option.active {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: var(--bg-dark);
+    }
+    .scope-option span { display: block; font-size: 16px; margin-bottom: 4px; }
+    .scope-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 16px;
+      padding: 6px 10px;
+      background: rgba(212, 168, 84, 0.08);
+      border-radius: 6px;
+    }
+    .scope-hint.highlight {
+      background: rgba(90, 184, 122, 0.15);
+      color: var(--accent-green);
+    }
+    
+    /* ============ PRICING URGENCY ============ */
+    .price-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .price-original {
+      text-decoration: line-through;
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .price-current {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .discount-badge {
+      background: var(--accent-green);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    
+    .offer-banner {
+      margin-top: 14px;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(196, 92, 74, 0.15) 0%, rgba(232, 152, 48, 0.15) 100%);
+      border: 1px solid rgba(232, 152, 48, 0.3);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .offer-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .offer-timer {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .timer-block {
+      background: var(--bg-dark);
+      padding: 6px 10px;
+      border-radius: 6px;
+      min-width: 45px;
+    }
+    .timer-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .timer-label {
+      font-size: 8px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .offer-text {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+    .offer-text strong {
+      color: var(--accent-red);
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(232, 152, 48, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(232, 152, 48, 0.6); }
+    }
+    .offer-banner {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    /* ============ TRUST BADGES ============ */
+    .trust-section {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(212, 168, 84, 0.1);
+      margin-top: 10px;
+    }
+    .trust-title {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212, 168, 84, 0.08);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    .trust-badge-icon {
+      font-size: 16px;
+    }
+    .trust-badge-text {
+      font-size: 10px;
+      color: var(--text-dim);
+      line-height: 1.3;
+    }
+    .trust-badge-text strong {
+      display: block;
+      color: var(--text);
+      font-size: 11px;
+    }
+    
+    .social-proof {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(90, 184, 122, 0.1);
+      border-radius: 10px;
+      margin: 16px 20px;
+    }
+    .social-proof-avatars {
+      display: flex;
+    }
+    .social-proof-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      border: 2px solid var(--bg-dark);
+      margin-left: -10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .social-proof-avatar:first-child {
+      margin-left: 0;
+    }
+    .social-proof-text {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .social-proof-text strong {
+      color: var(--accent-green);
+    }
+    
+    .tech-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+    }
+    .tech-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .tech-badge-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .tech-badge-label {
+      font-size: 8px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      max-width: 60px;
+    }
+    
+    .accuracy-banner {
+      background: linear-gradient(135deg, rgba(74, 144, 184, 0.15) 0%, rgba(90, 184, 122, 0.15) 100%);
+      border: 1px solid rgba(74, 144, 184, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 0 20px 16px;
+    }
+    .accuracy-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .accuracy-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .accuracy-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .accuracy-item span:first-child {
+      color: var(--accent-green);
+    }
+    
+    /* ============ TESTIMONIALS ============ */
+    .testimonials-section {
+      padding: 16px 20px;
+    }
+    .testimonials-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .testimonial-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .testimonial-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .testimonial-info {
+      flex: 1;
+    }
+    .testimonial-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .testimonial-location {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .testimonial-stars {
+      color: #ffc107;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+    .testimonial-text {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      font-style: italic;
+    }
+    .testimonial-result {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(90, 184, 122, 0.1);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--accent-green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* ============ LIVE NOTIFICATION ============ */
+    .live-notification {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      max-width: 340px;
+      width: calc(100% - 40px);
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      z-index: 150;
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .live-notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .live-notification-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-green) 0%, #3d9259 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .live-notification-content {
+      flex: 1;
+    }
+    .live-notification-title {
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .live-notification-title strong {
+      color: var(--gold);
+    }
+    .live-notification-time {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    .live-notification-close {
+      color: var(--text-dim);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    /* ============ COMPARISON TABLE ============ */
+    .comparison-section {
+      padding: 16px 20px;
+    }
+    .comparison-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .comparison-table {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .comparison-header {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      background: rgba(212, 168, 84, 0.1);
+      padding: 10px 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .comparison-header span:first-child {
+      color: var(--text-dim);
+    }
+    .comparison-header span:nth-child(2) {
+      text-align: center;
+      color: var(--text-dim);
+    }
+    .comparison-header span:nth-child(3) {
+      text-align: center;
+      color: var(--gold);
+    }
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      padding: 10px 12px;
+      border-top: 1px solid rgba(212, 168, 84, 0.1);
+      font-size: 11px;
+      align-items: center;
+    }
+    .comparison-row span:first-child {
+      color: var(--text-dim);
+    }
+    .comparison-row span:nth-child(2) {
+      text-align: center;
+      color: var(--text-dim);
+    }
+    .comparison-row span:nth-child(3) {
+      text-align: center;
+      color: var(--accent-green);
+    }
+    .comparison-row .check {
+      color: var(--accent-green);
+    }
+    .comparison-row .cross {
+      color: var(--accent-red);
+    }
+    .comparison-row .partial {
+      color: var(--accent-orange);
+    }
+    .comparison-price-row {
+      background: rgba(90, 184, 122, 0.1);
+      padding: 12px;
+    }
+    .comparison-price-row span:first-child {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .comparison-price-row span:nth-child(2) {
+      color: var(--accent-red);
+      font-weight: 600;
+    }
+    .comparison-price-row span:nth-child(3) {
+      color: var(--accent-green);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    
+    /* ============ SAMPLE PREVIEW ============ */
+    .sample-preview-section {
+      padding: 16px 20px;
+    }
+    .sample-preview-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .sample-preview-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .sample-preview-header {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      padding: 12px;
+      text-align: center;
+    }
+    .sample-preview-header h4 {
+      color: var(--bg-dark);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .sample-preview-content {
+      padding: 14px;
+      position: relative;
+    }
+    .sample-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(212, 168, 84, 0.1);
+    }
+    .sample-item:last-child {
+      border-bottom: none;
+    }
+    .sample-item-label {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .sample-item-value {
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 500;
+    }
+    .sample-item-value.blur {
+      filter: blur(4px);
+      user-select: none;
+    }
+    .sample-blur-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: linear-gradient(to bottom, transparent, var(--bg-card) 80%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 14px;
+    }
+    .sample-unlock-btn {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: var(--bg-dark);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* ============ WHATSAPP OPTION ============ */
+    .delivery-toggle {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .delivery-option {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(212, 168, 84, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .delivery-option.active {
+      border-color: var(--accent-green);
+      background: rgba(90, 184, 122, 0.1);
+    }
+    .delivery-option span:first-child {
+      font-size: 16px;
+    }
+    .delivery-option span:last-child {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .delivery-option.active span:last-child {
+      color: var(--accent-green);
+    }
+    
+    /* ============ DIRECTION BUTTONS ============ */
+    .direction-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 20px; }
+    .direction-btn {
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .direction-btn:active { transform: scale(0.97); }
+    .direction-btn-icon { font-size: 24px; margin-bottom: 6px; }
+    .direction-btn-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--gold);
+      margin-bottom: 3px;
+    }
+    .direction-btn-desc { font-size: 10px; color: var(--text-dim); }
+    
+    /* ============ CITY CARDS ============ */
+    .city-section-title {
+      color: var(--gold);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      margin: 20px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .city-card {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(212, 168, 84, 0.15);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .city-card:active { transform: scale(0.98); }
+    .city-card.top { border-color: var(--gold); background: rgba(212, 168, 84, 0.1); }
+    .city-card.india { border-color: var(--accent-orange); background: rgba(232, 152, 48, 0.08); }
+    .city-rank {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-right: 12px;
+    }
+    .city-card.india .city-rank { border-color: var(--accent-orange); color: var(--accent-orange); }
+    .city-info { flex: 1; }
+    .city-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .city-country { font-size: 11px; color: var(--text-dim); }
+    .city-score { text-align: right; }
+    .city-score-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .city-card.india .city-score-value { color: var(--accent-orange); }
+    .city-score-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
+    
+    /* ============ POWER DIRECTION ============ */
+    .power-direction {
+      text-align: center;
+      padding: 18px;
+      margin: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 12px;
+    }
+    .power-direction-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    .power-direction-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      color: var(--gold);
+    }
+    .power-direction-name { font-size: 13px; color: var(--text); margin-top: 4px; }
+    
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      padding: 14px 16px;
+      border-top: 1px solid rgba(212, 168, 84, 0.1);
+      margin-top: 14px;
+    }
+    .stat { text-align: center; }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: var(--gold);
+    }
+    .stat-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+    
+    /* ============ BOTTOM NAV ============ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      width: 100%;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      background: rgba(15, 29, 50, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(212, 168, 84, 0.2);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      z-index: 100;
+    }
+    @media (min-width: 500px) { .bottom-nav { border-radius: 0 0 28px 28px; } }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+      color: var(--text-dim);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+    .nav-item.active { color: var(--gold); }
+    .nav-item svg { width: 20px; height: 20px; margin-bottom: 3px; }
+    
+    /* ============ LOADING ============ */
+    .loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      background: rgba(10, 22, 40, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.5s;
+    }
+    @media (min-width: 500px) { .loading { top: 20px; bottom: 20px; border-radius: 40px; max-height: 812px; } }
+    .loading.hidden { opacity: 0; pointer-events: none; }
+    .loading-compass {
+      width: 70px; height: 70px;
+      border: 3px solid var(--gold);
+      border-radius: 50%;
+      position: relative;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .loading-needle {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 4px; height: 45px;
+      background: linear-gradient(to top, var(--text-dim) 50%, var(--accent-red) 50%);
+      transform-origin: 50% 50%;
+      transform: translate(-50%, -50%);
+      animation: spin 1.5s ease-in-out infinite;
+    }
+    @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 84, 0.3); } 50% { box-shadow: 0 0 40px rgba(212, 168, 84, 0.6); } }
+    
+    /* ============ SCANNING ============ */
+    .scanning-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      max-width: var(--phone-width);
+      margin: 0 auto;
+      background: rgba(10, 22, 40, 0.92);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+    @media (min-width: 500px) { .scanning-overlay { top: 20px; bottom: 20px; border-radius: 40px; max-height: 812px; } }
+    .scanning-overlay.active { display: flex; }
+    .scanning-compass { width: 180px; height: 180px; position: relative; }
+    .scanning-ring {
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      animation: scanPulse 1.5s ease-out infinite;
+    }
+    .scanning-ring:nth-child(2) { animation-delay: 0.5s; }
+    .scanning-ring:nth-child(3) { animation-delay: 1s; }
+    @keyframes scanPulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    .scanning-needle {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 4px; height: 70px;
+      background: linear-gradient(to top, transparent 50%, var(--gold) 50%);
+      transform-origin: 50% 50%;
+      transform: translate(-50%, -50%);
+      animation: scan 2s linear infinite;
+    }
+    @keyframes scan { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+    .scanning-text { margin-top: 25px; font-size: 12px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+    .scanning-status { margin-top: 8px; font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--gold); min-height: 22px; }
+    
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    .back-btn:active { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- Night Sky Background -->
+  <div class="night-sky">
+    <div class="stars"></div>
+    <div class="stars2"></div>
+    <div class="stars3"></div>
+    
+    <!-- Constellation 1 - Orion-like -->
+    <div class="constellation constellation-1">
+      <svg viewBox="0 0 120 100">
+        <circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.8)"/>
+        <circle cx="50" cy="15" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="80" cy="25" r="2" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="40" cy="50" r="1.5" fill="rgba(212,168,84,0.8)"/>
+        <circle cx="60" cy="50" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="50" cy="48" r="1" fill="rgba(255,255,255,0.5)"/>
+        <circle cx="30" cy="80" r="2" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="70" cy="85" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <line x1="20" y1="20" x2="50" y2="15" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="50" y1="15" x2="80" y2="25" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="20" y1="20" x2="40" y2="50" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="80" y1="25" x2="60" y2="50" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="40" y1="50" x2="30" y2="80" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="60" y1="50" x2="70" y2="85" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+      </svg>
+    </div>
+    
+    <!-- Constellation 2 - Big Dipper-like -->
+    <div class="constellation constellation-2">
+      <svg viewBox="0 0 100 80">
+        <circle cx="10" cy="30" r="2" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="30" cy="20" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="50" cy="25" r="2" fill="rgba(212,168,84,0.7)"/>
+        <circle cx="45" cy="45" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="65" cy="50" r="1.5" fill="rgba(255,255,255,0.5)"/>
+        <circle cx="85" cy="40" r="2" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="90" cy="60" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <line x1="10" y1="30" x2="30" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="30" y1="20" x2="50" y2="25" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="50" y1="25" x2="45" y2="45" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="45" y1="45" x2="65" y2="50" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="65" y1="50" x2="85" y2="40" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="85" y1="40" x2="90" y2="60" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+      </svg>
+    </div>
+    
+    <!-- Constellation 3 - Triangle -->
+    <div class="constellation constellation-3">
+      <svg viewBox="0 0 90 70">
+        <circle cx="45" cy="10" r="2" fill="rgba(212,168,84,0.7)"/>
+        <circle cx="15" cy="60" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="75" cy="55" r="2" fill="rgba(255,255,255,0.7)"/>
+        <line x1="45" y1="10" x2="15" y2="60" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="15" y1="60" x2="75" y2="55" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="75" y1="55" x2="45" y2="10" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+      </svg>
+    </div>
+    
+    <!-- Constellation 4 - Cassiopeia-like W -->
+    <div class="constellation constellation-4">
+      <svg viewBox="0 0 110 90">
+        <circle cx="10" cy="30" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="30" cy="60" r="2" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="55" cy="25" r="2" fill="rgba(212,168,84,0.8)"/>
+        <circle cx="80" cy="55" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="100" cy="20" r="2" fill="rgba(255,255,255,0.7)"/>
+        <line x1="10" y1="30" x2="30" y2="60" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="30" y1="60" x2="55" y2="25" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="55" y1="25" x2="80" y2="55" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+        <line x1="80" y1="55" x2="100" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
+      </svg>
+    </div>
+    
+    <!-- Shooting stars -->
+    <div class="shooting-star"></div>
+    <div class="shooting-star shooting-star-2"></div>
+    
+    <!-- Nebula glows -->
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+    
+    <!-- Gradient overlay for readability -->
+    <div class="sky-overlay"></div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading">
+    <div class="loading-compass"><div class="loading-needle"></div></div>
+    <p style="margin-top: 18px; color: var(--gold); font-family: 'Cormorant Garamond', serif; font-size: 22px; letter-spacing: 4px;">SUMMTRA</p>
+    <p style="margin-top: 6px; color: var(--text-dim); font-size: 11px;">Finding your direction...</p>
+  </div>
+  
+  <!-- Scanning Overlay -->
+  <div id="scanning" class="scanning-overlay">
+    <div class="scanning-compass">
+      <div class="scanning-ring"></div>
+      <div class="scanning-ring"></div>
+      <div class="scanning-ring"></div>
+      <div class="scanning-needle"></div>
+    </div>
+    <p class="scanning-text">Scanning the stars</p>
+    <p id="scanning-status" class="scanning-status"></p>
+  </div>
+
+  <!-- Live Notification Popup -->
+  <div id="live-notification" class="live-notification">
+    <div class="live-notification-avatar" id="notif-avatar">👩</div>
+    <div class="live-notification-content">
+      <div class="live-notification-title"><strong id="notif-name">Priya</strong> from <span id="notif-city">Mumbai</span> just purchased</div>
+      <div class="live-notification-time" id="notif-time">2 minutes ago</div>
+    </div>
+    <div class="live-notification-close" onclick="hideNotification()">×</div>
+  </div>
+
+  <!-- ============ ONBOARDING ============ -->
+  <div id="onboarding" class="onboarding">
+    <div class="onboarding-slides">
+      
+      <!-- Slide 1: Hook -->
+      <div class="slide active" data-slide="0">
+        <div class="slide-icon">🌍</div>
+        <h2 class="slide-title">What If Your Location Is Holding You Back?</h2>
+        <p class="slide-subtitle">The same person can thrive in one city and struggle in another — whether across the world or within India.</p>
+        
+        <div class="slide-content">
+          <div class="problem-card">
+            <h4>❌ The Wrong Place</h4>
+            <p>Career stuck, relationships fail, constant obstacles, feeling "off" for no reason.</p>
+          </div>
+          
+          <div class="solution-card">
+            <h4>✓ The Right Place</h4>
+            <p>Opportunities flow, recognition comes easily, abundance feels natural.</p>
+          </div>
+          
+          <div class="quote-box">
+            <p class="quote-text">"Geography is destiny."</p>
+            <p class="quote-author">— Napoleon Bonaparte</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slide 2: What is Astrocartography -->
+      <div class="slide" data-slide="1">
+        <div class="slide-icon">🗺️</div>
+        <h2 class="slide-title">Ancient Wisdom Meets Modern Science</h2>
+        <p class="slide-subtitle">Powered by NASA-grade calculations & Swiss Ephemeris — the same tools used by professional astrologers worldwide.</p>
+        
+        <div class="slide-content">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-year">Ancient Wisdom</div>
+              <p class="timeline-text">Vedic astrology has long advised on auspicious directions (Digbala) and locations for different life goals.</p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">Modern Science</div>
+              <p class="timeline-text">Swiss Ephemeris provides arcminute precision — accurate planetary positions within 1 km on Earth.</p>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">6,000+ Reports</div>
+              <p class="timeline-text">Trusted by thousands to find their optimal city — internationally or within India.</p>
+            </div>
+          </div>
+          
+          <div class="stat-boxes">
+            <div class="stat-box">
+              <div class="stat-box-value">🛰️</div>
+              <div class="stat-box-label">NASA-Grade Data</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-value">🇨🇭</div>
+              <div class="stat-box-label">Swiss Ephemeris</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slide 3: International Case Study -->
+      <div class="slide" data-slide="2">
+        <div class="slide-icon">⭐</div>
+        <h2 class="slide-title">Why Sundar Pichai Thrived in California</h2>
+        <p class="slide-subtitle">From Chennai to CEO — the power of the right location.</p>
+        
+        <div class="slide-content">
+          <div class="celebrity-card">
+            <div class="celebrity-header">
+              <div class="celebrity-avatar">👨‍💼</div>
+              <div class="celebrity-info">
+                <h4>Sundar Pichai</h4>
+                <p>CEO, Google & Alphabet</p>
+              </div>
+            </div>
+            <p class="celebrity-story">
+              Born in <strong>Chennai</strong> — brilliant but limited opportunities. Moved to <strong>California</strong> for his Masters. The West Coast sits on powerful expansion lines. Within years: engineer → CEO of Google.
+            </p>
+            <div class="celebrity-result">
+              <span>📍</span>
+              <span>His Jupiter line runs through Silicon Valley</span>
+            </div>
+          </div>
+          
+          <p style="text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 12px;">
+            <em>But what if moving abroad isn't an option?</em> 👇
+          </p>
+        </div>
+      </div>
+      
+      <!-- Slide 4: INDIA Case Study -->
+      <div class="slide" data-slide="3">
+        <div class="slide-icon">🇮🇳</div>
+        <h2 class="slide-title">Delhi to Bangalore: A Career Transformation</h2>
+        <p class="slide-subtitle">You don't need to leave India to find your lucky city.</p>
+        
+        <div class="slide-content">
+          <div class="celebrity-card">
+            <div class="celebrity-header">
+              <div class="celebrity-avatar">💻</div>
+              <div class="celebrity-info">
+                <h4>Tech Professional Case Study</h4>
+                <p><span class="india-badge">🇮🇳 Within India</span></p>
+              </div>
+            </div>
+            <p class="celebrity-story">
+              Struggled for 5 years in <strong>Delhi</strong> — constant job changes, toxic workplaces. Relocated to <strong>Bangalore</strong> which aligned with their <strong>Mercury-Jupiter line</strong>. Within 18 months: 2 promotions, 70% salary hike, dream role at a top startup.
+            </p>
+            <div class="celebrity-result">
+              <span>📍</span>
+              <span>Same person, different city, transformed career</span>
+            </div>
+          </div>
+          
+          <div class="stat-boxes">
+            <div class="stat-box">
+              <div class="stat-box-value">3,000</div>
+              <div class="stat-box-label">km across India</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-value">12+</div>
+              <div class="stat-box-label">Major cities to analyze</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slide 5: Another India Example -->
+      <div class="slide" data-slide="4">
+        <div class="slide-icon">💼</div>
+        <h2 class="slide-title">Mumbai vs Hyderabad: Business Success</h2>
+        <p class="slide-subtitle">Different cities activate different opportunities.</p>
+        
+        <div class="slide-content">
+          <div class="celebrity-card">
+            <div class="celebrity-header">
+              <div class="celebrity-avatar">🏢</div>
+              <div class="celebrity-info">
+                <h4>Entrepreneur Case Study</h4>
+                <p><span class="india-badge">🇮🇳 Within India</span></p>
+              </div>
+            </div>
+            <p class="celebrity-story">
+              Started 2 failed businesses in <strong>Mumbai</strong> despite working hard. Astrocartography showed their <strong>Sun-Jupiter line</strong> passed through <strong>Hyderabad</strong>. Moved operations there — 3rd venture became profitable within 8 months.
+            </p>
+            <div class="celebrity-result">
+              <span>📍</span>
+              <span>Sun line = Recognition & leadership zone</span>
+            </div>
+          </div>
+          
+          <div class="quote-box">
+            <p class="quote-text">"Your chart works within India too. Planetary lines don't follow borders."</p>
+            <p class="quote-author">— Astrocartography Principle</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Slide 6: What You'll Discover -->
+      <div class="slide" data-slide="5">
+        <div class="slide-icon">🧭</div>
+        <h2 class="slide-title">Discover Your Power Locations</h2>
+        <p class="slide-subtitle">Search worldwide OR within India — your choice.</p>
+        
+        <div class="slide-content">
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="feature-icon">🎯</div>
+              <div class="feature-text">
+                <h5>Your Power Direction</h5>
+                <p>North, South, East, or West</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">🌍</div>
+              <div class="feature-text">
+                <h5>Top International Cities</h5>
+                <p>Dubai, Singapore, London & more</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">🇮🇳</div>
+              <div class="feature-text">
+                <h5>Top Indian Cities</h5>
+                <p>Mumbai, Bangalore, Hyderabad & more</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">⚠️</div>
+              <div class="feature-text">
+                <h5>Cities to Avoid</h5>
+                <p>Places that may block your growth</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">📄</div>
+              <div class="feature-text">
+                <h5>Detailed PDF Report</h5>
+                <p>20+ page personalized analysis</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="onboarding-footer">
+      <div class="progress-dots">
+        <div class="dot active" data-dot="0"></div>
+        <div class="dot" data-dot="1"></div>
+        <div class="dot" data-dot="2"></div>
+        <div class="dot" data-dot="3"></div>
+        <div class="dot" data-dot="4"></div>
+        <div class="dot" data-dot="5"></div>
+      </div>
+      <button class="onboarding-btn" onclick="nextSlide()">
+        <span id="btn-text">Next</span>
+      </button>
+      <p class="skip-btn" onclick="skipOnboarding()">Skip intro</p>
+    </div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- ============ HOME PAGE ============ -->
+    <div id="page-home" class="page active">
+      <div class="header">
+        <h1 class="logo">SUMMTRA</h1>
+        <p class="tagline">Find Your Lucky City</p>
+      </div>
+      
+      <div class="compass-container">
+        <div class="compass">
+          <div class="compass-ring"></div>
+          <span class="cardinal north">N</span>
+          <span class="cardinal south">S</span>
+          <span class="cardinal east">E</span>
+          <span class="cardinal west">W</span>
+          <div class="compass-needle wobble">
+            <div class="needle-north"></div>
+            <div class="needle-south"></div>
+            <div class="needle-center"></div>
+          </div>
+          <div class="compass-center">
+            <span style="font-size: 22px;">🌍</span>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; padding: 16px 20px;">
+        <p style="color: var(--text); font-size: 15px; line-height: 1.5;">
+          Discover which cities are<br>written in your stars
+        </p>
+        <p style="color: var(--text-dim); font-size: 12px; margin-top: 8px;">
+          Worldwide or within India 🇮🇳
+        </p>
+      </div>
+      
+      <div class="direction-btns">
+        <div class="direction-btn" onclick="navigateTo('form')">
+          <div class="direction-btn-icon">💼</div>
+          <div class="direction-btn-title">Career</div>
+          <div class="direction-btn-desc">Best cities for success</div>
+        </div>
+        <div class="direction-btn" onclick="navigateTo('form')">
+          <div class="direction-btn-icon">💰</div>
+          <div class="direction-btn-title">Wealth</div>
+          <div class="direction-btn-desc">Where money flows</div>
+        </div>
+        <div class="direction-btn" onclick="navigateTo('form')">
+          <div class="direction-btn-icon">💕</div>
+          <div class="direction-btn-title">Love</div>
+          <div class="direction-btn-desc">Find your soulmate</div>
+        </div>
+        <div class="direction-btn" onclick="navigateTo('form')">
+          <div class="direction-btn-icon">🧘</div>
+          <div class="direction-btn-title">Peace</div>
+          <div class="direction-btn-desc">Inner harmony</div>
+        </div>
+      </div>
+      
+      <div style="padding: 0 20px;">
+        <button class="btn btn-primary" onclick="navigateTo('form')">Find My Lucky Cities</button>
+        <p style="text-align: center; font-size: 11px; margin-top: 10px;">
+          <span style="color: var(--accent-orange);">🔥 50% OFF</span>
+          <span style="color: var(--text-dim);"> — Limited time launch offer</span>
+        </p>
+      </div>
+      
+      <!-- Trust indicators on home -->
+      <div style="display: flex; justify-content: center; gap: 16px; padding: 20px; margin-top: 10px; border-top: 1px solid rgba(212,168,84,0.1);">
+        <div style="text-align: center;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold);">6,000+</div>
+          <div style="font-size: 9px; color: var(--text-dim); text-transform: uppercase;">Reports</div>
+        </div>
+        <div style="width: 1px; background: rgba(212,168,84,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold);">NASA</div>
+          <div style="font-size: 9px; color: var(--text-dim); text-transform: uppercase;">Grade</div>
+        </div>
+        <div style="width: 1px; background: rgba(212,168,84,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold);">Swiss</div>
+          <div style="font-size: 9px; color: var(--text-dim); text-transform: uppercase;">Ephemeris</div>
+        </div>
+      </div>
+      
+      <!-- Sample Preview -->
+      <div class="sample-preview-section">
+        <h3 class="sample-preview-title">📄 Sample Report Preview</h3>
+        <div class="sample-preview-card">
+          <div class="sample-preview-header">
+            <h4>Astrocartography Report</h4>
+          </div>
+          <div class="sample-preview-content">
+            <div class="sample-item">
+              <span class="sample-item-label">Power Direction</span>
+              <span class="sample-item-value">South-East ↗</span>
+            </div>
+            <div class="sample-item">
+              <span class="sample-item-label">#1 Lucky City</span>
+              <span class="sample-item-value blur">Bangalore</span>
+            </div>
+            <div class="sample-item">
+              <span class="sample-item-label">Match Score</span>
+              <span class="sample-item-value blur">94%</span>
+            </div>
+            <div class="sample-item">
+              <span class="sample-item-label">Jupiter Line</span>
+              <span class="sample-item-value blur">Strong ↑</span>
+            </div>
+            <div class="sample-item">
+              <span class="sample-item-label">Best Move Date</span>
+              <span class="sample-item-value blur">March 2026</span>
+            </div>
+            <div class="sample-blur-overlay">
+              <button class="sample-unlock-btn" onclick="navigateTo('form')">
+                <span>🔓</span> Unlock Full Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Comparison Table -->
+      <div class="comparison-section">
+        <h3 class="comparison-title">📊 Why Choose Summtra?</h3>
+        <div class="comparison-table">
+          <div class="comparison-header">
+            <span>Feature</span>
+            <span>Others</span>
+            <span>Summtra</span>
+          </div>
+          <div class="comparison-row">
+            <span>Indian Cities</span>
+            <span class="cross">✗ Limited</span>
+            <span class="check">✓ 50+ Cities</span>
+          </div>
+          <div class="comparison-row">
+            <span>NASA-Grade Data</span>
+            <span class="cross">✗ No</span>
+            <span class="check">✓ Yes</span>
+          </div>
+          <div class="comparison-row">
+            <span>Swiss Ephemeris</span>
+            <span class="partial">~ Some</span>
+            <span class="check">✓ Yes</span>
+          </div>
+          <div class="comparison-row">
+            <span>Hindi Support</span>
+            <span class="cross">✗ No</span>
+            <span class="check">✓ Coming</span>
+          </div>
+          <div class="comparison-row">
+            <span>WhatsApp Delivery</span>
+            <span class="cross">✗ No</span>
+            <span class="check">✓ Yes</span>
+          </div>
+          <div class="comparison-row">
+            <span>Best Time to Move</span>
+            <span class="cross">✗ No</span>
+            <span class="check">✓ Included</span>
+          </div>
+          <div class="comparison-row comparison-price-row">
+            <span>Price</span>
+            <span>₹2,500+</span>
+            <span>₹999</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Testimonials -->
+      <div class="testimonials-section">
+        <h3 class="testimonials-title">💬 What Our Users Say</h3>
+        
+        <div class="testimonial-card">
+          <div class="testimonial-header">
+            <div class="testimonial-avatar">👩</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">Priya Sharma</div>
+              <div class="testimonial-location">Delhi → Bangalore</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+          <p class="testimonial-text">"I was confused between Mumbai and Bangalore for my new job. Summtra showed Bangalore as my #1 city. Took the leap — got 40% higher package and amazing work culture!"</p>
+          <div class="testimonial-result">
+            <span>✓</span>
+            <span>Relocated 8 months ago</span>
+          </div>
+        </div>
+        
+        <div class="testimonial-card">
+          <div class="testimonial-header">
+            <div class="testimonial-avatar">👨</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">Rahul Mehta</div>
+              <div class="testimonial-location">Mumbai → Dubai</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+          <p class="testimonial-text">"Skeptical at first, but the report was incredibly detailed. Dubai was my Jupiter line — moved there and my business revenue 3x'd in 6 months. Mind-blown!"</p>
+          <div class="testimonial-result">
+            <span>✓</span>
+            <span>Business grew 3x</span>
+          </div>
+        </div>
+        
+        <div class="testimonial-card">
+          <div class="testimonial-header">
+            <div class="testimonial-avatar">👩</div>
+            <div class="testimonial-info">
+              <div class="testimonial-name">Ananya Reddy</div>
+              <div class="testimonial-location">Chennai → Hyderabad</div>
+            </div>
+            <div class="testimonial-stars">★★★★★</div>
+          </div>
+          <p class="testimonial-text">"Report said avoid Pune, go to Hyderabad. I was planning Pune! Changed my decision — now thriving here with a loving partner. Thank you Summtra! 🙏"</p>
+          <div class="testimonial-result">
+            <span>✓</span>
+            <span>Found love in 4 months</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ============ FORM PAGE ============ -->
+    <div id="page-form" class="page">
+      <div class="back-btn" onclick="navigateTo('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </div>
+      
+      <div class="header" style="padding-top: 5px;">
+        <h1 class="logo" style="font-size: 22px;">SUMMTRA</h1>
+        <p class="tagline">Enter Your Birth Details</p>
+      </div>
+      
+      <!-- Social Proof -->
+      <div class="social-proof">
+        <div class="social-proof-avatars">
+          <div class="social-proof-avatar">👨</div>
+          <div class="social-proof-avatar">👩</div>
+          <div class="social-proof-avatar">👨</div>
+          <div class="social-proof-avatar">👩</div>
+          <div class="social-proof-avatar">+</div>
+        </div>
+        <div class="social-proof-text">
+          <strong>6,000+</strong> reports generated
+        </div>
+      </div>
+      
+      <div class="card">
+        <!-- Scope Toggle -->
+        <p class="form-label" style="margin-bottom: 8px;">Search Scope</p>
+        <div class="scope-toggle three-options">
+          <div class="scope-option active" onclick="setScope('india')" id="scope-india">
+            <span>🇮🇳</span>
+            India
+          </div>
+          <div class="scope-option" onclick="setScope('world')" id="scope-world">
+            <span>🌍</span>
+            Worldwide
+          </div>
+          <div class="scope-option" onclick="setScope('both')" id="scope-both">
+            <span>✨</span>
+            Both
+          </div>
+        </div>
+        <p id="scope-hint" class="scope-hint">Top 10 cities within India</p>
+        
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" placeholder="As per birth certificate">
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Birth Date</label>
+            <input type="date" class="form-input">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Birth Time</label>
+            <input type="time" class="form-input">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Birth Place</label>
+          <input type="text" class="form-input" placeholder="City, State">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="For report delivery">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Deliver Report Via</label>
+          <div class="delivery-toggle">
+            <div class="delivery-option active" onclick="setDelivery('email')" id="delivery-email">
+              <span>📧</span>
+              <span>Email</span>
+            </div>
+            <div class="delivery-option" onclick="setDelivery('whatsapp')" id="delivery-whatsapp">
+              <span>💬</span>
+              <span>WhatsApp</span>
+            </div>
+            <div class="delivery-option" onclick="setDelivery('both')" id="delivery-both">
+              <span>✨</span>
+              <span>Both</span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="whatsapp-field" class="form-group" style="display: none;">
+          <label class="form-label">WhatsApp Number</label>
+          <input type="tel" class="form-input" placeholder="+91 98765 43210">
+        </div>
+        
+        <div style="margin-top: 18px;">
+          <button class="btn btn-primary" onclick="startScanning()">
+            Find My Direction — 
+            <span class="price-container">
+              <span id="price-original" class="price-original">₹1,999</span>
+              <span id="price-text" class="price-current">₹999</span>
+              <span id="discount-badge" class="discount-badge">50% OFF</span>
+            </span>
+          </button>
+          <p style="text-align: center; color: var(--text-dim); font-size: 10px; margin-top: 10px;">🔒 Secure payment via Razorpay</p>
+          
+          <!-- Urgency Offer Banner -->
+          <div class="offer-banner">
+            <div class="offer-title">
+              <span>🔥</span> Limited Time Launch Offer <span>🔥</span>
+            </div>
+            <div class="offer-timer">
+              <div class="timer-block">
+                <div id="timer-hours" class="timer-value">23</div>
+                <div class="timer-label">Hours</div>
+              </div>
+              <div class="timer-block">
+                <div id="timer-mins" class="timer-value">47</div>
+                <div class="timer-label">Mins</div>
+              </div>
+              <div class="timer-block">
+                <div id="timer-secs" class="timer-value">32</div>
+                <div class="timer-label">Secs</div>
+              </div>
+            </div>
+            <p class="offer-text">
+              <strong>Only 17 spots left</strong> at this price today!
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <p class="card-title">What You'll Discover</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text-dim); font-size: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--gold);">🧭</span>
+            <span>Your power direction</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--gold);">🏙️</span>
+            <span id="discover-text">Top 10 Indian cities ranked</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--gold);">⚠️</span>
+            <span>Cities to avoid & why</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--gold);">📄</span>
+            <span>Detailed PDF report via email</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Accuracy Banner -->
+      <div class="accuracy-banner">
+        <div class="accuracy-title">
+          <span>🎯</span> Scientific Precision Guaranteed
+        </div>
+        <div class="accuracy-items">
+          <div class="accuracy-item">
+            <span>✓</span>
+            <span><strong>NASA-Grade</strong> planetary calculations</span>
+          </div>
+          <div class="accuracy-item">
+            <span>✓</span>
+            <span><strong>Swiss Ephemeris</strong> — same as pro astrologers</span>
+          </div>
+          <div class="accuracy-item">
+            <span>✓</span>
+            <span><strong>Arcminute precision</strong> — accurate within 1 km</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tech Badges -->
+      <div class="tech-badges">
+        <div class="tech-badge">
+          <div class="tech-badge-icon">🛰️</div>
+          <div class="tech-badge-label">NASA Grade</div>
+        </div>
+        <div class="tech-badge">
+          <div class="tech-badge-icon">🇨🇭</div>
+          <div class="tech-badge-label">Swiss Ephemeris</div>
+        </div>
+        <div class="tech-badge">
+          <div class="tech-badge-icon">🎯</div>
+          <div class="tech-badge-label">Arcminute Precision</div>
+        </div>
+        <div class="tech-badge">
+          <div class="tech-badge-icon">🔒</div>
+          <div class="tech-badge-label">Secure & Private</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ============ RESULTS PAGE ============ -->
+    <div id="page-results" class="page">
+      <div class="header" style="padding-top: 25px;">
+        <p style="color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 2px;">Your Cosmic Direction</p>
+        <h1 class="logo" style="font-size: 22px; margin-top: 4px;">Results Ready</h1>
+      </div>
+      
+      <div style="display: flex; justify-content: center; margin: 16px 0;">
+        <div class="compass-container result-compass">
+          <div class="compass">
+            <div class="compass-ring"></div>
+            <span class="cardinal north">N</span>
+            <span class="cardinal south">S</span>
+            <span class="cardinal east">E</span>
+            <span class="cardinal west">W</span>
+            <div class="compass-needle" style="transform: translate(-50%, -50%) rotate(120deg);">
+              <div class="needle-north"></div>
+              <div class="needle-south"></div>
+              <div class="needle-center"></div>
+            </div>
+            <div class="compass-center">
+              <span style="font-size: 14px;">✨</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="power-direction">
+        <p class="power-direction-label">Your Power Direction</p>
+        <p class="power-direction-value">SOUTH-EAST</p>
+        <p class="power-direction-name">The Direction of Wealth & Growth</p>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value">10</div>
+            <div class="stat-label">Lucky Cities</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Avoid</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">94%</div>
+            <div class="stat-label">Top Match</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="padding: 0 20px;">
+        
+        <!-- Indian Cities Section -->
+        <p class="city-section-title"><span>🇮🇳</span> Top Indian Cities</p>
+        
+        <div class="city-card india top" onclick="navigateTo('city-detail')">
+          <div class="city-rank">1</div>
+          <div class="city-info">
+            <div class="city-name">Bangalore</div>
+            <div class="city-country">Karnataka, India</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">94%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card india" onclick="navigateTo('city-detail')">
+          <div class="city-rank">2</div>
+          <div class="city-info">
+            <div class="city-name">Hyderabad</div>
+            <div class="city-country">Telangana, India</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">91%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card india" onclick="navigateTo('city-detail')">
+          <div class="city-rank">3</div>
+          <div class="city-info">
+            <div class="city-name">Chennai</div>
+            <div class="city-country">Tamil Nadu, India</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">87%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card india">
+          <div class="city-rank">4</div>
+          <div class="city-info">
+            <div class="city-name">Pune</div>
+            <div class="city-country">Maharashtra, India</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">82%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card india">
+          <div class="city-rank">5</div>
+          <div class="city-info">
+            <div class="city-name">Kochi</div>
+            <div class="city-country">Kerala, India</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">79%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <!-- International Cities Section -->
+        <p class="city-section-title" style="margin-top: 24px;"><span>🌍</span> Top International Cities</p>
+        
+        <div class="city-card top" onclick="navigateTo('city-detail')">
+          <div class="city-rank">1</div>
+          <div class="city-info">
+            <div class="city-name">Dubai</div>
+            <div class="city-country">United Arab Emirates</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">92%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card" onclick="navigateTo('city-detail')">
+          <div class="city-rank">2</div>
+          <div class="city-info">
+            <div class="city-name">Singapore</div>
+            <div class="city-country">Singapore</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">89%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+        
+        <div class="city-card">
+          <div class="city-rank">3</div>
+          <div class="city-info">
+            <div class="city-name">Sydney</div>
+            <div class="city-country">Australia</div>
+          </div>
+          <div class="city-score">
+            <div class="city-score-value">85%</div>
+            <div class="city-score-label">Match</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Warning cities -->
+      <div style="padding: 20px;">
+        <p style="color: var(--accent-red); font-size: 13px; margin-bottom: 10px;">⚠️ Cities to Avoid</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="background: rgba(196, 92, 74, 0.2); color: var(--accent-red); padding: 6px 12px; border-radius: 20px; font-size: 11px;">Delhi</span>
+          <span style="background: rgba(196, 92, 74, 0.2); color: var(--accent-red); padding: 6px 12px; border-radius: 20px; font-size: 11px;">Kolkata</span>
+          <span style="background: rgba(196, 92, 74, 0.2); color: var(--accent-red); padding: 6px 12px; border-radius: 20px; font-size: 11px;">New York</span>
+        </div>
+      </div>
+      
+      <div style="padding: 0 20px 20px;">
+        <button class="btn btn-primary">📥 Download Full Report</button>
+        <button class="btn btn-secondary" style="margin-top: 10px;">📤 Share Results</button>
+      </div>
+    </div>
+    
+    <!-- ============ CITY DETAIL PAGE ============ -->
+    <div id="page-city-detail" class="page">
+      <div class="back-btn" onclick="navigateTo('results')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </div>
+      
+      <div style="text-align: center; padding: 16px;">
+        <div style="font-size: 44px; margin-bottom: 8px;">🏙️</div>
+        <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--accent-orange);">Bangalore</h1>
+        <p style="color: var(--text-dim); font-size: 13px;">Karnataka, India 🇮🇳</p>
+        <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; background: rgba(232, 152, 48, 0.2); padding: 8px 18px; border-radius: 25px;">
+          <span style="font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--accent-orange);">94%</span>
+          <span style="color: var(--text-dim); font-size: 11px;">MATCH</span>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: center; gap: 16px; padding: 16px; border-top: 1px solid rgba(212, 168, 84, 0.1); border-bottom: 1px solid rgba(212, 168, 84, 0.1);">
+        <div style="text-align: center;">
+          <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Direction</div>
+          <div style="color: var(--gold); font-size: 16px;">SOUTH</div>
+        </div>
+        <div style="width: 1px; background: rgba(212, 168, 84, 0.2);"></div>
+        <div style="text-align: center;">
+          <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">From Delhi</div>
+          <div style="color: var(--text); font-size: 16px;">1,740 km</div>
+        </div>
+        <div style="width: 1px; background: rgba(212, 168, 84, 0.2);"></div>
+        <div style="text-align: center;">
+          <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Best For</div>
+          <div style="color: var(--accent-green); font-size: 16px;">💼</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <p class="card-title">Why Bangalore is Lucky for You</p>
+        <div style="color: var(--text-dim); font-size: 13px; line-height: 1.7;">
+          <p>Bangalore lies on your <strong style="color: var(--accent-orange);">Mercury-Jupiter line</strong>, creating powerful energy for:</p>
+          <ul style="margin-top: 12px; padding-left: 18px;">
+            <li style="margin-bottom: 6px;">Tech career growth & innovation</li>
+            <li style="margin-bottom: 6px;">Business opportunities & networking</li>
+            <li style="margin-bottom: 6px;">Financial abundance</li>
+            <li>Recognition in your field</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="card">
+        <p class="card-title">Planetary Influences</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">☿</span>
+              <span style="color: var(--text); font-size: 13px;">Mercury Line</span>
+            </div>
+            <span style="color: var(--accent-green); font-size: 12px;">Strong ↑</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">♃</span>
+              <span style="color: var(--text); font-size: 13px;">Jupiter Line</span>
+            </div>
+            <span style="color: var(--accent-green); font-size: 12px;">Strong ↑</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">♄</span>
+              <span style="color: var(--text); font-size: 13px;">Saturn Line</span>
+            </div>
+            <span style="color: var(--text-dim); font-size: 12px;">Weak</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <p class="card-title">Best Time to Move</p>
+        <div style="text-align: center;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--gold);">March - April 2026</div>
+          <p style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Jupiter enters favorable transit</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ============ BOTTOM NAV ============ -->
+    <nav class="bottom-nav">
+      <div id="nav-home" class="nav-item active" onclick="navigateTo('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span>Compass</span>
+      </div>
+      <div id="nav-results" class="nav-item" onclick="navigateTo('results')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/>
+        </svg>
+        <span>Results</span>
+      </div>
+      <div id="nav-profile" class="nav-item" onclick="navigateTo('form')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="7" r="4"/>
+          <path d="M5 21v-2a7 7 0 0114 0v2"/>
+        </svg>
+        <span>Profile</span>
+      </div>
+    </nav>
+  </div>
+  
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('ServiceWorker registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+    
+    // Loading
+    window.addEventListener('load', () => {
+      setTimeout(() => { document.getElementById('loading').classList.add('hidden'); }, 1800);
+    });
+    
+    // Onboarding
+    let currentSlide = 0;
+    const totalSlides = 6;
+    
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        slides[currentSlide].classList.remove('active');
+        slides[currentSlide].classList.add('prev');
+        dots[currentSlide].classList.remove('active');
+        currentSlide++;
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+        if (currentSlide === totalSlides - 1) {
+          document.getElementById('btn-text').textContent = 'Find My Lucky City';
+        }
+      } else {
+        skipOnboarding();
+      }
+    }
+    
+    function skipOnboarding() {
+      document.getElementById('onboarding').classList.add('hidden');
+      localStorage.setItem('summtra_onboarded', 'true');
+    }
+    
+    if (localStorage.getItem('summtra_onboarded') === 'true') {
+      document.getElementById('onboarding').classList.add('hidden');
+    }
+    
+    // Scope toggle
+    let searchScope = 'india';
+    function setScope(scope) {
+      searchScope = scope;
+      document.getElementById('scope-india').classList.toggle('active', scope === 'india');
+      document.getElementById('scope-world').classList.toggle('active', scope === 'world');
+      document.getElementById('scope-both').classList.toggle('active', scope === 'both');
+      
+      const hint = document.getElementById('scope-hint');
+      const price = document.getElementById('price-text');
+      const originalPrice = document.getElementById('price-original');
+      const discountBadge = document.getElementById('discount-badge');
+      const discover = document.getElementById('discover-text');
+      
+      if (scope === 'india') {
+        hint.textContent = 'Top 10 cities within India';
+        hint.classList.remove('highlight');
+        originalPrice.textContent = '₹1,999';
+        price.textContent = '₹999';
+        discountBadge.textContent = '50% OFF';
+        discover.textContent = 'Top 10 Indian cities ranked';
+      } else if (scope === 'world') {
+        hint.textContent = 'Top 10 cities worldwide';
+        hint.classList.remove('highlight');
+        originalPrice.textContent = '₹1,999';
+        price.textContent = '₹999';
+        discountBadge.textContent = '50% OFF';
+        discover.textContent = 'Top 10 cities worldwide ranked';
+      } else {
+        hint.textContent = '🎁 Best Value! India + Worldwide (20 cities)';
+        hint.classList.add('highlight');
+        originalPrice.textContent = '₹2,499';
+        price.textContent = '₹1,499';
+        discountBadge.textContent = '40% OFF';
+        discover.textContent = 'Top 10 Indian + 10 International cities';
+      }
+    }
+    
+    // Navigation
+    let currentPage = 'home';
+    function navigateTo(page) {
+      document.getElementById('page-' + currentPage)?.classList.remove('active');
+      document.getElementById('page-' + page)?.classList.add('active');
+      currentPage = page;
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      if (page === 'home') document.getElementById('nav-home')?.classList.add('active');
+      if (page === 'results' || page === 'city-detail') document.getElementById('nav-results')?.classList.add('active');
+      if (page === 'form') document.getElementById('nav-profile')?.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function startScanning() {
+      const overlay = document.getElementById('scanning');
+      const status = document.getElementById('scanning-status');
+      overlay.classList.add('active');
+      
+      let steps;
+      if (searchScope === 'india') {
+        steps = ['Reading birth chart...', 'Calculating planetary lines...', 'Scanning Indian cities...', 'Analyzing Bangalore, Mumbai, Delhi...', 'Finding your power direction...', 'Ranking lucky cities...'];
+      } else if (searchScope === 'world') {
+        steps = ['Reading birth chart...', 'Calculating planetary lines...', 'Scanning global coordinates...', 'Analyzing city alignments...', 'Finding your power direction...', 'Ranking lucky cities...'];
+      } else {
+        steps = ['Reading birth chart...', 'Calculating planetary lines...', 'Scanning Indian cities...', 'Scanning global coordinates...', 'Analyzing 20 cities...', 'Finding your power direction...', 'Ranking all lucky cities...'];
+      }
+      
+      let i = 0;
+      const interval = setInterval(() => {
+        status.textContent = steps[i];
+        i++;
+        if (i >= steps.length) {
+          clearInterval(interval);
+          setTimeout(() => { overlay.classList.remove('active'); navigateTo('results'); }, 800);
+        }
+      }, 700);
+    }
+    
+    // Swipe for onboarding
+    let touchStartX = 0;
+    document.querySelector('.onboarding-slides')?.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.querySelector('.onboarding-slides')?.addEventListener('touchend', e => {
+      const diff = touchStartX - e.changedTouches[0].screenX;
+      if (diff > 50) nextSlide();
+    });
+    
+    // Countdown Timer
+    function startCountdown() {
+      // Set end time to 24 hours from now (stored in localStorage to persist)
+      let endTime = localStorage.getItem('summtra_offer_end');
+      if (!endTime || parseInt(endTime) < Date.now()) {
+        endTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+        localStorage.setItem('summtra_offer_end', endTime);
+      }
+      
+      function updateTimer() {
+        const now = Date.now();
+        const remaining = parseInt(endTime) - now;
+        
+        if (remaining <= 0) {
+          // Reset timer when it expires
+          endTime = Date.now() + (24 * 60 * 60 * 1000);
+          localStorage.setItem('summtra_offer_end', endTime);
+        }
+        
+        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+        
+        document.getElementById('timer-hours').textContent = hours.toString().padStart(2, '0');
+        document.getElementById('timer-mins').textContent = mins.toString().padStart(2, '0');
+        document.getElementById('timer-secs').textContent = secs.toString().padStart(2, '0');
+      }
+      
+      updateTimer();
+      setInterval(updateTimer, 1000);
+    }
+    
+    startCountdown();
+    
+    // Delivery toggle
+    let deliveryMethod = 'email';
+    function setDelivery(method) {
+      deliveryMethod = method;
+      document.getElementById('delivery-email').classList.toggle('active', method === 'email');
+      document.getElementById('delivery-whatsapp').classList.toggle('active', method === 'whatsapp');
+      document.getElementById('delivery-both').classList.toggle('active', method === 'both');
+      
+      const whatsappField = document.getElementById('whatsapp-field');
+      if (method === 'whatsapp' || method === 'both') {
+        whatsappField.style.display = 'block';
+      } else {
+        whatsappField.style.display = 'none';
+      }
+    }
+    
+    // Live notification popup
+    const notifications = [
+      { name: 'Priya', city: 'Mumbai', avatar: '👩', time: '2 minutes ago' },
+      { name: 'Rahul', city: 'Delhi', avatar: '👨', time: '5 minutes ago' },
+      { name: 'Ananya', city: 'Bangalore', avatar: '👩', time: '8 minutes ago' },
+      { name: 'Vikram', city: 'Chennai', avatar: '👨', time: '12 minutes ago' },
+      { name: 'Sneha', city: 'Hyderabad', avatar: '👩', time: '15 minutes ago' },
+      { name: 'Arjun', city: 'Pune', avatar: '👨', time: '18 minutes ago' },
+      { name: 'Kavya', city: 'Kolkata', avatar: '👩', time: '22 minutes ago' },
+      { name: 'Aditya', city: 'Ahmedabad', avatar: '👨', time: '25 minutes ago' },
+      { name: 'Meera', city: 'Jaipur', avatar: '👩', time: '28 minutes ago' },
+      { name: 'Rohan', city: 'Lucknow', avatar: '👨', time: '32 minutes ago' },
+    ];
+    
+    let notificationIndex = 0;
+    function showNotification() {
+      const notif = notifications[notificationIndex];
+      document.getElementById('notif-name').textContent = notif.name;
+      document.getElementById('notif-city').textContent = notif.city;
+      document.getElementById('notif-avatar').textContent = notif.avatar;
+      document.getElementById('notif-time').textContent = notif.time;
+      
+      const el = document.getElementById('live-notification');
+      el.classList.add('show');
+      
+      setTimeout(() => {
+        el.classList.remove('show');
+      }, 4000);
+      
+      notificationIndex = (notificationIndex + 1) % notifications.length;
+    }
+    
+    function hideNotification() {
+      document.getElementById('live-notification').classList.remove('show');
+    }
+    
+    // Show first notification after 10 seconds, then every 25-40 seconds
+    setTimeout(() => {
+      showNotification();
+      setInterval(() => {
+        showNotification();
+      }, Math.random() * 15000 + 25000); // Random 25-40 seconds
+    }, 10000);
+  </script>
+</body>
+</html>
