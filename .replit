@@ -1,6 +1,6 @@
 run = "npx serve -s . -l 3000"
 entrypoint = "index.html"
-modules = ["web", "nodejs-20", "nix"]
+modules = ["web", "nodejs-20", "nix", "python-3.11"]
 
 [nix]
 channel = "stable-25_05"
@@ -13,5 +13,34 @@ deploymentTarget = "cloudrun"
 localPort = 3000
 externalPort = 80
 
+[[ports]]
+localPort = 5000
+externalPort = 80
+
 [agent]
 expertMode = true
+integrations = ["github:1.0.0"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Summtra Web Server"
+
+[[workflows.workflow]]
+name = "Summtra Web Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m http.server 5000 --bind 0.0.0.0"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
