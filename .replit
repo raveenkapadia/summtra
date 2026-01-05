@@ -11,11 +11,7 @@ deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
-externalPort = 80
-
-[[ports]]
-localPort = 5000
-externalPort = 80
+externalPort = 3000
 
 [agent]
 expertMode = true
@@ -33,14 +29,30 @@ author = "agent"
 task = "workflow.run"
 args = "Summtra Web Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Port 3000 Server"
+
 [[workflows.workflow]]
 name = "Summtra Web Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m http.server 5000 --bind 0.0.0.0"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx serve -s . -l 5000"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Port 3000 Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m http.server 3000 --bind 0.0.0.0"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
