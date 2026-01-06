@@ -1,0 +1,54 @@
+Replace the celebrity case studies in the onboarding slides (slides 3, 4, 5, and add slide 6) with these 4 AUTHENTIC Indian celebrity location-based success stories:
+
+**SLIDE 3 - SUNDAR PICHAI (Tech Success)**
+- Icon: 🚀
+- Title: "Sundar Pichai: Chennai → California"
+- From: Chennai/Madurai, Tamil Nadu
+- To: Silicon Valley, California, USA
+- Astrological insight: Jupiter in Sagittarius in his 10th house (career) - destined for extraordinary fame and highest positions
+- Result: CEO of Google & Alphabet - world's most powerful tech executive
+- Quote: "From middle-class Chennai to leading the world's biggest tech company"
+
+**SLIDE 4 - SHAH RUKH KHAN (Bollywood Success)**
+- Icon: 👑
+- Title: "Shah Rukh Khan: Delhi → Mumbai"
+- From: Delhi (middle-class family)
+- To: Mumbai (arrived with just ₹1,500)
+- Astrological insight: Rahu dasha brought him from Delhi to Mumbai. Rahu in Taurus gave stability and perseverance in the film industry.
+- Result: "King of Bollywood" - 100+ films, 14 Filmfare Awards
+- Quote: "From a Delhi boy with nothing to the undisputed Badshah of Bollywood"
+
+**SLIDE 5 - VIRAT KOHLI (Sports Performance by Location)**
+- Icon: 🏏
+- Title: "Virat Kohli: Location Shapes Performance"
+- Born: Delhi, India
+- Key insight: His batting average CHANGES dramatically by location:
+  • Sri Lanka: 67.81 avg ⭐ (Highest!)
+  • India: 55.38 avg
+  • South Africa: 54.15 avg
+  • Australia: 46.72 avg (7 centuries, maiden Test ton at Adelaide)
+  • England: 33.21 avg (Struggles)
+- Highlight: Adelaide is his "power place" - scored maiden Test century there, then 115 & 141 on captaincy debut at same venue
+- Quote: "Same player, different locations, dramatically different results - that's astrocartography in action"
+
+**SLIDE 6 - PRIYANKA CHOPRA (Global Crossover)**
+- Icon: 🌟
+- Title: "Priyanka Chopra: Jamshedpur → Hollywood"
+- From: Jamshedpur, India (army family)
+- To: Los Angeles, USA
+- Astrological insight: Rahu conjunct Venus brought sudden international fame. Her global trajectory reflects Rahu pushing her toward worldwide success.
+- Result: First South Asian to headline American TV series (Quantico), Hollywood star
+- Quote: "From small-town India to India's biggest Hollywood crossover success"
+
+**DESIGN NOTES:**
+1. Keep same visual card design with timeline format
+2. For Virat Kohli slide, show the stats in a mini comparison table/visual
+3. Add source line at bottom of case studies section: "Astrological analysis from Vedic astrology experts. Cricket stats from ESPNCricinfo."
+4. For user testimonials section (Priya, Rahul, Ananya), add disclaimer: "Names changed for privacy. Based on real user experiences."
+
+**COLOR CODING FOR KOHLI'S STATS:**
+- Green for high averages (55+)
+- Gold for medium (45-55)
+- Orange for lower (below 40)
+
+These are REAL documented cases with verifiable data from Indian astrology experts (GaneshaSpeaks, Indastro) and cricket statistics (ESPNCricinfo).
