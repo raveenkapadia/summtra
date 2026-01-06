@@ -1,4 +1,4 @@
-const CACHE_NAME = 'summtra-v1';
+const CACHE_NAME = 'ssumitra-v1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
 // Handle push notifications (for future use)
 self.addEventListener('push', (event) => {
   const options = {
-    body: event.data ? event.data.text() : 'New update from Summtra!',
+    body: event.data ? event.data.text() : 'New update from Ssumitra!',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
@@ -88,7 +88,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Summtra', options)
+    self.registration.showNotification('Ssumitra', options)
   );
 });
 
