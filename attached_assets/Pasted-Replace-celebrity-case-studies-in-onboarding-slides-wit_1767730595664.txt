@@ -1,0 +1,155 @@
+Replace celebrity case studies in onboarding slides with these 4 AUTHENTIC astrocartography examples. Each MUST include the specific planetary line explanation:
+
+═══════════════════════════════════════════════════════════════
+SLIDE 3 - SUNDAR PICHAI (Tech Success)
+═══════════════════════════════════════════════════════════════
+- Title: "Sundar Pichai: Chennai → Silicon Valley"
+- Icon: 🚀
+- Visual: Map showing line from Chennai to California
+
+PLANETARY LINE:
+┌─────────────────────────────────────────────────────────────┐
+│  ♃ JUPITER-MC LINE passes through California                │
+│  Jupiter = Expansion, Growth, Prosperity, Good Fortune      │
+│  MC (Midheaven) = Career, Public Recognition, Achievement   │
+└─────────────────────────────────────────────────────────────┘
+
+COMPARISON:
+| CHENNAI                    | SILICON VALLEY              |
+|---------------------------|----------------------------|
+| IIT graduate              | CEO of Google & Alphabet   |
+| Limited global reach      | $2 Trillion company        |
+| Same intelligence         | World-changing impact      |
+
+QUOTE: "His Jupiter-MC line runs through California — the planet of expansion meeting his career destiny. Same talent, different location, world-changing outcome."
+
+═══════════════════════════════════════════════════════════════
+SLIDE 4 - SATYA NADELLA (Business Leadership)
+═══════════════════════════════════════════════════════════════
+- Title: "Satya Nadella: Hyderabad → Seattle"
+- Icon: 💻
+- Visual: Map showing line from Hyderabad to Pacific Northwest
+
+PLANETARY LINE:
+┌─────────────────────────────────────────────────────────────┐
+│  ♃ JUPITER-MC LINE passes through Seattle/Redmond           │
+│  Jupiter = Abundance, Leadership, Prosperity                │
+│  MC = Career peak, Public success, Authority                │
+└─────────────────────────────────────────────────────────────┘
+
+COMPARISON:
+| HYDERABAD                  | SEATTLE                     |
+|---------------------------|----------------------------|
+| Middle-class engineer     | CEO of Microsoft            |
+| $7,000/year salary        | $79 Million compensation    |
+| Regional career           | Led company: $300B → $3T   |
+
+QUOTE: "Nadella's Jupiter line of abundance crosses the Pacific Northwest. When he relocated there in 1992, he stepped into his zone of maximum expansion."
+
+KEY INSIGHT: "He had the same skills in Hyderabad. But Seattle activated his Jupiter-MC energy — turning potential into unprecedented success."
+
+═══════════════════════════════════════════════════════════════
+SLIDE 5 - VIRAT KOHLI (Sports Performance)
+═══════════════════════════════════════════════════════════════
+- Title: "Virat Kohli: Same Player, Different Results"
+- Icon: 🏏
+- Visual: Side-by-side comparison with flags
+
+PLANETARY LINES:
+┌─────────────────────────────────────────────────────────────┐
+│  🇦🇺 AUSTRALIA: ♂ MARS-MC LINE (favorable)                  │
+│     Mars = Competition, Energy, Peak Performance            │
+│     His Mars line activates winning energy here             │
+│                                                             │
+│  🏴󠁧󠁢󠁥󠁮󠁧󠁿 ENGLAND: ♄ SATURN INFLUENCE (challenging)           │
+│     Saturn = Obstacles, Hard lessons, Struggles             │
+│     Saturn's restrictive energy blocks his potential        │
+└─────────────────────────────────────────────────────────────┘
+
+STATS COMPARISON:
+| 🇦🇺 AUSTRALIA (Mars Active)  | 🏴󠁧󠁢󠁥󠁮󠁧󠁿 ENGLAND (Saturn Zone)  |
+|-----------------------------|------------------------------|
+| Batting Average: 46.72      | Batting Average: 33.21       |
+| Test Centuries: 7           | Test Centuries: 2            |
+| Maiden Test 100 ✓           | Consistent struggles         |
+| Adelaide: His "Power Place" | Challenging conditions       |
+
+QUOTE: "World's best batsman. Same technique. Same dedication. But his Mars line fires in Australia while Saturn restricts him in England."
+
+SOURCE: ESPNCricinfo (verifiable stats)
+
+═══════════════════════════════════════════════════════════════
+SLIDE 6 - A.R. RAHMAN (Creative Recognition)
+═══════════════════════════════════════════════════════════════
+- Title: "A.R. Rahman: Chennai → Hollywood"
+- Icon: 🎵
+- Visual: Map showing line from Chennai to Los Angeles
+
+PLANETARY LINES:
+┌─────────────────────────────────────────────────────────────┐
+│  ♆ NEPTUNE-MC LINE passes through Los Angeles               │
+│     Neptune = Creativity, Music, Dreams, Spirituality       │
+│                                                             │
+│  ♀ VENUS-MC LINE also active near Hollywood                 │
+│     Venus = Arts, Beauty, Aesthetics, Recognition           │
+│                                                             │
+│  Combined: The perfect alignment for artistic global fame   │
+└─────────────────────────────────────────────────────────────┘
+
+COMPARISON:
+| CHENNAI (Origin)           | LOS ANGELES (Activation)    |
+|---------------------------|----------------------------|
+| National Film Awards      | 2 OSCAR WINS               |
+| Bollywood success         | 2 Grammy Awards            |
+| "Mozart of Madras"        | Global icon                |
+| Kodambakkam studio        | Hollywood's highest honor  |
+
+QUOTE: "Rahman's Neptune line of creativity and Venus line of artistic beauty intersect near Los Angeles. When Slumdog Millionaire took his music there, his global destiny activated."
+
+KEY INSIGHT: "From a tiny street in Chennai's Kodambakkam to Hollywood's Kodak Theatre — his planetary lines were waiting in LA all along."
+
+═══════════════════════════════════════════════════════════════
+SLIDE 7 - YOUR TURN (CTA)
+═══════════════════════════════════════════════════════════════
+- Title: "What About You?"
+- Subtitle: "Which planetary lines run through YOUR ideal cities?"
+- Icon: 🧭
+
+CONTENT:
+- "Sundar found his Jupiter-MC line in California"
+- "Satya activated his abundance line in Seattle"  
+- "Kohli's Mars line fires in Australia"
+- "Rahman's Neptune-Venus intersection lit up in LA"
+
+QUESTION: "Where do YOUR planetary lines cross? Which city holds your career expansion? Your creative breakthrough? Your winning energy?"
+
+CTA BUTTON: "Discover My Power Lines →" or "Find My Lucky Cities →"
+
+═══════════════════════════════════════════════════════════════
+DESIGN & COPY NOTES:
+═══════════════════════════════════════════════════════════════
+
+1. PLANETARY SYMBOLS TO USE:
+   ♃ = Jupiter (expansion, luck, career growth)
+   ♂ = Mars (competition, energy, sports)
+   ♀ = Venus (love, arts, beauty)
+   ♆ = Neptune (creativity, music, spirituality)
+   ♄ = Saturn (challenges, obstacles, hard lessons)
+   
+2. KEY TERMS TO INCLUDE:
+   - "MC line" (Midheaven = career/public success)
+   - "Power location" / "Power place"
+   - "Planetary activation"
+   - "Abundance line"
+   - "Your stars align here"
+
+3. VISUAL STYLE:
+   - Show world map with glowing lines
+   - Use planetary symbols next to city names
+   - Color code: Gold for favorable, Grey for challenging
+
+4. KEY MESSAGE:
+   "These celebrities had the SAME talent everywhere. But specific locations ACTIVATED their planetary potential. Astrocartography reveals which cities will activate YOURS."
+
+5. DISCLAIMER (small, at bottom):
+   "Celebrity birth charts analyzed for illustrative purposes. Individual results vary based on complete birth chart analysis."

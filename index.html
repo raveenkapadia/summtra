@@ -499,6 +499,139 @@
       color: inherit;
     }
     
+    /* Planetary Line Box */
+    .planetary-box {
+      background: linear-gradient(135deg, rgba(212, 168, 84, 0.1) 0%, rgba(10, 22, 40, 0.8) 100%);
+      border: 1px solid rgba(212, 168, 84, 0.4);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .planetary-box h5 {
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .planetary-box p {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+    .planetary-box .planet-symbol {
+      font-size: 16px;
+    }
+    .planetary-box .planet-meaning {
+      color: rgba(212, 168, 84, 0.8);
+      font-style: italic;
+    }
+    
+    /* Comparison Table */
+    .comparison-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .comparison-col {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .comparison-col.origin {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .comparison-col.destination {
+      border-color: rgba(90, 184, 122, 0.3);
+      background: rgba(90, 184, 122, 0.05);
+    }
+    .comparison-col h6 {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .comparison-col.destination h6 {
+      color: var(--accent-green);
+    }
+    .comparison-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .comparison-col li {
+      font-size: 10px;
+      color: var(--text);
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .comparison-col li:last-child {
+      border-bottom: none;
+    }
+    
+    /* Astro Quote */
+    .astro-quote {
+      background: rgba(212, 168, 84, 0.08);
+      border-left: 3px solid var(--gold);
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .astro-quote p {
+      font-size: 11px;
+      color: var(--text);
+      font-style: italic;
+      line-height: 1.6;
+    }
+    
+    /* Key Insight */
+    .key-insight {
+      background: rgba(90, 184, 122, 0.1);
+      border: 1px solid rgba(90, 184, 122, 0.3);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+    .key-insight p {
+      font-size: 10px;
+      color: var(--accent-green);
+      line-height: 1.5;
+    }
+    
+    /* CTA List */
+    .cta-examples {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .cta-example {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      border: 1px solid rgba(212, 168, 84, 0.2);
+    }
+    .cta-example .icon {
+      font-size: 20px;
+    }
+    .cta-example p {
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .cta-example strong {
+      color: var(--gold);
+    }
+    
     /* India badge */
     .india-badge {
       display: inline-flex;
@@ -1875,66 +2008,75 @@
       <!-- Slide 3: Sundar Pichai -->
       <div class="slide" data-slide="2">
         <div class="slide-icon">🚀</div>
-        <h2 class="slide-title">Sundar Pichai: Chennai → California</h2>
-        <p class="slide-subtitle">From middle-class Chennai to leading the world's biggest tech company.</p>
+        <h2 class="slide-title">Sundar Pichai: Chennai → Silicon Valley</h2>
+        <p class="slide-subtitle">Same talent, different location, world-changing outcome.</p>
         
         <div class="slide-content">
-          <div class="celebrity-card">
-            <div class="celebrity-header">
-              <div class="celebrity-avatar">👨‍💼</div>
-              <div class="celebrity-info">
-                <h4>Sundar Pichai</h4>
-                <p>CEO, Google & Alphabet</p>
-              </div>
+          <div class="planetary-box">
+            <h5><span class="planet-symbol">♃</span> JUPITER-MC LINE passes through California</h5>
+            <p><strong>Jupiter</strong> = Expansion, Growth, Prosperity, Good Fortune</p>
+            <p><strong>MC (Midheaven)</strong> = Career, Public Recognition, Achievement</p>
+          </div>
+          
+          <div class="comparison-table">
+            <div class="comparison-col origin">
+              <h6>📍 Chennai</h6>
+              <ul>
+                <li>IIT graduate</li>
+                <li>Limited global reach</li>
+                <li>Same intelligence</li>
+              </ul>
             </div>
-            <p class="celebrity-story">
-              Born in <strong>Chennai/Madurai, Tamil Nadu</strong> in a middle-class family. Moved to <strong>Silicon Valley, California</strong> for higher education. His <strong>Jupiter in Sagittarius in 10th house</strong> (career) destined him for extraordinary fame and the highest positions.
-            </p>
-            <div class="celebrity-result">
-              <span>📍</span>
-              <span>World's most powerful tech executive</span>
+            <div class="comparison-col destination">
+              <h6>📍 Silicon Valley</h6>
+              <ul>
+                <li>CEO of Google & Alphabet</li>
+                <li>$2 Trillion company</li>
+                <li>World-changing impact</li>
+              </ul>
             </div>
           </div>
           
-          <p style="text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 12px;">
-            <em>Location activates destiny. See more Indian success stories...</em> 👇
-          </p>
+          <div class="astro-quote">
+            <p>"His Jupiter-MC line runs through California — the planet of expansion meeting his career destiny."</p>
+          </div>
         </div>
       </div>
       
-      <!-- Slide 4: Shah Rukh Khan -->
+      <!-- Slide 4: Satya Nadella -->
       <div class="slide" data-slide="3">
-        <div class="slide-icon">👑</div>
-        <h2 class="slide-title">Shah Rukh Khan: Delhi → Mumbai</h2>
-        <p class="slide-subtitle">From a Delhi boy with nothing to the undisputed Badshah of Bollywood.</p>
+        <div class="slide-icon">💻</div>
+        <h2 class="slide-title">Satya Nadella: Hyderabad → Seattle</h2>
+        <p class="slide-subtitle">When he relocated in 1992, he stepped into his zone of maximum expansion.</p>
         
         <div class="slide-content">
-          <div class="celebrity-card">
-            <div class="celebrity-header">
-              <div class="celebrity-avatar">🎬</div>
-              <div class="celebrity-info">
-                <h4>Shah Rukh Khan</h4>
-                <p>King of Bollywood</p>
-              </div>
+          <div class="planetary-box">
+            <h5><span class="planet-symbol">♃</span> JUPITER-MC LINE passes through Seattle</h5>
+            <p><strong>Jupiter</strong> = Abundance, Leadership, Prosperity</p>
+            <p><strong>MC</strong> = Career peak, Public success, Authority</p>
+          </div>
+          
+          <div class="comparison-table">
+            <div class="comparison-col origin">
+              <h6>📍 Hyderabad</h6>
+              <ul>
+                <li>Middle-class engineer</li>
+                <li>$7,000/year salary</li>
+                <li>Regional career</li>
+              </ul>
             </div>
-            <p class="celebrity-story">
-              From a middle-class family in <strong>Delhi</strong>, arrived in <strong>Mumbai</strong> with just <strong>₹1,500</strong>. His <strong>Rahu dasha</strong> brought him from Delhi to Mumbai. <strong>Rahu in Taurus</strong> gave him stability and perseverance in the film industry.
-            </p>
-            <div class="celebrity-result">
-              <span>📍</span>
-              <span>100+ films, 14 Filmfare Awards</span>
+            <div class="comparison-col destination">
+              <h6>📍 Seattle</h6>
+              <ul>
+                <li>CEO of Microsoft</li>
+                <li>$79 Million compensation</li>
+                <li>Led company: $300B → $3T</li>
+              </ul>
             </div>
           </div>
           
-          <div class="stat-boxes">
-            <div class="stat-box">
-              <div class="stat-box-value">₹1,500</div>
-              <div class="stat-box-label">Arrived with</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-box-value">100+</div>
-              <div class="stat-box-label">Films</div>
-            </div>
+          <div class="key-insight">
+            <p>He had the same skills in Hyderabad. But Seattle activated his Jupiter-MC energy — turning potential into unprecedented success.</p>
           </div>
         </div>
       </div>
@@ -1942,111 +2084,121 @@
       <!-- Slide 5: Virat Kohli -->
       <div class="slide" data-slide="4">
         <div class="slide-icon">🏏</div>
-        <h2 class="slide-title">Virat Kohli: Location Shapes Performance</h2>
-        <p class="slide-subtitle">Same player, different locations, dramatically different results.</p>
+        <h2 class="slide-title">Virat Kohli: Same Player, Different Results</h2>
+        <p class="slide-subtitle">World's best batsman. Same technique. Same dedication. Different locations.</p>
         
         <div class="slide-content">
-          <div class="celebrity-card">
-            <div class="celebrity-header">
-              <div class="celebrity-avatar">🏏</div>
-              <div class="celebrity-info">
-                <h4>Virat Kohli</h4>
-                <p>Born: Delhi, India</p>
-              </div>
+          <div class="planetary-box">
+            <h5><span class="planet-symbol">♂</span> MARS-MC LINE (Australia - Favorable)</h5>
+            <p><strong>Mars</strong> = Competition, Energy, Peak Performance</p>
+            <p class="planet-meaning">His Mars line activates winning energy here</p>
+          </div>
+          
+          <div class="planetary-box" style="border-color: rgba(232, 152, 48, 0.4); background: linear-gradient(135deg, rgba(232, 152, 48, 0.1) 0%, rgba(10, 22, 40, 0.8) 100%);">
+            <h5 style="color: var(--accent-orange);"><span class="planet-symbol">♄</span> SATURN Influence (England - Challenging)</h5>
+            <p><strong>Saturn</strong> = Obstacles, Hard lessons, Struggles</p>
+            <p class="planet-meaning">Saturn's restrictive energy blocks his potential</p>
+          </div>
+          
+          <div class="comparison-table">
+            <div class="comparison-col destination">
+              <h6>🇦🇺 Australia (Mars)</h6>
+              <ul>
+                <li>Average: <strong>46.72</strong></li>
+                <li>Test Centuries: <strong>7</strong></li>
+                <li>Adelaide: His "Power Place"</li>
+              </ul>
             </div>
-            <p class="celebrity-story">
-              His Test batting average <strong>changes dramatically by location</strong>. <strong>Adelaide</strong> is his power place — scored maiden Test century there, then 115 & 141 on captaincy debut.
-            </p>
-            <div class="kohli-stats">
-              <div class="kohli-stat high">🇱🇰 Sri Lanka: <strong>67.81</strong> ⭐</div>
-              <div class="kohli-stat high">🇮🇳 India: <strong>55.38</strong></div>
-              <div class="kohli-stat high">🇿🇦 South Africa: <strong>54.15</strong></div>
-              <div class="kohli-stat medium">🇦🇺 Australia: <strong>46.72</strong> (7 centuries)</div>
-              <div class="kohli-stat low">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England: <strong>33.21</strong></div>
+            <div class="comparison-col origin">
+              <h6>🏴󠁧󠁢󠁥󠁮󠁧󠁿 England (Saturn)</h6>
+              <ul>
+                <li>Average: <strong>33.21</strong></li>
+                <li>Test Centuries: <strong>2</strong></li>
+                <li>Consistent struggles</li>
+              </ul>
             </div>
           </div>
           
-          <div class="quote-box">
-            <p class="quote-text">"That's astrocartography in action — location shapes performance."</p>
-            <p class="quote-author">— Stats: ESPNCricinfo</p>
-          </div>
+          <p style="text-align: center; color: var(--text-dim); font-size: 9px; margin-top: 8px;">Stats: ESPNCricinfo</p>
         </div>
       </div>
       
-      <!-- Slide 6: Priyanka Chopra -->
+      <!-- Slide 6: A.R. Rahman -->
       <div class="slide" data-slide="5">
-        <div class="slide-icon">🌟</div>
-        <h2 class="slide-title">Priyanka Chopra: Jamshedpur → Hollywood</h2>
-        <p class="slide-subtitle">From small-town India to India's biggest Hollywood crossover success.</p>
+        <div class="slide-icon">🎵</div>
+        <h2 class="slide-title">A.R. Rahman: Chennai → Hollywood</h2>
+        <p class="slide-subtitle">From Kodambakkam studio to Hollywood's highest honor.</p>
         
         <div class="slide-content">
-          <div class="celebrity-card">
-            <div class="celebrity-header">
-              <div class="celebrity-avatar">🌟</div>
-              <div class="celebrity-info">
-                <h4>Priyanka Chopra Jonas</h4>
-                <p>Global Icon</p>
-              </div>
+          <div class="planetary-box">
+            <h5><span class="planet-symbol">♆</span> NEPTUNE-MC LINE passes through Los Angeles</h5>
+            <p><strong>Neptune</strong> = Creativity, Music, Dreams, Spirituality</p>
+          </div>
+          
+          <div class="planetary-box">
+            <h5><span class="planet-symbol">♀</span> VENUS-MC LINE also active near Hollywood</h5>
+            <p><strong>Venus</strong> = Arts, Beauty, Aesthetics, Recognition</p>
+            <p class="planet-meaning">Combined: The perfect alignment for artistic global fame</p>
+          </div>
+          
+          <div class="comparison-table">
+            <div class="comparison-col origin">
+              <h6>📍 Chennai</h6>
+              <ul>
+                <li>National Film Awards</li>
+                <li>Bollywood success</li>
+                <li>"Mozart of Madras"</li>
+              </ul>
             </div>
-            <p class="celebrity-story">
-              Born in <strong>Jamshedpur</strong> to an army family. Moved to <strong>Los Angeles, USA</strong>. Her <strong>Rahu conjunct Venus</strong> brought sudden international fame. Rahu pushed her toward worldwide success.
-            </p>
-            <div class="celebrity-result">
-              <span>📍</span>
-              <span>First South Asian to headline American TV series (Quantico)</span>
+            <div class="comparison-col destination">
+              <h6>📍 Los Angeles</h6>
+              <ul>
+                <li><strong>2 OSCAR WINS</strong></li>
+                <li>2 Grammy Awards</li>
+                <li>Global icon</li>
+              </ul>
             </div>
           </div>
           
-          <p style="text-align: center; color: var(--text-dim); font-size: 10px; margin-top: 12px;">
-            <em>Astrological analysis from Vedic astrology experts.</em>
-          </p>
+          <div class="astro-quote">
+            <p>"When Slumdog Millionaire took his music to LA, his Neptune-Venus intersection activated his global destiny."</p>
+          </div>
         </div>
       </div>
       
-      <!-- Slide 7: What You'll Discover -->
+      <!-- Slide 7: Your Turn CTA -->
       <div class="slide" data-slide="6">
         <div class="slide-icon">🧭</div>
-        <h2 class="slide-title">Discover Your Power Locations</h2>
-        <p class="slide-subtitle">Search worldwide OR within India — your choice.</p>
+        <h2 class="slide-title">What About You?</h2>
+        <p class="slide-subtitle">Which planetary lines run through YOUR ideal cities?</p>
         
         <div class="slide-content">
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon">🎯</div>
-              <div class="feature-text">
-                <h5>Your Power Direction</h5>
-                <p>North, South, East, or West</p>
-              </div>
+          <div class="cta-examples">
+            <div class="cta-example">
+              <span class="icon">♃</span>
+              <p>Sundar found his <strong>Jupiter-MC line</strong> in California</p>
             </div>
-            <div class="feature-item">
-              <div class="feature-icon">🌍</div>
-              <div class="feature-text">
-                <h5>Top International Cities</h5>
-                <p>Dubai, Singapore, London & more</p>
-              </div>
+            <div class="cta-example">
+              <span class="icon">♃</span>
+              <p>Satya activated his <strong>abundance line</strong> in Seattle</p>
             </div>
-            <div class="feature-item">
-              <div class="feature-icon">🇮🇳</div>
-              <div class="feature-text">
-                <h5>Top Indian Cities</h5>
-                <p>Mumbai, Bangalore, Hyderabad & more</p>
-              </div>
+            <div class="cta-example">
+              <span class="icon">♂</span>
+              <p>Kohli's <strong>Mars line</strong> fires in Australia</p>
             </div>
-            <div class="feature-item">
-              <div class="feature-icon">⚠️</div>
-              <div class="feature-text">
-                <h5>Cities to Avoid</h5>
-                <p>Places that may block your growth</p>
-              </div>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">📄</div>
-              <div class="feature-text">
-                <h5>Detailed PDF Report</h5>
-                <p>20+ page personalized analysis</p>
-              </div>
+            <div class="cta-example">
+              <span class="icon">♆♀</span>
+              <p>Rahman's <strong>Neptune-Venus</strong> intersection lit up in LA</p>
             </div>
           </div>
+          
+          <div class="astro-quote">
+            <p>Where do YOUR planetary lines cross? Which city holds your career expansion? Your creative breakthrough? Your winning energy?</p>
+          </div>
+          
+          <p style="text-align: center; color: var(--text-dim); font-size: 8px; margin-top: 12px;">
+            Celebrity birth charts analyzed for illustrative purposes. Individual results vary based on complete birth chart analysis.
+          </p>
         </div>
       </div>
       
