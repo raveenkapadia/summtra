@@ -869,8 +869,53 @@ async function startServer() {
     }
   });
 
-  // Serve admin.html for /admin route
-  app.get("/admin", (req, res) => {
+  // Serve admin.html for /admin route (protected server-side)
+  app.get("/admin", async (req: any, res) => {
+    // Check if user has a valid session
+    if (!req.user || !req.user.claims) {
+      // Not authenticated - redirect to login
+      return res.redirect('/api/login?returnTo=/admin');
+    }
+    
+    // User is authenticated - check if admin
+    const userId = req.user.claims.sub;
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      // User not in database yet - redirect to login
+      return res.redirect('/api/login?returnTo=/admin');
+    }
+    
+    // Check if no admins exist - if so, auto-promote this user
+    const [adminCount] = await db.select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'admin'));
+    
+    if (Number(adminCount.count) === 0) {
+      // No admins exist - make this user the first admin
+      await db.update(users).set({ role: 'admin' }).where(eq(users.id, userId));
+      console.log(`🔐 First admin created via /admin route: ${user.email || userId}`);
+      return res.sendFile(path.join(process.cwd(), "admin.html"));
+    }
+    
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      return res.status(403).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Access Denied</title></head>
+        <body style="background: #0f1419; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+          <div style="text-align: center;">
+            <h1 style="color: #f87171;">Access Denied</h1>
+            <p>You don't have admin privileges to access this page.</p>
+            <a href="/" style="color: #d4a854;">Return to Home</a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    // User is admin - serve the dashboard
     res.sendFile(path.join(process.cwd(), "admin.html"));
   });
 

@@ -50,6 +50,14 @@ Preferred communication style: Simple, everyday language.
   - Session management via PostgreSQL-backed connect-pg-simple
   - Passport.js strategy for OAuth flow
   - Mandatory sessions and users tables in database
+  - Role-based access control: `user` (default) or `admin`
+
+- **Admin Dashboard** (`/admin`):
+  - Desktop-optimized interface separate from mobile PWA
+  - Protected by admin middleware - only users with `role: 'admin'` can access
+  - First user to access admin becomes the super admin automatically
+  - Features: User management, reports tracking, payment analytics, revenue stats
+  - API endpoints under `/api/admin/*` for CRUD operations
 
 ### Database Layer
 
