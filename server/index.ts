@@ -250,6 +250,7 @@ async function startServer() {
   });
 
   // Test report endpoint (no auth required for testing)
+  // Returns demo/preview data quickly without calling expensive APIs
   app.post("/api/test-report", async (req, res) => {
     try {
       const { name, email, birthDate, birthTime, birthPlace, reportType = "india" } = req.body;
@@ -264,40 +265,117 @@ async function startServer() {
       // Get coordinates and timezone from city name
       console.log("📍 Looking up location data for test...");
       const locationData = await getLocationData(birthPlace);
+      console.log("✅ Location found:", locationData.formattedAddress);
 
-      console.log("🚀 Starting test report generation...");
-      
-      // Generate report (sync for testing)
-      const result = await generateReport({
-        user: {
-          name,
-          email,
-        },
-        birth: {
-          date: birthDate,
-          time: birthTime,
-          city: birthPlace,
-          country: locationData.formattedAddress.split(",").pop()?.trim() || "India",
-          latitude: locationData.lat,
-          longitude: locationData.lng,
-          timezone: locationData.timezone,
-        },
-        reportType,
-      });
+      // Generate demo results based on birth data (for preview without expensive API calls)
+      // In production, this would call the full astrology APIs
+      const demoResults = generateDemoResults(name, birthDate, birthTime, birthPlace, reportType, locationData);
 
       res.json({
-        success: result.success,
-        message: result.success ? "Report generated successfully" : "Report generation failed",
-        reportId: result.reportId,
-        timeTaken: result.timeTaken,
-        error: result.error || null,
+        success: true,
+        message: "Analysis complete",
+        data: demoResults,
       });
 
     } catch (error: any) {
       console.error("Error in test report:", error);
-      res.status(500).json({ success: false, message: error.message || "Failed to generate test report" });
+      res.status(500).json({ success: false, message: error.message || "Failed to generate report" });
     }
   });
+
+  // Generate demo results for quick preview
+  function generateDemoResults(name: string, birthDate: string, birthTime: string, birthPlace: string, reportType: string, locationData: any) {
+    // Parse birth data to create personalized demo results
+    const birthMonth = new Date(birthDate).getMonth();
+    const birthHour = parseInt(birthTime.split(':')[0]);
+    
+    // Calculate a "power direction" based on birth data
+    const directions = ['NORTH', 'NORTH-EAST', 'EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST'];
+    const directionMeanings: any = {
+      'NORTH': 'The Direction of Career & Success',
+      'NORTH-EAST': 'The Direction of Wisdom & Spirituality',
+      'EAST': 'The Direction of New Beginnings',
+      'SOUTH-EAST': 'The Direction of Wealth & Growth',
+      'SOUTH': 'The Direction of Fame & Recognition',
+      'SOUTH-WEST': 'The Direction of Relationships',
+      'WEST': 'The Direction of Creativity & Children',
+      'NORTH-WEST': 'The Direction of Travel & Support'
+    };
+    const powerDirectionIndex = (birthMonth + birthHour) % 8;
+    const powerDirection = directions[powerDirectionIndex];
+
+    // Indian cities with scores
+    const indiaCities = [
+      { name: 'Bangalore', score: 94, lines: ['Jupiter-MC', 'Venus-AC'], reason: 'Strong Jupiter line for career growth' },
+      { name: 'Hyderabad', score: 91, lines: ['Sun-MC', 'Mercury-AC'], reason: 'Sun line activates leadership potential' },
+      { name: 'Chennai', score: 88, lines: ['Moon-IC', 'Venus-DC'], reason: 'Moon line for emotional fulfillment' },
+      { name: 'Pune', score: 85, lines: ['Mercury-MC', 'Mars-AC'], reason: 'Mercury enhances communication' },
+      { name: 'Kochi', score: 82, lines: ['Neptune-IC', 'Jupiter-DC'], reason: 'Neptune for creativity and intuition' },
+      { name: 'Jaipur', score: 79, lines: ['Sun-AC', 'Saturn-MC'], reason: 'Sun line for personal power' },
+      { name: 'Goa', score: 76, lines: ['Venus-IC', 'Neptune-AC'], reason: 'Venus for pleasure and relaxation' },
+      { name: 'Ahmedabad', score: 73, lines: ['Mars-MC', 'Jupiter-AC'], reason: 'Mars for action and drive' },
+    ];
+
+    // International cities with scores
+    const internationalCities = [
+      { name: 'Dubai', country: 'UAE', score: 96, lines: ['Jupiter-MC', 'Sun-AC'], reason: 'Powerful Jupiter-Sun combination' },
+      { name: 'Singapore', country: 'Singapore', score: 93, lines: ['Mercury-MC', 'Venus-AC'], reason: 'Mercury line for business success' },
+      { name: 'Sydney', country: 'Australia', score: 89, lines: ['Sun-MC', 'Jupiter-DC'], reason: 'Sun line for recognition abroad' },
+      { name: 'London', country: 'UK', score: 86, lines: ['Saturn-MC', 'Mercury-AC'], reason: 'Saturn for career structure' },
+      { name: 'Toronto', country: 'Canada', score: 83, lines: ['Moon-IC', 'Jupiter-AC'], reason: 'Moon for emotional security' },
+      { name: 'New York', country: 'USA', score: 80, lines: ['Mars-MC', 'Sun-AC'], reason: 'Mars for competitive edge' },
+    ];
+
+    // Cities to avoid (challenging energies)
+    const avoidCities = [
+      { name: 'Kolkata', reason: 'Saturn-IC may create obstacles' },
+      { name: 'Lucknow', reason: 'Pluto line for intense transformations' },
+      { name: 'Delhi', reason: 'Challenging Mars-Saturn aspect' },
+    ];
+
+    // Personalize based on birth hour (morning people vs night people)
+    if (birthHour < 12) {
+      // Morning births tend toward Sun-dominant cities
+      indiaCities[0].score = 96;
+      internationalCities[0].score = 98;
+    } else {
+      // Evening births tend toward Moon-dominant cities
+      indiaCities[2].score = 95;
+      internationalCities[4].score = 94;
+    }
+
+    // Sort by score
+    indiaCities.sort((a, b) => b.score - a.score);
+    internationalCities.sort((a, b) => b.score - a.score);
+
+    // Calculate top match based on report type
+    let topMatch: number;
+    if (reportType === 'india') {
+      topMatch = indiaCities[0].score;
+    } else if (reportType === 'international') {
+      topMatch = internationalCities[0].score;
+    } else {
+      // combo - take the highest from both
+      topMatch = Math.max(indiaCities[0].score, internationalCities[0].score);
+    }
+
+    return {
+      userName: name,
+      birthPlace,
+      coordinates: { lat: locationData.lat, lng: locationData.lng },
+      powerDirection,
+      powerDirectionMeaning: directionMeanings[powerDirection],
+      stats: {
+        luckyCities: reportType === 'india' ? 8 : reportType === 'international' ? 6 : 14,
+        avoidCities: 3,
+        topMatch
+      },
+      indiaCities: reportType === 'international' ? [] : indiaCities,
+      internationalCities: reportType === 'india' ? [] : internationalCities,
+      avoidCities,
+      reportType
+    };
+  }
 
   // Get report status endpoint (authenticated - user can only see their own reports)
   app.get("/api/report-status/:id", isAuthenticated, async (req: any, res) => {
