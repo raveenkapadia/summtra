@@ -1,6 +1,6 @@
 // ============================================
-// SUMMITRA - Astrology API Service
-// Calls RapidAPI Astrology Endpoints
+// SUMMITRA - Astrology API Service (FULL VERSION)
+// Uses ALL RapidAPI Astrology Endpoints
 // ============================================
 
 const axios = require('axios');
@@ -16,306 +16,266 @@ const getHeaders = () => ({
   'X-RapidAPI-Host': RAPIDAPI_HOST
 });
 
-// ============================================
-// API ENDPOINTS
-// ============================================
-
-/**
- * Get all astrocartography lines for a birth chart
- */
-async function getAstrocartographyLines(birthData) {
+// Helper to make API calls with error handling
+async function apiCall(method, endpoint, data = null) {
   try {
-    console.log('📡 Calling getAstrocartographyLines...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/lines`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone
-      }
-    });
-    
-    console.log('✅ Astrocartography lines received');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error getting astrocartography lines:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Find power zones - best cities for the user
- */
-async function findPowerZones(birthData, options = {}) {
-  try {
-    console.log('📡 Calling findPowerZones...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/power-zones`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        region: options.region || 'global',
-        limit: options.limit || 20
-      }
-    });
-    
-    console.log('✅ Power zones received');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error finding power zones:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Search optimal locations by goal (career, love, wealth, health, creativity, family)
- */
-async function searchOptimalLocations(birthData, goal, options = {}) {
-  try {
-    console.log(`📡 Calling searchOptimalLocations for goal: ${goal}...`);
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/search-optimal`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        goal: goal,
-        region: options.region || 'global',
-        limit: options.limit || 10
-      }
-    });
-    
-    console.log(`✅ Optimal locations for ${goal} received`);
-    return response.data;
-  } catch (error) {
-    console.error(`❌ Error searching optimal locations for ${goal}:`, error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Generate paran map - where planetary lines intersect
- */
-async function generateParanMap(birthData) {
-  try {
-    console.log('📡 Calling generateParanMap...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/paran-map`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone
-      }
-    });
-    
-    console.log('✅ Paran map received');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error generating paran map:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Calculate astrodynes (power scores) for specific locations
- */
-async function calculateAstrodynes(birthData, locations) {
-  try {
-    console.log('📡 Calling calculateAstrodynes...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/astrodynes`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        locations: locations
-      }
-    });
-    
-    console.log('✅ Astrodynes calculated');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error calculating astrodynes:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Deep analysis of a specific location
- */
-async function analyzeLocation(birthData, location) {
-  try {
-    console.log(`📡 Calling analyzeLocation for ${location.name}...`);
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/analyze-location`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        location_latitude: location.latitude,
-        location_longitude: location.longitude,
-        location_name: location.name
-      }
-    });
-    
-    console.log(`✅ Location analysis for ${location.name} received`);
-    return response.data;
-  } catch (error) {
-    console.error(`❌ Error analyzing location ${location.name}:`, error.response?.data || error.message);
-    throw error;
-  }
-}
-
-/**
- * Get pre-built line meanings/interpretations
- */
-async function getLineMeanings() {
-  try {
-    console.log('📡 Calling getLineMeanings...');
-    
-    const response = await axios({
-      method: 'GET',
-      url: `${BASE_URL}/api/v3/astrocartography/line-meanings`,
+    const config = {
+      method,
+      url: `${BASE_URL}${endpoint}`,
       headers: getHeaders()
-    });
+    };
+    if (data) config.data = data;
     
-    console.log('✅ Line meanings received');
-    return response.data;
+    const response = await axios(config);
+    return { success: true, data: response.data };
   } catch (error) {
-    console.error('❌ Error getting line meanings:', error.response?.data || error.message);
-    throw error;
+    console.error(`❌ API Error (${endpoint}):`, error.response?.data?.message || error.message);
+    return { success: false, error: error.response?.data || error.message };
   }
 }
 
-/**
- * Compare multiple locations
- */
+// ============================================
+// 1. ASTROCARTOGRAPHY LINES (All 15+ planets)
+// ============================================
+async function getAstrocartographyLines(birthData) {
+  console.log('📡 [1/9] Fetching astrocartography lines (all planets)...');
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/lines', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    // Request ALL planets
+    planets: [
+      'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
+      'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
+      'NorthNode', 'SouthNode', 'Chiron', 'Vertex', 'PartOfFortune'
+    ]
+  });
+  
+  if (result.success) console.log('   ✅ Astrocartography lines received (15 planets)');
+  return result;
+}
+
+// ============================================
+// 2. FIND POWER ZONES (Best cities ranked)
+// ============================================
+async function findPowerZones(birthData, options = {}) {
+  console.log(`📡 [2/9] Finding power zones (${options.region || 'global'})...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/power-zones', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    region: options.region || 'global',
+    limit: options.limit || 25
+  });
+  
+  if (result.success) console.log(`   ✅ Power zones received (${result.data?.length || 0} cities)`);
+  return result;
+}
+
+// ============================================
+// 3. SEARCH OPTIMAL LOCATIONS (By goal)
+// ============================================
+async function searchOptimalLocations(birthData, goal, options = {}) {
+  console.log(`📡 [3/9] Searching optimal locations for: ${goal}...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/search-optimal', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    goal: goal, // career, love, wealth, health, creativity, family, spiritual
+    region: options.region || 'global',
+    limit: options.limit || 10
+  });
+  
+  if (result.success) console.log(`   ✅ Optimal locations for ${goal}: ${result.data?.length || 0} cities`);
+  return result;
+}
+
+// ============================================
+// 4. GENERATE PARAN MAP (Line crossings - POWERFUL!)
+// ============================================
+async function generateParanMap(birthData) {
+  console.log('📡 [4/9] Generating paran map (line crossings)...');
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/paran-map', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    include_minor_aspects: true
+  });
+  
+  if (result.success) {
+    const crossings = result.data?.crossings || result.data?.parans || [];
+    console.log(`   ✅ Paran map received (${crossings.length} crossings)`);
+  }
+  return result;
+}
+
+// ============================================
+// 5. CALCULATE ASTRODYNES (Power scores 0-100)
+// ============================================
+async function calculateAstrodynes(birthData, locations) {
+  console.log(`📡 [5/9] Calculating astrodynes for ${locations.length} locations...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/astrodynes', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    locations: locations.map(loc => ({
+      name: loc.name || loc.city,
+      latitude: loc.latitude || loc.lat,
+      longitude: loc.longitude || loc.lng || loc.lon
+    }))
+  });
+  
+  if (result.success) console.log('   ✅ Astrodynes calculated');
+  return result;
+}
+
+// ============================================
+// 6. ANALYZE LOCATION (Deep dive on ONE city)
+// ============================================
+async function analyzeLocation(birthData, location) {
+  console.log(`📡 [6/9] Deep analyzing location: ${location.name}...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/analyze-location', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    location_name: location.name,
+    location_latitude: location.latitude || location.lat,
+    location_longitude: location.longitude || location.lng || location.lon,
+    include_aspects: true,
+    include_houses: true
+  });
+  
+  if (result.success) console.log(`   ✅ Location analysis complete for ${location.name}`);
+  return result;
+}
+
+// ============================================
+// 7. COMPARE LOCATIONS (Side-by-side comparison)
+// ============================================
 async function compareLocations(birthData, locations) {
-  try {
-    console.log('📡 Calling compareLocations...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/astrocartography/compare-locations`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        locations: locations
-      }
-    });
-    
-    console.log('✅ Locations compared');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error comparing locations:', error.response?.data || error.message);
-    throw error;
-  }
+  console.log(`📡 [7/9] Comparing ${locations.length} locations...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/compare-locations', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    locations: locations.map(loc => ({
+      name: loc.name || loc.city,
+      latitude: loc.latitude || loc.lat,
+      longitude: loc.longitude || loc.lng || loc.lon
+    }))
+  });
+  
+  if (result.success) console.log('   ✅ Locations compared');
+  return result;
 }
 
-/**
- * Get natal chart data
- */
+// ============================================
+// 8. GET LINE MEANINGS (Pre-written interpretations)
+// ============================================
+async function getLineMeanings() {
+  console.log('📡 [8/9] Fetching line meanings (interpretations)...');
+  
+  const result = await apiCall('GET', '/api/v3/astrocartography/line-meanings');
+  
+  if (result.success) console.log('   ✅ Line meanings received');
+  return result;
+}
+
+// ============================================
+// 9. GET RELOCATION CHART (Relocated birth chart)
+// ============================================
+async function getRelocationChart(birthData, newLocation) {
+  console.log(`📡 [9/9] Getting relocation chart for: ${newLocation.name}...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/relocation-chart', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    birth_latitude: birthData.latitude,
+    birth_longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    relocation_latitude: newLocation.latitude || newLocation.lat,
+    relocation_longitude: newLocation.longitude || newLocation.lng || newLocation.lon,
+    relocation_name: newLocation.name,
+    house_system: 'P' // Placidus
+  });
+  
+  if (result.success) console.log(`   ✅ Relocation chart received for ${newLocation.name}`);
+  return result;
+}
+
+// ============================================
+// BONUS: Get Natal Chart
+// ============================================
 async function getNatalChart(birthData) {
-  try {
-    console.log('📡 Calling getNatalChart...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/natal/chart`,
-      headers: getHeaders(),
-      data: {
-        datetime: `${birthData.date}T${birthData.time}:00`,
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-        house_system: 'W',
-        zodiac_type: 'Tropic'
-      }
-    });
-    
-    console.log('✅ Natal chart received');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error getting natal chart:', error.response?.data || error.message);
-    throw error;
-  }
+  console.log('📡 [Bonus] Fetching natal chart...');
+  
+  const result = await apiCall('POST', '/api/v3/natal/chart', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone,
+    house_system: 'P',
+    zodiac_type: 'Tropic',
+    include_asteroids: true
+  });
+  
+  if (result.success) console.log('   ✅ Natal chart received');
+  return result;
 }
 
-/**
- * Get current transits
- */
+// ============================================
+// BONUS: Get Current Transits
+// ============================================
 async function getCurrentTransits(birthData) {
-  try {
-    console.log('📡 Calling getCurrentTransits...');
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/v3/transits/current`,
-      headers: getHeaders(),
-      data: {
-        natal_datetime: `${birthData.date}T${birthData.time}:00`,
-        natal_latitude: birthData.latitude,
-        natal_longitude: birthData.longitude,
-        timezone: birthData.timezone
-      }
-    });
-    
-    console.log('✅ Current transits received');
-    return response.data;
-  } catch (error) {
-    console.error('❌ Error getting transits:', error.response?.data || error.message);
-    throw error;
-  }
+  console.log('📡 [Bonus] Fetching current transits...');
+  
+  const result = await apiCall('POST', '/api/v3/transits/current', {
+    natal_datetime: `${birthData.date}T${birthData.time}:00`,
+    natal_latitude: birthData.latitude,
+    natal_longitude: birthData.longitude,
+    timezone: birthData.timezone
+  });
+  
+  if (result.success) console.log('   ✅ Current transits received');
+  return result;
 }
 
 // ============================================
-// MAIN FUNCTION: Fetch All Data for Report
+// MAIN: FETCH ALL DATA FOR COMPLETE REPORT
 // ============================================
-
-/**
- * Fetch all astrology data needed for the report
- */
 async function fetchAllAstrologyData(birthData, reportType) {
-  console.log('\n🌟 Starting to fetch all astrology data...\n');
+  console.log('\n' + '═'.repeat(60));
+  console.log('🌟 FETCHING ALL ASTROLOGY DATA (9 API ENDPOINTS)');
+  console.log('═'.repeat(60) + '\n');
   
   const results = {
+    // Core data
     natalChart: null,
     astroLines: null,
     lineMeanings: null,
     paranMap: null,
     transits: null,
+    
+    // Power zones by region
     powerZones: {
       india: null,
       international: null
     },
+    
+    // Optimal locations by goal (6 life areas)
     optimalLocations: {
       career: { india: null, international: null },
       love: { india: null, international: null },
@@ -324,100 +284,143 @@ async function fetchAllAstrologyData(birthData, reportType) {
       creativity: { india: null, international: null },
       family: { india: null, international: null }
     },
-    topCityAnalysis: null
+    
+    // Advanced data
+    astrodynes: null,
+    topCityAnalysis: null,
+    topCityRelocationChart: null,
+    locationComparison: null
   };
 
   try {
-    // 1. Get basic chart data
-    results.natalChart = await getNatalChart(birthData);
-    
-    // 2. Get astrocartography lines
-    results.astroLines = await getAstrocartographyLines(birthData);
-    
-    // 3. Get line meanings (interpretations)
-    try {
-      results.lineMeanings = await getLineMeanings();
-    } catch (e) {
-      console.log('⚠️ Line meanings not available, continuing...');
-      results.lineMeanings = {};
-    }
-    
-    // 4. Get paran crossings
-    try {
-      results.paranMap = await generateParanMap(birthData);
-    } catch (e) {
-      console.log('⚠️ Paran map not available, continuing...');
-      results.paranMap = { crossings: [] };
-    }
-    
-    // 5. Get current transits (for timing recommendations)
-    try {
-      results.transits = await getCurrentTransits(birthData);
-    } catch (e) {
-      console.log('⚠️ Transits not available, continuing...');
-      results.transits = {};
-    }
+    // ═══════════════════════════════════════════
+    // STEP 1: Core natal chart
+    // ═══════════════════════════════════════════
+    const natalResult = await getNatalChart(birthData);
+    if (natalResult.success) results.natalChart = natalResult.data;
 
-    // 6. Get power zones and optimal locations based on report type
+    // ═══════════════════════════════════════════
+    // STEP 2: ALL astrocartography lines (15 planets)
+    // ═══════════════════════════════════════════
+    const linesResult = await getAstrocartographyLines(birthData);
+    if (linesResult.success) results.astroLines = linesResult.data;
+
+    // ═══════════════════════════════════════════
+    // STEP 3: Line meanings (interpretations)
+    // ═══════════════════════════════════════════
+    const meaningsResult = await getLineMeanings();
+    if (meaningsResult.success) results.lineMeanings = meaningsResult.data;
+
+    // ═══════════════════════════════════════════
+    // STEP 4: Paran map (line crossings)
+    // ═══════════════════════════════════════════
+    const paranResult = await generateParanMap(birthData);
+    if (paranResult.success) results.paranMap = paranResult.data;
+
+    // ═══════════════════════════════════════════
+    // STEP 5: Current transits
+    // ═══════════════════════════════════════════
+    const transitsResult = await getCurrentTransits(birthData);
+    if (transitsResult.success) results.transits = transitsResult.data;
+
+    // ═══════════════════════════════════════════
+    // STEP 6: Power zones by region
+    // ═══════════════════════════════════════════
     const goals = ['career', 'love', 'wealth', 'health', 'creativity', 'family'];
     
     if (reportType === 'india' || reportType === 'combo') {
-      // India data
-      try {
-        results.powerZones.india = await findPowerZones(birthData, { region: 'india', limit: 20 });
-      } catch (e) {
-        console.log('⚠️ India power zones not available');
-      }
+      // India power zones
+      const indiaPowerResult = await findPowerZones(birthData, { region: 'india', limit: 25 });
+      if (indiaPowerResult.success) results.powerZones.india = indiaPowerResult.data;
       
+      // India optimal locations by goal
       for (const goal of goals) {
-        try {
-          results.optimalLocations[goal].india = await searchOptimalLocations(
-            birthData, 
-            goal, 
-            { region: 'india', limit: 10 }
-          );
-        } catch (e) {
-          console.log(`⚠️ India ${goal} locations not available`);
-        }
+        const goalResult = await searchOptimalLocations(birthData, goal, { region: 'india', limit: 10 });
+        if (goalResult.success) results.optimalLocations[goal].india = goalResult.data;
       }
     }
     
     if (reportType === 'international' || reportType === 'combo') {
-      // International data
-      try {
-        results.powerZones.international = await findPowerZones(birthData, { region: 'global', limit: 20 });
-      } catch (e) {
-        console.log('⚠️ International power zones not available');
-      }
+      // International power zones
+      const intlPowerResult = await findPowerZones(birthData, { region: 'global', limit: 25 });
+      if (intlPowerResult.success) results.powerZones.international = intlPowerResult.data;
       
+      // International optimal locations by goal
       for (const goal of goals) {
-        try {
-          results.optimalLocations[goal].international = await searchOptimalLocations(
-            birthData, 
-            goal, 
-            { region: 'global', limit: 10 }
-          );
-        } catch (e) {
-          console.log(`⚠️ International ${goal} locations not available`);
-        }
+        const goalResult = await searchOptimalLocations(birthData, goal, { region: 'global', limit: 10 });
+        if (goalResult.success) results.optimalLocations[goal].international = goalResult.data;
       }
     }
 
-    // 7. Deep analysis of top city
+    // ═══════════════════════════════════════════
+    // STEP 7: Calculate astrodynes for top cities
+    // ═══════════════════════════════════════════
+    const topCities = [
+      ...(results.powerZones.india?.slice(0, 5) || []),
+      ...(results.powerZones.international?.slice(0, 5) || [])
+    ].filter(Boolean);
+    
+    if (topCities.length > 0) {
+      const astrodynesResult = await calculateAstrodynes(birthData, topCities);
+      if (astrodynesResult.success) results.astrodynes = astrodynesResult.data;
+    }
+
+    // ═══════════════════════════════════════════
+    // STEP 8: Deep analysis of #1 city
+    // ═══════════════════════════════════════════
     const topCity = results.powerZones.india?.[0] || results.powerZones.international?.[0];
     if (topCity) {
-      try {
-        results.topCityAnalysis = await analyzeLocation(birthData, {
-          name: topCity.name || topCity.city,
-          latitude: topCity.latitude,
-          longitude: topCity.longitude
-        });
-      } catch (e) {
-        console.log('⚠️ Top city analysis not available');
-      }
+      const analysisResult = await analyzeLocation(birthData, {
+        name: topCity.name || topCity.city,
+        latitude: topCity.latitude || topCity.lat,
+        longitude: topCity.longitude || topCity.lng || topCity.lon
+      });
+      if (analysisResult.success) results.topCityAnalysis = analysisResult.data;
+      
+      // ═══════════════════════════════════════════
+      // STEP 9: Relocation chart for #1 city
+      // ═══════════════════════════════════════════
+      const relocationResult = await getRelocationChart(birthData, {
+        name: topCity.name || topCity.city,
+        latitude: topCity.latitude || topCity.lat,
+        longitude: topCity.longitude || topCity.lng || topCity.lon
+      });
+      if (relocationResult.success) results.topCityRelocationChart = relocationResult.data;
     }
 
-    console.log('\n✅ All astrology data fetched successfully!\n');
+    // ═══════════════════════════════════════════
+    // STEP 10: Compare top 3 cities
+    // ═══════════════════════════════════════════
+    const citiesToCompare = [
+      results.powerZones.india?.[0],
+      results.powerZones.india?.[1],
+      results.powerZones.international?.[0]
+    ].filter(Boolean);
+    
+    if (citiesToCompare.length >= 2) {
+      const compareResult = await compareLocations(birthData, citiesToCompare);
+      if (compareResult.success) results.locationComparison = compareResult.data;
+    }
+
+    console.log('\n' + '═'.repeat(60));
+    console.log('✅ ALL ASTROLOGY DATA FETCHED SUCCESSFULLY!');
+    console.log('═'.repeat(60) + '\n');
+    
+    // Summary
+    console.log('📊 Data Summary:');
+    console.log(`   • Natal Chart: ${results.natalChart ? '✅' : '❌'}`);
+    console.log(`   • Astro Lines (15 planets): ${results.astroLines ? '✅' : '❌'}`);
+    console.log(`   • Line Meanings: ${results.lineMeanings ? '✅' : '❌'}`);
+    console.log(`   • Paran Map: ${results.paranMap ? '✅' : '❌'}`);
+    console.log(`   • Transits: ${results.transits ? '✅' : '❌'}`);
+    console.log(`   • India Power Zones: ${results.powerZones.india?.length || 0} cities`);
+    console.log(`   • International Power Zones: ${results.powerZones.international?.length || 0} cities`);
+    console.log(`   • Astrodynes: ${results.astrodynes ? '✅' : '❌'}`);
+    console.log(`   • Top City Analysis: ${results.topCityAnalysis ? '✅' : '❌'}`);
+    console.log(`   • Relocation Chart: ${results.topCityRelocationChart ? '✅' : '❌'}`);
+    console.log(`   • Location Comparison: ${results.locationComparison ? '✅' : '❌'}`);
+    console.log('');
+
     return results;
 
   } catch (error) {
@@ -427,15 +430,19 @@ async function fetchAllAstrologyData(birthData, reportType) {
 }
 
 module.exports = {
+  // Individual endpoints
   getAstrocartographyLines,
   findPowerZones,
   searchOptimalLocations,
   generateParanMap,
   calculateAstrodynes,
   analyzeLocation,
-  getLineMeanings,
   compareLocations,
+  getLineMeanings,
+  getRelocationChart,
   getNatalChart,
   getCurrentTransits,
+  
+  // Main function
   fetchAllAstrologyData
 };
