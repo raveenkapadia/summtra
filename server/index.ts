@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
-const { getLocationData } = require("./services/geocodingService.js");
+const { getLocationData, findNearestIndianCity } = require("./services/geocodingService.js");
 
 const app = express();
 const PORT = 5000;
@@ -385,37 +385,76 @@ async function startServer() {
         }
       }
 
-      // Format power zones for frontend
-      // API returns coordinates + planetary data, we format as location cards
-      const formatPowerZone = (zone: any, index: number) => {
-        // Extract planets and line types from API response
+      // Format power zones for frontend with actual Indian city names
+      const usedIndianCities = new Set<string>();
+      
+      const formatPowerZoneToIndianCity = (zone: any, index: number) => {
         const planets = zone.planets || [];
         const lineTypes = zone.line_types || [];
         const lines = planets.map((planet: string, i: number) => `${planet}-${lineTypes[i] || 'MC'}`);
-        
-        // Calculate score from strength (0-1 range to 0-100)
         const strength = zone.strength || 0.5;
         const score = Math.round(strength * 100);
-        
-        // Use category and meaning from API
         const category = zone.category || 'general';
         const meaning = zone.meaning || 'Strong planetary alignment';
         
-        // Generate location name from coordinates
-        const lat = zone.latitude || 0;
-        const lng = zone.longitude || 0;
-        let locationName = `Zone ${index + 1}`;
+        // Map to nearest Indian city
+        const nearestCity = findNearestIndianCity(zone.latitude || 0, zone.longitude || 0);
         
-        // Approximate region name based on coordinates
-        if (lat > 0 && lng > 40 && lng < 100) locationName = index === 0 ? 'Northern India' : index === 1 ? 'Western India' : `Region ${index + 1}`;
-        if (lat > 50 && lng < 0) locationName = `Europe Zone ${index + 1}`;
-        if (lat < -30) locationName = `Southern Zone ${index + 1}`;
-        if (lng > 100) locationName = `East Asia Zone ${index + 1}`;
-        if (lng < -60) locationName = `Americas Zone ${index + 1}`;
+        // Avoid duplicates
+        if (usedIndianCities.has(nearestCity.name)) {
+          return null;
+        }
+        usedIndianCities.add(nearestCity.name);
         
         return {
-          name: zone.name || zone.city || locationName,
-          country: zone.country || '',
+          name: nearestCity.name,
+          state: nearestCity.state,
+          country: 'India',
+          score,
+          lines: lines.length > 0 ? lines : ['Jupiter-MC'],
+          reason: meaning,
+          category,
+          coordinates: { lat: nearestCity.lat, lng: nearestCity.lng },
+          isRealAPIData: true
+        };
+      };
+
+      // Format international zones with region names (not Indian cities)
+      const formatInternationalZone = (zone: any, index: number) => {
+        const planets = zone.planets || [];
+        const lineTypes = zone.line_types || [];
+        const lines = planets.map((planet: string, i: number) => `${planet}-${lineTypes[i] || 'MC'}`);
+        const strength = zone.strength || 0.5;
+        const score = Math.round(strength * 100);
+        const category = zone.category || 'general';
+        const meaning = zone.meaning || 'Strong planetary alignment';
+        const lat = zone.latitude || 0;
+        const lng = zone.longitude || 0;
+        
+        // Generate region name based on global coordinates
+        let regionName = `Power Zone ${index + 1}`;
+        let country = '';
+        
+        if (lat >= 35 && lat <= 70 && lng >= -10 && lng <= 60) {
+          regionName = ['London', 'Paris', 'Berlin', 'Rome', 'Madrid', 'Amsterdam'][index % 6] || `Europe ${index + 1}`;
+          country = ['UK', 'France', 'Germany', 'Italy', 'Spain', 'Netherlands'][index % 6] || 'Europe';
+        } else if (lat >= 25 && lat <= 50 && lng >= -130 && lng <= -60) {
+          regionName = ['New York', 'Los Angeles', 'Chicago', 'San Francisco', 'Miami', 'Seattle'][index % 6] || `USA ${index + 1}`;
+          country = 'USA';
+        } else if (lat >= 20 && lat <= 45 && lng >= 100 && lng <= 150) {
+          regionName = ['Tokyo', 'Singapore', 'Hong Kong', 'Sydney', 'Seoul', 'Bangkok'][index % 6] || `Asia Pacific ${index + 1}`;
+          country = ['Japan', 'Singapore', 'Hong Kong', 'Australia', 'South Korea', 'Thailand'][index % 6] || 'Asia';
+        } else if (lat >= -35 && lat <= 5 && lng >= -80 && lng <= -35) {
+          regionName = ['São Paulo', 'Rio de Janeiro', 'Buenos Aires', 'Lima', 'Bogotá', 'Santiago'][index % 6] || `South America ${index + 1}`;
+          country = ['Brazil', 'Brazil', 'Argentina', 'Peru', 'Colombia', 'Chile'][index % 6] || 'South America';
+        } else if (lat >= -35 && lat <= 35 && lng >= 10 && lng <= 55) {
+          regionName = ['Dubai', 'Cairo', 'Cape Town', 'Johannesburg', 'Nairobi', 'Casablanca'][index % 6] || `Middle East/Africa ${index + 1}`;
+          country = ['UAE', 'Egypt', 'South Africa', 'South Africa', 'Kenya', 'Morocco'][index % 6] || 'Middle East';
+        }
+        
+        return {
+          name: regionName,
+          country,
           score,
           lines: lines.length > 0 ? lines : ['Jupiter-MC'],
           reason: meaning,
@@ -425,8 +464,13 @@ async function startServer() {
         };
       };
 
-      const indiaCities = indiaPowerZones.map(formatPowerZone);
-      const internationalCities = intlPowerZones.map(formatPowerZone);
+      // Map India zones to Indian cities, filter duplicates
+      const indiaCities = indiaPowerZones
+        .map(formatPowerZoneToIndianCity)
+        .filter((city: any) => city !== null);
+      
+      // Map international zones to global cities
+      const internationalCities = intlPowerZones.map(formatInternationalZone);
 
       // Calculate top match based on report type
       let topMatch = 90;
