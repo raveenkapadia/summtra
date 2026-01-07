@@ -169,31 +169,48 @@ function generateFallbackInterpretation(cityData, zodiac) {
 }
 
 /**
- * Generate interpretations for multiple cities in batch
+ * Generate interpretations for multiple cities in batch - PARALLEL execution
  * Returns cities with AI-generated interpretations
  */
 async function generateCityInterpretations(cities, userData) {
-  console.log(`🤖 Generating AI interpretations for ${cities.length} cities...`);
+  console.log(`🤖 Generating AI interpretations for ${cities.length} cities in PARALLEL...`);
   
-  const interpretedCities = [];
+  const zodiac = getZodiacSign(userData.birthDate);
   
-  for (const city of cities) {
-    try {
-      const interpretation = await generateQuickCityInterpretation(city, userData);
-      interpretedCities.push({
-        ...city,
-        aiInterpretation: interpretation
-      });
-      console.log(`   ✅ ${city.name || city.city}: AI interpretation generated`);
-    } catch (error) {
-      console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
-      interpretedCities.push({
-        ...city,
-        aiInterpretation: city.reason
-      });
+  // Process all cities in parallel for speed
+  const results = await Promise.allSettled(
+    cities.map(async (city) => {
+      try {
+        const interpretation = await generateQuickCityInterpretation(city, userData);
+        return {
+          ...city,
+          aiInterpretation: interpretation
+        };
+      } catch (error) {
+        console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
+        return {
+          ...city,
+          aiInterpretation: generateFallbackInterpretation(city, zodiac)
+        };
+      }
+    })
+  );
+  
+  // Extract successful results
+  const interpretedCities = results.map((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`   ✅ ${cities[index].name || cities[index].city}: AI interpretation generated`);
+      return result.value;
+    } else {
+      console.error(`   ❌ ${cities[index].name || cities[index].city}: Promise rejected`);
+      return {
+        ...cities[index],
+        aiInterpretation: generateFallbackInterpretation(cities[index], zodiac)
+      };
     }
-  }
+  });
   
+  console.log(`   ✅ All ${interpretedCities.length} interpretations complete!`);
   return interpretedCities;
 }
 
