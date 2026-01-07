@@ -5,7 +5,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth/index.js";
 import { db } from "./db.js";
-import { birthData, reports, payments, users } from "../shared/schema.js";
+import { birthData, reports, payments, users, apiCalls } from "../shared/schema.js";
 import { eq, sql, desc } from "drizzle-orm";
 
 // Import services
@@ -19,6 +19,34 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API call tracking middleware
+app.use(async (req: any, res, next) => {
+  // Only track /api/ routes (excluding admin and health for less noise)
+  if (req.path.startsWith('/api/') && !req.path.startsWith('/api/admin/') && req.path !== '/api/health') {
+    const startTime = Date.now();
+    
+    // Capture response status after response is sent
+    res.on('finish', async () => {
+      try {
+        const responseTime = Date.now() - startTime;
+        const userId = req.user?.claims?.sub || null;
+        
+        await db.insert(apiCalls).values({
+          endpoint: req.path,
+          method: req.method,
+          userId,
+          statusCode: res.statusCode,
+          responseTime
+        });
+      } catch (err) {
+        // Silent fail - don't break the request for tracking
+        console.error('API tracking error:', err);
+      }
+    });
+  }
+  next();
+});
 
 async function startServer() {
   await setupAuth(app);
@@ -866,6 +894,90 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching payments:", error);
       res.status(500).json({ success: false, message: "Failed to fetch payments" });
+    }
+  });
+
+  // Get API usage stats
+  app.get("/api/admin/api-stats", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      // Today's API calls
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const [todayCount] = await db.select({ count: sql<number>`count(*)` })
+        .from(apiCalls)
+        .where(sql`created_at >= ${today.toISOString()}`);
+      
+      // Total API calls
+      const [totalCount] = await db.select({ count: sql<number>`count(*)` }).from(apiCalls);
+      
+      // Last 7 days breakdown
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const dailyStats = await db.select({
+        date: sql<string>`DATE(created_at)`,
+        count: sql<number>`count(*)`
+      })
+        .from(apiCalls)
+        .where(sql`created_at >= ${sevenDaysAgo.toISOString()}`)
+        .groupBy(sql`DATE(created_at)`)
+        .orderBy(sql`DATE(created_at)`);
+      
+      // Top endpoints
+      const topEndpoints = await db.select({
+        endpoint: apiCalls.endpoint,
+        count: sql<number>`count(*)`
+      })
+        .from(apiCalls)
+        .groupBy(apiCalls.endpoint)
+        .orderBy(sql`count(*) DESC`)
+        .limit(10);
+      
+      // Average response time
+      const [avgResponse] = await db.select({
+        avg: sql<number>`COALESCE(AVG(response_time), 0)`
+      }).from(apiCalls);
+      
+      res.json({
+        success: true,
+        stats: {
+          todayCount: Number(todayCount.count),
+          totalCount: Number(totalCount.count),
+          avgResponseTime: Math.round(Number(avgResponse.avg)),
+          dailyStats,
+          topEndpoints
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching API stats:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch API stats" });
+    }
+  });
+
+  // Get live API calls (last 5 minutes)
+  app.get("/api/admin/api-live", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      
+      const recentCalls = await db.select()
+        .from(apiCalls)
+        .where(sql`created_at >= ${fiveMinutesAgo.toISOString()}`)
+        .orderBy(desc(apiCalls.createdAt))
+        .limit(50);
+      
+      const [liveCount] = await db.select({ count: sql<number>`count(*)` })
+        .from(apiCalls)
+        .where(sql`created_at >= ${fiveMinutesAgo.toISOString()}`);
+      
+      res.json({
+        success: true,
+        liveCount: Number(liveCount.count),
+        recentCalls
+      });
+    } catch (error) {
+      console.error("Error fetching live API stats:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch live API stats" });
     }
   });
 

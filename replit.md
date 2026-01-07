@@ -56,8 +56,9 @@ Preferred communication style: Simple, everyday language.
   - Desktop-optimized interface separate from mobile PWA
   - Protected by admin middleware - only users with `role: 'admin'` can access
   - First user to access admin becomes the super admin automatically
-  - Features: User management, reports tracking, payment analytics, revenue stats
+  - Features: User management, reports tracking, payment analytics, revenue stats, API usage monitoring
   - API endpoints under `/api/admin/*` for CRUD operations
+  - **API Usage Tracking**: Monitors all `/api/*` endpoint calls with response times, daily stats, top endpoints, and live feed
 
 ### Database Layer
 

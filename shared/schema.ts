@@ -38,9 +38,21 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const apiCalls = pgTable("api_calls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  endpoint: varchar("endpoint").notNull(),
+  method: varchar("method").notNull(),
+  userId: varchar("user_id"),
+  statusCode: integer("status_code"),
+  responseTime: integer("response_time"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type BirthData = typeof birthData.$inferSelect;
 export type InsertBirthData = typeof birthData.$inferInsert;
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = typeof reports.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = typeof payments.$inferInsert;
+export type ApiCall = typeof apiCalls.$inferSelect;
+export type InsertApiCall = typeof apiCalls.$inferInsert;

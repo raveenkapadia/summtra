@@ -527,6 +527,12 @@
           </svg>
           Payments
         </a>
+        <a class="nav-item" data-page="api-usage">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          API Usage
+        </a>
       </div>
       
       <div class="sidebar-footer">
@@ -713,6 +719,106 @@
           </table>
         </div>
       </section>
+
+      <!-- API Usage Page -->
+      <section id="page-api-usage" class="page-section">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">API Usage</h1>
+            <p class="page-subtitle">Monitor API calls and performance</p>
+          </div>
+          <button class="btn btn-primary" onclick="loadApiStats()">Refresh</button>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Today's API Calls</div>
+            <div class="stat-value" id="stat-api-today">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total API Calls</div>
+            <div class="stat-value" id="stat-api-total">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Response Time</div>
+            <div class="stat-value" id="stat-api-avg-time">-</div>
+            <div class="stat-change" style="color: var(--text-dim);">milliseconds</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Live (Last 5 min)</div>
+            <div class="stat-value" id="stat-api-live">-</div>
+            <div class="stat-change" id="live-indicator" style="color: var(--success);">updating live...</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <div class="table-card">
+            <div class="table-header">
+              <h3 class="table-title">Top Endpoints</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Calls</th>
+                </tr>
+              </thead>
+              <tbody id="top-endpoints-table">
+                <tr>
+                  <td colspan="2" class="loading">
+                    <div class="spinner"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <h3 class="table-title">Last 7 Days</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>API Calls</th>
+                </tr>
+              </thead>
+              <tbody id="daily-stats-table">
+                <tr>
+                  <td colspan="2" class="loading">
+                    <div class="spinner"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="table-card" style="margin-top: 24px;">
+          <div class="table-header">
+            <h3 class="table-title">Recent API Calls (Live)</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Response Time</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="live-api-calls">
+              <tr>
+                <td colspan="5" class="loading">
+                  <div class="spinner"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -826,6 +932,114 @@
         }
       } catch (error) {
         console.error('Failed to load payments:', error);
+      }
+    }
+
+    let apiStatsInterval = null;
+
+    async function loadApiStats() {
+      try {
+        const [statsResponse, liveResponse] = await Promise.all([
+          fetch('/api/admin/api-stats'),
+          fetch('/api/admin/api-live')
+        ]);
+        
+        const statsData = await statsResponse.json();
+        const liveData = await liveResponse.json();
+        
+        if (statsData.success) {
+          document.getElementById('stat-api-today').textContent = statsData.stats.todayCount || 0;
+          document.getElementById('stat-api-total').textContent = statsData.stats.totalCount || 0;
+          document.getElementById('stat-api-avg-time').textContent = statsData.stats.avgResponseTime || 0;
+          
+          renderTopEndpoints(statsData.stats.topEndpoints || []);
+          renderDailyStats(statsData.stats.dailyStats || []);
+        }
+        
+        if (liveData.success) {
+          document.getElementById('stat-api-live').textContent = liveData.liveCount || 0;
+          renderLiveApiCalls(liveData.recentCalls || []);
+        }
+      } catch (error) {
+        console.error('Failed to load API stats:', error);
+      }
+    }
+
+    function renderTopEndpoints(endpoints) {
+      const tbody = document.getElementById('top-endpoints-table');
+      
+      if (endpoints.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="empty-state">No API calls yet</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = endpoints.map(ep => `
+        <tr>
+          <td><code style="background: rgba(212, 168, 84, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(ep.endpoint)}</code></td>
+          <td style="font-weight: 600; color: var(--gold);">${ep.count}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderDailyStats(stats) {
+      const tbody = document.getElementById('daily-stats-table');
+      
+      if (stats.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="empty-state">No data yet</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = stats.map(day => `
+        <tr>
+          <td>${day.date}</td>
+          <td style="font-weight: 600; color: var(--gold);">${day.count}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderLiveApiCalls(calls) {
+      const tbody = document.getElementById('live-api-calls');
+      
+      if (calls.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No recent API calls</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = calls.map(call => {
+        const statusClass = call.statusCode >= 200 && call.statusCode < 300 ? 'success' : 
+                           call.statusCode >= 400 ? 'failed' : 'pending';
+        const methodColor = call.method === 'GET' ? 'var(--success)' : 
+                           call.method === 'POST' ? 'var(--warning)' : 
+                           call.method === 'DELETE' ? 'var(--danger)' : 'var(--text)';
+        
+        return `
+          <tr>
+            <td><code style="background: rgba(212, 168, 84, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(call.endpoint)}</code></td>
+            <td><span style="color: ${methodColor}; font-weight: 600;">${call.method}</span></td>
+            <td><span class="status-badge ${statusClass}">${call.statusCode}</span></td>
+            <td>${call.responseTime}ms</td>
+            <td>${formatTime(call.createdAt)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatTime(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function startApiLiveUpdates() {
+      if (apiStatsInterval) clearInterval(apiStatsInterval);
+      loadApiStats();
+      apiStatsInterval = setInterval(loadApiStats, 10000);
+    }
+
+    function stopApiLiveUpdates() {
+      if (apiStatsInterval) {
+        clearInterval(apiStatsInterval);
+        apiStatsInterval = null;
       }
     }
 
@@ -1048,6 +1262,12 @@
         
         document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
         document.getElementById('page-' + page).classList.add('active');
+        
+        if (page === 'api-usage') {
+          startApiLiveUpdates();
+        } else {
+          stopApiLiveUpdates();
+        }
       });
     });
 
