@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
-const { getLocationData, findNearestIndianCity } = require("./services/geocodingService.js");
+const { getLocationData, findNearestIndianCity, findNearestInternationalCity } = require("./services/geocodingService.js");
 
 const app = express();
 const PORT = 5000;
@@ -419,7 +419,9 @@ async function startServer() {
         };
       };
 
-      // Format international zones with region names (not Indian cities)
+      // Format international zones with actual city names using geocoding
+      const usedIntlCities = new Set<string>();
+      
       const formatInternationalZone = (zone: any, index: number) => {
         const planets = zone.planets || [];
         const lineTypes = zone.line_types || [];
@@ -428,38 +430,24 @@ async function startServer() {
         const score = Math.round(strength * 100);
         const category = zone.category || 'general';
         const meaning = zone.meaning || 'Strong planetary alignment';
-        const lat = zone.latitude || 0;
-        const lng = zone.longitude || 0;
         
-        // Generate region name based on global coordinates
-        let regionName = `Power Zone ${index + 1}`;
-        let country = '';
+        // Map to nearest international city using the geocoding service
+        const nearestCity = findNearestInternationalCity(zone.latitude || 0, zone.longitude || 0);
         
-        if (lat >= 35 && lat <= 70 && lng >= -10 && lng <= 60) {
-          regionName = ['London', 'Paris', 'Berlin', 'Rome', 'Madrid', 'Amsterdam'][index % 6] || `Europe ${index + 1}`;
-          country = ['UK', 'France', 'Germany', 'Italy', 'Spain', 'Netherlands'][index % 6] || 'Europe';
-        } else if (lat >= 25 && lat <= 50 && lng >= -130 && lng <= -60) {
-          regionName = ['New York', 'Los Angeles', 'Chicago', 'San Francisco', 'Miami', 'Seattle'][index % 6] || `USA ${index + 1}`;
-          country = 'USA';
-        } else if (lat >= 20 && lat <= 45 && lng >= 100 && lng <= 150) {
-          regionName = ['Tokyo', 'Singapore', 'Hong Kong', 'Sydney', 'Seoul', 'Bangkok'][index % 6] || `Asia Pacific ${index + 1}`;
-          country = ['Japan', 'Singapore', 'Hong Kong', 'Australia', 'South Korea', 'Thailand'][index % 6] || 'Asia';
-        } else if (lat >= -35 && lat <= 5 && lng >= -80 && lng <= -35) {
-          regionName = ['São Paulo', 'Rio de Janeiro', 'Buenos Aires', 'Lima', 'Bogotá', 'Santiago'][index % 6] || `South America ${index + 1}`;
-          country = ['Brazil', 'Brazil', 'Argentina', 'Peru', 'Colombia', 'Chile'][index % 6] || 'South America';
-        } else if (lat >= -35 && lat <= 35 && lng >= 10 && lng <= 55) {
-          regionName = ['Dubai', 'Cairo', 'Cape Town', 'Johannesburg', 'Nairobi', 'Casablanca'][index % 6] || `Middle East/Africa ${index + 1}`;
-          country = ['UAE', 'Egypt', 'South Africa', 'South Africa', 'Kenya', 'Morocco'][index % 6] || 'Middle East';
+        // Avoid duplicates
+        if (usedIntlCities.has(nearestCity.name)) {
+          return null;
         }
+        usedIntlCities.add(nearestCity.name);
         
         return {
-          name: regionName,
-          country,
+          name: nearestCity.name,
+          country: nearestCity.country,
           score,
           lines: lines.length > 0 ? lines : ['Jupiter-MC'],
           reason: meaning,
           category,
-          coordinates: { lat, lng },
+          coordinates: { lat: nearestCity.lat, lng: nearestCity.lng },
           isRealAPIData: true
         };
       };
@@ -469,8 +457,10 @@ async function startServer() {
         .map(formatPowerZoneToIndianCity)
         .filter((city: any) => city !== null);
       
-      // Map international zones to global cities
-      const internationalCities = intlPowerZones.map(formatInternationalZone);
+      // Map international zones to global cities, filter duplicates
+      const internationalCities = intlPowerZones
+        .map(formatInternationalZone)
+        .filter((city: any) => city !== null);
 
       // Calculate top match based on report type
       let topMatch = 90;
