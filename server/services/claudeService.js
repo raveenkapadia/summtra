@@ -42,9 +42,160 @@ const PLANET_MEANINGS = {
   'PartOfFortune': 'Prosperity, luck, material success'
 };
 
+const ZODIAC_SIGNS = [
+  { name: 'Capricorn', symbol: '♑', start: [12, 22], end: [1, 19], element: 'Earth' },
+  { name: 'Aquarius', symbol: '♒', start: [1, 20], end: [2, 18], element: 'Air' },
+  { name: 'Pisces', symbol: '♓', start: [2, 19], end: [3, 20], element: 'Water' },
+  { name: 'Aries', symbol: '♈', start: [3, 21], end: [4, 19], element: 'Fire' },
+  { name: 'Taurus', symbol: '♉', start: [4, 20], end: [5, 20], element: 'Earth' },
+  { name: 'Gemini', symbol: '♊', start: [5, 21], end: [6, 20], element: 'Air' },
+  { name: 'Cancer', symbol: '♋', start: [6, 21], end: [7, 22], element: 'Water' },
+  { name: 'Leo', symbol: '♌', start: [7, 23], end: [8, 22], element: 'Fire' },
+  { name: 'Virgo', symbol: '♍', start: [8, 23], end: [9, 22], element: 'Earth' },
+  { name: 'Libra', symbol: '♎', start: [9, 23], end: [10, 22], element: 'Air' },
+  { name: 'Scorpio', symbol: '♏', start: [10, 23], end: [11, 21], element: 'Water' },
+  { name: 'Sagittarius', symbol: '♐', start: [11, 22], end: [12, 21], element: 'Fire' }
+];
+
+function getZodiacSign(birthDate) {
+  const date = new Date(birthDate);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  for (const sign of ZODIAC_SIGNS) {
+    const [startMonth, startDay] = sign.start;
+    const [endMonth, endDay] = sign.end;
+    
+    if (startMonth === 12 && endMonth === 1) {
+      if ((month === 12 && day >= startDay) || (month === 1 && day <= endDay)) {
+        return { ...sign, monthName: monthNames[month - 1] };
+      }
+    } else if ((month === startMonth && day >= startDay) || (month === endMonth && day <= endDay)) {
+      return { ...sign, monthName: monthNames[month - 1] };
+    }
+  }
+  return { name: 'Unknown', symbol: '?', element: 'Unknown', monthName: monthNames[month - 1] };
+}
+
 // ============================================
 // INTERPRETATION GENERATORS
 // ============================================
+
+/**
+ * Generate quick, personalized city interpretation (2-3 sentences)
+ * Optimized for test-report endpoint - fast and lightweight
+ */
+async function generateQuickCityInterpretation(cityData, userData) {
+  const anthropic = getAnthropicClient();
+  const zodiac = getZodiacSign(userData.birthDate);
+  
+  const cityName = cityData.name || cityData.city;
+  const country = cityData.country || cityData.state || '';
+  const lines = cityData.lines || [];
+  const score = cityData.score || 50;
+  const category = cityData.category || 'general';
+  
+  const lineDetails = lines.map(line => {
+    const parts = line.split('-');
+    const planet = parts[0];
+    const angle = parts[1] || '';
+    const meaning = PLANET_MEANINGS[planet] || '';
+    return `${line} (${meaning})`;
+  }).join(', ');
+  
+  const prompt = `You are an expert astrocartographer writing a brief, personalized interpretation.
+
+USER: ${userData.name}
+ZODIAC: ${zodiac.name} (${zodiac.symbol}) - ${zodiac.element} sign, born in ${zodiac.monthName}
+BIRTH DATE: ${userData.birthDate}
+
+CITY: ${cityName}, ${country}
+POWER SCORE: ${score}%
+CATEGORY: ${category}
+ACTIVE PLANETARY LINES: ${lineDetails || lines.join(', ')}
+
+Write exactly 2-3 warm, encouraging sentences that:
+1. Start with "As a ${zodiac.name} born in ${zodiac.monthName}..."
+2. Explain specifically how their planetary lines (${lines.join(', ')}) affect them in ${cityName}
+3. Mention what opportunities or gifts await them there
+
+Be specific about the planetary lines and their effects. Keep it personal and uplifting. NO bullet points, NO paragraphs - just 2-3 flowing sentences.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    return response.content[0].text;
+  } catch (error) {
+    console.error(`Error generating interpretation for ${cityName}:`, error.message);
+    return generateFallbackInterpretation(cityData, zodiac);
+  }
+}
+
+function generateFallbackInterpretation(cityData, zodiac) {
+  const cityName = cityData.name || cityData.city || 'this location';
+  const country = cityData.country || cityData.state || '';
+  const lines = cityData.lines || [];
+  const category = cityData.category || 'general';
+  
+  const lineDescriptions = lines.map(line => {
+    const parts = line.split('-');
+    const planet = parts[0];
+    const angle = parts[1] || 'line';
+    const meaning = PLANET_MEANINGS[planet] || 'unique energies';
+    return { line, planet, angle, meaning };
+  });
+  
+  const categoryText = {
+    'love': 'romantic connections and heartfelt relationships',
+    'career': 'professional success and public recognition',
+    'wealth': 'abundance and financial prosperity',
+    'health': 'vitality and well-being',
+    'creativity': 'artistic expression and creative inspiration',
+    'family': 'domestic harmony and family bonds'
+  };
+  
+  if (lineDescriptions.length >= 2) {
+    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} activates ${lineDescriptions[0].meaning.toLowerCase()}, while your ${lineDescriptions[1].line} line enhances ${lineDescriptions[1].meaning.toLowerCase()}. Together, these planetary alignments create an exceptional environment for ${categoryText[category] || 'personal growth and transformation'}.`;
+  } else if (lineDescriptions.length === 1) {
+    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} powerfully activates ${lineDescriptions[0].meaning.toLowerCase()}. This location offers you wonderful opportunities for ${categoryText[category] || 'personal growth'} that resonate deeply with your ${zodiac.element} nature.`;
+  }
+  
+  return `As a ${zodiac.name} born in ${zodiac.monthName}, ${cityName}${country ? ', ' + country : ''} offers you powerful cosmic alignments that support ${categoryText[category] || 'personal growth and success'}. This location holds special potential aligned with your ${zodiac.element} nature.`;
+}
+
+/**
+ * Generate interpretations for multiple cities in batch
+ * Returns cities with AI-generated interpretations
+ */
+async function generateCityInterpretations(cities, userData) {
+  console.log(`🤖 Generating AI interpretations for ${cities.length} cities...`);
+  
+  const interpretedCities = [];
+  
+  for (const city of cities) {
+    try {
+      const interpretation = await generateQuickCityInterpretation(city, userData);
+      interpretedCities.push({
+        ...city,
+        aiInterpretation: interpretation
+      });
+      console.log(`   ✅ ${city.name || city.city}: AI interpretation generated`);
+    } catch (error) {
+      console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
+      interpretedCities.push({
+        ...city,
+        aiInterpretation: city.reason
+      });
+    }
+  }
+  
+  return interpretedCities;
+}
 
 /**
  * Generate personalized introduction
@@ -504,7 +655,11 @@ module.exports = {
   generateActionPlan,
   generateChallengingLocations,
   generateAllInterpretations,
+  generateQuickCityInterpretation,
+  generateCityInterpretations,
+  getZodiacSign,
   ALL_PLANETS,
   PLANET_SYMBOLS,
-  PLANET_MEANINGS
+  PLANET_MEANINGS,
+  ZODIAC_SIGNS
 };

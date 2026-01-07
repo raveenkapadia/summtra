@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
 const { getLocationData, findNearestIndianCity, findNearestInternationalCity } = require("./services/geocodingService.js");
+const { generateCityInterpretations, getZodiacSign } = require("./services/claudeService.js");
 
 const app = express();
 const PORT = 5000;
@@ -453,14 +454,76 @@ async function startServer() {
       };
 
       // Map India zones to Indian cities, filter duplicates
-      const indiaCities = indiaPowerZones
+      let indiaCities = indiaPowerZones
         .map(formatPowerZoneToIndianCity)
         .filter((city: any) => city !== null);
       
       // Map international zones to global cities, filter duplicates
-      const internationalCities = intlPowerZones
+      let internationalCities = intlPowerZones
         .map(formatInternationalZone)
         .filter((city: any) => city !== null);
+
+      // Step 6: Generate AI interpretations using Claude
+      const userData = { name, birthDate, email };
+      const zodiac = getZodiacSign(birthDate);
+      console.log(`\n🤖 Step 3: Generating Claude AI interpretations...`);
+      console.log(`   ♈ Zodiac: ${zodiac.name} (${zodiac.symbol}) - born in ${zodiac.monthName}`);
+      
+      // Generate interpretations for all cities
+      const allCities = [...indiaCities, ...internationalCities];
+      if (allCities.length > 0 && process.env.ANTHROPIC_API_KEY) {
+        try {
+          const interpretedCities = await generateCityInterpretations(allCities, userData);
+          
+          // Split back into India and International
+          const indiaCount = indiaCities.length;
+          indiaCities = interpretedCities.slice(0, indiaCount);
+          internationalCities = interpretedCities.slice(indiaCount);
+          
+          console.log(`   ✅ AI interpretations generated for ${interpretedCities.length} cities`);
+        } catch (error: any) {
+          console.log(`   ⚠️ AI interpretation failed, using fallback: ${error.message}`);
+          // Add fallback interpretations when Claude fails
+          indiaCities = indiaCities.map((city: any) => ({
+            ...city,
+            aiInterpretation: generateFallbackText(city, zodiac)
+          }));
+          internationalCities = internationalCities.map((city: any) => ({
+            ...city,
+            aiInterpretation: generateFallbackText(city, zodiac)
+          }));
+        }
+      } else if (!process.env.ANTHROPIC_API_KEY) {
+        console.log(`   ⚠️ ANTHROPIC_API_KEY not set, using fallback interpretations`);
+        // Add fallback interpretations when API key is missing
+        indiaCities = indiaCities.map((city: any) => ({
+          ...city,
+          aiInterpretation: generateFallbackText(city, zodiac)
+        }));
+        internationalCities = internationalCities.map((city: any) => ({
+          ...city,
+          aiInterpretation: generateFallbackText(city, zodiac)
+        }));
+      }
+      
+      // Helper function for fallback interpretations
+      function generateFallbackText(city: any, zodiac: any): string {
+        const lines = city.lines || [];
+        const category = city.category || 'general';
+        const categoryText: any = {
+          'love': 'romantic connections and heartfelt relationships',
+          'career': 'professional success and public recognition',
+          'wealth': 'abundance and financial prosperity',
+          'general': 'personal growth and transformation'
+        };
+        
+        if (lines.length >= 2) {
+          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} and ${lines[1]} lines in ${city.name} create powerful opportunities for ${categoryText[category] || 'success'}. This location holds exceptional potential for you.`;
+        } else if (lines.length === 1) {
+          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} line in ${city.name} activates extraordinary potential for ${categoryText[category] || 'growth'}. This city offers wonderful cosmic support for you.`;
+        }
+        return `As a ${zodiac.name} born in ${zodiac.monthName}, ${city.name} offers powerful planetary alignments supporting ${categoryText[category] || 'personal success'}.`;
+      }
 
       // Calculate top match based on report type
       let topMatch = 90;
@@ -499,6 +562,7 @@ async function startServer() {
       console.log(`   📊 India cities: ${indiaCities.length}`);
       console.log(`   🌍 International cities: ${internationalCities.length}`);
       console.log(`   🧭 Power direction: ${powerDirection}`);
+      console.log(`   🤖 AI Interpretations: ${indiaCities.some((c: any) => c.aiInterpretation) || internationalCities.some((c: any) => c.aiInterpretation) ? 'Yes' : 'No'}`);
       console.log("=".repeat(60) + "\n");
 
       res.json({
