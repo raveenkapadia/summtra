@@ -360,6 +360,19 @@
       to { transform: rotate(360deg); }
     }
     
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    
+    .live-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
     /* Page sections */
     .page-section {
       display: none;
@@ -747,7 +760,9 @@
           <div class="stat-card">
             <div class="stat-label">Live (Last 5 min)</div>
             <div class="stat-value" id="stat-api-live">-</div>
-            <div class="stat-change" id="live-indicator" style="color: var(--success);">updating live...</div>
+            <div class="stat-change" id="live-indicator" style="color: var(--success); display: flex; align-items: center; gap: 6px;">
+              <span class="live-pulse"></span> updating every 3s
+            </div>
           </div>
         </div>
 
@@ -1033,7 +1048,7 @@
     function startApiLiveUpdates() {
       if (apiStatsInterval) clearInterval(apiStatsInterval);
       loadApiStats();
-      apiStatsInterval = setInterval(loadApiStats, 10000);
+      apiStatsInterval = setInterval(loadApiStats, 3000);
     }
 
     function stopApiLiveUpdates() {
