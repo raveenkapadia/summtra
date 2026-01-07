@@ -3025,11 +3025,28 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    function startScanning() {
+    async function startScanning() {
       const overlay = document.getElementById('scanning');
       const status = document.getElementById('scanning-status');
       overlay.classList.add('active');
       
+      // Collect form data
+      const name = document.getElementById('input-name')?.value || 'Test User';
+      const email = document.getElementById('input-email')?.value || 'test@example.com';
+      const birthDate = document.getElementById('input-birthdate')?.value;
+      const birthTime = document.getElementById('input-birthtime')?.value;
+      const birthPlace = document.getElementById('input-birthplace')?.value;
+
+      if (!birthDate || !birthTime || !birthPlace) {
+        overlay.classList.remove('active');
+        alert('Please fill in all birth details (date, time, and place)');
+        return;
+      }
+
+      // Map searchScope to reportType
+      const reportType = searchScope === 'india' ? 'india' : searchScope === 'world' ? 'international' : 'combo';
+      
+      // Show scanning animation while API processes
       let steps;
       if (searchScope === 'india') {
         steps = ['Reading birth chart...', 'Calculating planetary lines...', 'Scanning Indian cities...', 'Analyzing Bangalore, Mumbai, Delhi...', 'Finding your power direction...', 'Ranking lucky cities...'];
@@ -3040,14 +3057,57 @@
       }
       
       let i = 0;
-      const interval = setInterval(() => {
-        status.textContent = steps[i];
-        i++;
-        if (i >= steps.length) {
-          clearInterval(interval);
-          setTimeout(() => { overlay.classList.remove('active'); navigateTo('results'); }, 800);
+      const stepInterval = setInterval(() => {
+        if (i < steps.length) {
+          status.textContent = steps[i];
+          i++;
         }
-      }, 700);
+      }, 800);
+
+      try {
+        // Call the test API (no login required)
+        const response = await fetch('/api/test-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            birthDate,
+            birthTime,
+            birthPlace,
+            reportType
+          })
+        });
+
+        clearInterval(stepInterval);
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          status.textContent = 'Report generated! Loading results...';
+          console.log('Report generated:', result);
+          setTimeout(() => { 
+            overlay.classList.remove('active'); 
+            navigateTo('results'); 
+          }, 1000);
+        } else {
+          // API returned an error
+          console.error('Report generation failed:', result.error || result.message);
+          status.textContent = 'Generation failed. Please try again.';
+          setTimeout(() => { 
+            overlay.classList.remove('active');
+            alert(result.message || 'Report generation failed. Please check your details and try again.');
+          }, 1500);
+        }
+      } catch (error) {
+        clearInterval(stepInterval);
+        console.error('Error generating report:', error);
+        status.textContent = 'Connection error. Please try again.';
+        setTimeout(() => { 
+          overlay.classList.remove('active');
+          alert('Unable to connect to the server. Please check your internet connection and try again.');
+        }, 1500);
+      }
     }
     
     // Swipe for onboarding

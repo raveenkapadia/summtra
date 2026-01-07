@@ -8,6 +8,10 @@ import { db } from "./db.js";
 import { birthData, reports, payments } from "../shared/schema.js";
 import { eq } from "drizzle-orm";
 
+// Import services
+const { generateReport } = require("./services/reportGenerator.js");
+const { getLocationData } = require("./services/geocodingService.js");
+
 const app = express();
 const PORT = 5000;
 
@@ -171,6 +175,154 @@ async function startServer() {
     } catch (error) {
       console.error("Error verifying payment:", error);
       res.status(500).json({ success: false, message: "Error during verification" });
+    }
+  });
+
+  // Generate report endpoint (authenticated)
+  app.post("/api/generate-report", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email || "";
+      const userName = req.user.claims.first_name || "User";
+      
+      const { birthDate, birthTime, birthPlace, reportType = "india" } = req.body;
+
+      if (!birthDate || !birthTime || !birthPlace) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Birth date, time, and place are required" 
+        });
+      }
+
+      // Get coordinates and timezone from city name
+      console.log("📍 Looking up location data...");
+      const locationData = await getLocationData(birthPlace);
+
+      // Create report record in database
+      const [reportRecord] = await db.insert(reports).values({
+        userId,
+        reportType,
+        status: "processing",
+      }).returning();
+
+      // Start report generation (async - don't await)
+      generateReport({
+        user: {
+          name: userName,
+          email: userEmail,
+        },
+        birth: {
+          date: birthDate,
+          time: birthTime,
+          city: birthPlace,
+          country: locationData.formattedAddress.split(",").pop()?.trim() || "India",
+          latitude: locationData.lat,
+          longitude: locationData.lng,
+          timezone: locationData.timezone,
+        },
+        reportType,
+      }).then(async (result: any) => {
+        // Update report status when done
+        await db.update(reports)
+          .set({
+            status: result.success ? "completed" : "failed",
+            pdfUrl: result.pdfPath || null,
+          })
+          .where(eq(reports.id, reportRecord.id));
+      }).catch(async (error: any) => {
+        console.error("Report generation failed:", error);
+        await db.update(reports)
+          .set({ status: "failed" })
+          .where(eq(reports.id, reportRecord.id));
+      });
+
+      res.json({
+        success: true,
+        message: "Report generation started",
+        reportId: reportRecord.id,
+        status: "processing",
+      });
+
+    } catch (error: any) {
+      console.error("Error starting report generation:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to start report generation" });
+    }
+  });
+
+  // Test report endpoint (no auth required for testing)
+  app.post("/api/test-report", async (req, res) => {
+    try {
+      const { name, email, birthDate, birthTime, birthPlace, reportType = "india" } = req.body;
+
+      if (!name || !email || !birthDate || !birthTime || !birthPlace) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Name, email, birth date, time, and place are required" 
+        });
+      }
+
+      // Get coordinates and timezone from city name
+      console.log("📍 Looking up location data for test...");
+      const locationData = await getLocationData(birthPlace);
+
+      console.log("🚀 Starting test report generation...");
+      
+      // Generate report (sync for testing)
+      const result = await generateReport({
+        user: {
+          name,
+          email,
+        },
+        birth: {
+          date: birthDate,
+          time: birthTime,
+          city: birthPlace,
+          country: locationData.formattedAddress.split(",").pop()?.trim() || "India",
+          latitude: locationData.lat,
+          longitude: locationData.lng,
+          timezone: locationData.timezone,
+        },
+        reportType,
+      });
+
+      res.json({
+        success: result.success,
+        message: result.success ? "Report generated successfully" : "Report generation failed",
+        reportId: result.reportId,
+        timeTaken: result.timeTaken,
+        error: result.error || null,
+      });
+
+    } catch (error: any) {
+      console.error("Error in test report:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to generate test report" });
+    }
+  });
+
+  // Get report status endpoint (authenticated - user can only see their own reports)
+  app.get("/api/report-status/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reportId = parseInt(req.params.id);
+      const [report] = await db.select().from(reports).where(eq(reports.id, reportId));
+      
+      if (!report) {
+        return res.status(404).json({ success: false, message: "Report not found" });
+      }
+
+      // Security check: ensure report belongs to authenticated user
+      if (report.userId !== userId) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+      }
+
+      res.json({
+        success: true,
+        status: report.status,
+        pdfUrl: report.pdfUrl,
+      });
+    } catch (error) {
+      console.error("Error fetching report status:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch report status" });
     }
   });
 
