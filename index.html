@@ -3157,7 +3157,7 @@
     
     async function checkAuthStatus() {
       try {
-        const response = await fetch('/api/auth/user');
+        const response = await fetch('/api/auth/user', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
@@ -3211,7 +3211,7 @@
     async function loadUserBirthData() {
       if (!currentUser) return;
       try {
-        const response = await fetch('/api/birth-data');
+        const response = await fetch('/api/birth-data', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data && data.data.length > 0) {
@@ -3248,6 +3248,7 @@
         const response = await fetch('/api/birth-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ name, birthDate, birthTime, birthPlace })
         });
         
@@ -3265,7 +3266,7 @@
     async function fetchUserReports() {
       if (!currentUser) return [];
       try {
-        const response = await fetch('/api/reports');
+        const response = await fetch('/api/reports', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           return data.success ? data.data : [];
