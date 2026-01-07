@@ -56,24 +56,27 @@ function formatBirthDataForAPI(birthData) {
   };
 }
 
+// All 15 celestial bodies for astrocartography calculations
+const ALL_PLANETS = [
+  'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
+  'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
+  'NorthNode', 'SouthNode', 'Chiron', 'Vertex', 'PartOfFortune'
+];
+
 // ============================================
 // 1. ASTROCARTOGRAPHY LINES (All 15+ planets)
 // ============================================
 async function getAstrocartographyLines(birthData) {
-  console.log('📡 [1/9] Fetching astrocartography lines (all planets)...');
+  console.log('📡 [1/9] Fetching astrocartography lines (all 15 celestial bodies)...');
   
   const formattedData = formatBirthDataForAPI(birthData);
   
   const result = await apiCall('POST', '/api/v3/astrocartography/lines', {
     ...formattedData,
-    planets: [
-      'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
-      'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
-      'NorthNode', 'SouthNode', 'Chiron', 'Vertex', 'PartOfFortune'
-    ]
+    planets: ALL_PLANETS
   });
   
-  if (result.success) console.log('   ✅ Astrocartography lines received (15 planets)');
+  if (result.success) console.log('   ✅ Astrocartography lines received (15 celestial bodies)');
   return result;
 }
 
@@ -81,12 +84,13 @@ async function getAstrocartographyLines(birthData) {
 // 2. FIND POWER ZONES (Best cities ranked)
 // ============================================
 async function findPowerZones(birthData, options = {}) {
-  console.log(`📡 [2/9] Finding power zones (${options.region || 'global'})...`);
+  console.log(`📡 [2/9] Finding power zones (${options.region || 'global'}) using all 15 celestial bodies...`);
   
   const formattedData = formatBirthDataForAPI(birthData);
   
   const result = await apiCall('POST', '/api/v3/astrocartography/power-zones', {
     ...formattedData,
+    planets: ALL_PLANETS,
     region: options.region || 'global',
     limit: options.limit || 25
   });
