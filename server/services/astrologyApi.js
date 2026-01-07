@@ -4,6 +4,7 @@
 // ============================================
 
 const axios = require('axios');
+const { trackExternalApiCall } = require('./apiTracker.js');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'best-astrology-api-natal-charts-transits-synastry.p.rapidapi.com';
@@ -18,6 +19,7 @@ const getHeaders = () => ({
 
 // Helper to make API calls with error handling
 async function apiCall(method, endpoint, data = null) {
+  const startTime = Date.now();
   try {
     const config = {
       method,
@@ -27,8 +29,13 @@ async function apiCall(method, endpoint, data = null) {
     if (data) config.data = data;
     
     const response = await axios(config);
+    const responseTime = Date.now() - startTime;
+    trackExternalApiCall(endpoint, method, response.status, responseTime, 'RapidAPI');
     return { success: true, data: response.data };
   } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const statusCode = error.response?.status || 500;
+    trackExternalApiCall(endpoint, method, statusCode, responseTime, 'RapidAPI');
     console.error(`❌ API Error (${endpoint}):`, error.response?.data?.message || error.message);
     console.error(`   Details:`, JSON.stringify(error.response?.data || error.message));
     return { success: false, error: error.response?.data || error.message };

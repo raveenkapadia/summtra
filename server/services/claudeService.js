@@ -4,11 +4,29 @@
 // ============================================
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { trackExternalApiCall } = require('./apiTracker.js');
 
 const getAnthropicClient = () => {
-  return new Anthropic({
+  const client = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
   });
+  
+  const originalCreate = client.messages.create.bind(client.messages);
+  client.messages.create = async function(params) {
+    const startTime = Date.now();
+    try {
+      const response = await originalCreate(params);
+      const responseTime = Date.now() - startTime;
+      trackExternalApiCall('/messages', 'POST', 200, responseTime, 'Claude');
+      return response;
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      trackExternalApiCall('/messages', 'POST', error.status || 500, responseTime, 'Claude');
+      throw error;
+    }
+  };
+  
+  return client;
 };
 
 // All 15 planets for interpretation

@@ -4,6 +4,7 @@
 // ============================================
 
 const axios = require('axios');
+const { trackExternalApiCall } = require('./apiTracker.js');
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
@@ -13,6 +14,7 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
  * @returns {object} - { lat, lng, formattedAddress, timezone }
  */
 async function geocodeCity(cityName) {
+  const startTime = Date.now();
   try {
     console.log(`📍 Geocoding: ${cityName}`);
     
@@ -26,9 +28,14 @@ async function geocodeCity(cityName) {
       }
     );
 
+    const responseTime = Date.now() - startTime;
+
     if (response.data.status !== 'OK') {
+      trackExternalApiCall('/geocode', 'GET', 400, responseTime, 'Google');
       throw new Error(`Geocoding failed: ${response.data.status}`);
     }
+
+    trackExternalApiCall('/geocode', 'GET', 200, responseTime, 'Google');
 
     const result = response.data.results[0];
     const location = result.geometry.location;
@@ -44,6 +51,8 @@ async function geocodeCity(cityName) {
     };
 
   } catch (error) {
+    const responseTime = Date.now() - startTime;
+    trackExternalApiCall('/geocode', 'GET', 500, responseTime, 'Google');
     console.error('❌ Geocoding error:', error.message);
     throw error;
   }
@@ -56,6 +65,7 @@ async function geocodeCity(cityName) {
  * @returns {string} - timezone ID e.g., "Asia/Kolkata"
  */
 async function getTimezone(lat, lng) {
+  const startTime = Date.now();
   try {
     const timestamp = Math.floor(Date.now() / 1000);
     
@@ -70,17 +80,23 @@ async function getTimezone(lat, lng) {
       }
     );
 
+    const responseTime = Date.now() - startTime;
+
     if (response.data.status !== 'OK') {
+      trackExternalApiCall('/timezone', 'GET', 400, responseTime, 'Google');
       console.log('⚠️ Timezone lookup failed, using default');
       return 'Asia/Kolkata';
     }
 
+    trackExternalApiCall('/timezone', 'GET', 200, responseTime, 'Google');
     console.log(`✅ Timezone: ${response.data.timeZoneId}`);
     return response.data.timeZoneId;
 
   } catch (error) {
+    const responseTime = Date.now() - startTime;
+    trackExternalApiCall('/timezone', 'GET', 500, responseTime, 'Google');
     console.error('❌ Timezone error:', error.message);
-    return 'Asia/Kolkata'; // Default fallback
+    return 'Asia/Kolkata';
   }
 }
 
