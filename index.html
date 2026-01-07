@@ -2226,6 +2226,13 @@
     <!-- ============ HOME PAGE ============ -->
     <div id="page-home" class="page active">
       <div class="header">
+        <div id="auth-section" style="position: absolute; top: 10px; right: 15px; z-index: 50;">
+          <button id="login-btn" onclick="handleLogin()" style="background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 6px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; display: none;">Login</button>
+          <div id="user-profile-btn" style="display: none; align-items: center; gap: 8px; cursor: pointer;" onclick="navigateTo('form')">
+            <img id="user-avatar" src="" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--gold);">
+            <span id="user-name" style="color: var(--text); font-size: 12px;"></span>
+          </div>
+        </div>
         <h1 class="logo">SSUMITRA</h1>
         <p class="tagline">Find Your Lucky City</p>
       </div>
@@ -2491,28 +2498,28 @@
         
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input type="text" class="form-input" placeholder="As per birth certificate">
+          <input type="text" id="input-name" class="form-input" placeholder="As per birth certificate">
         </div>
         
         <div style="display: flex; gap: 10px;">
           <div class="form-group" style="flex: 1;">
             <label class="form-label">Birth Date</label>
-            <input type="date" class="form-input">
+            <input type="date" id="input-birthdate" class="form-input">
           </div>
           <div class="form-group" style="flex: 1;">
             <label class="form-label">Birth Time</label>
-            <input type="time" class="form-input">
+            <input type="time" id="input-birthtime" class="form-input">
           </div>
         </div>
         
         <div class="form-group">
           <label class="form-label">Birth Place</label>
-          <input type="text" class="form-input" placeholder="City, State">
+          <input type="text" id="input-birthplace" class="form-input" placeholder="City, State">
         </div>
         
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="For report delivery">
+          <input type="email" id="input-email" class="form-input" placeholder="For report delivery">
         </div>
         
         <div class="form-group">
@@ -3144,6 +3151,151 @@
         showNotification();
       }, Math.random() * 15000 + 25000); // Random 25-40 seconds
     }, 10000);
+    
+    // ============ AUTH & API FUNCTIONS ============
+    let currentUser = null;
+    
+    async function checkAuthStatus() {
+      try {
+        const response = await fetch('/api/auth/user');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            currentUser = data.user;
+            showLoggedInState(data.user);
+            await loadUserBirthData();
+          } else {
+            showLoggedOutState();
+          }
+        } else {
+          showLoggedOutState();
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        showLoggedOutState();
+      }
+    }
+    
+    function showLoggedInState(user) {
+      document.getElementById('login-btn').style.display = 'none';
+      const profileBtn = document.getElementById('user-profile-btn');
+      profileBtn.style.display = 'flex';
+      
+      const avatar = document.getElementById('user-avatar');
+      if (user.profileImageUrl) {
+        avatar.src = user.profileImageUrl;
+      } else {
+        avatar.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23d4a854"/><text x="50" y="60" text-anchor="middle" fill="white" font-size="40">' + (user.firstName || user.email || 'U').charAt(0).toUpperCase() + '</text></svg>';
+      }
+      
+      document.getElementById('user-name').textContent = user.firstName || user.email?.split('@')[0] || 'User';
+      
+      if (user.email && document.getElementById('input-email')) {
+        document.getElementById('input-email').value = user.email;
+      }
+    }
+    
+    function showLoggedOutState() {
+      document.getElementById('login-btn').style.display = 'block';
+      document.getElementById('user-profile-btn').style.display = 'none';
+    }
+    
+    function handleLogin() {
+      window.location.href = '/api/login';
+    }
+    
+    function handleLogout() {
+      window.location.href = '/api/logout';
+    }
+    
+    async function loadUserBirthData() {
+      if (!currentUser) return;
+      try {
+        const response = await fetch('/api/birth-data');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && data.data.length > 0) {
+            const birthInfo = data.data[0];
+            if (birthInfo.name) document.getElementById('input-name').value = birthInfo.name;
+            if (birthInfo.birthDate) document.getElementById('input-birthdate').value = birthInfo.birthDate;
+            if (birthInfo.birthTime) document.getElementById('input-birthtime').value = birthInfo.birthTime;
+            if (birthInfo.birthPlace) document.getElementById('input-birthplace').value = birthInfo.birthPlace;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load birth data:', error);
+      }
+    }
+    
+    async function saveBirthData() {
+      const name = document.getElementById('input-name').value;
+      const birthDate = document.getElementById('input-birthdate').value;
+      const birthTime = document.getElementById('input-birthtime').value;
+      const birthPlace = document.getElementById('input-birthplace').value;
+      
+      if (!name || !birthDate || !birthTime || !birthPlace) {
+        return false;
+      }
+      
+      if (!currentUser) {
+        localStorage.setItem('ssumitra_pending_birth_data', JSON.stringify({
+          name, birthDate, birthTime, birthPlace
+        }));
+        return true;
+      }
+      
+      try {
+        const response = await fetch('/api/birth-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, birthDate, birthTime, birthPlace })
+        });
+        
+        if (response.ok) {
+          console.log('Birth data saved successfully');
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to save birth data:', error);
+        return false;
+      }
+    }
+    
+    async function fetchUserReports() {
+      if (!currentUser) return [];
+      try {
+        const response = await fetch('/api/reports');
+        if (response.ok) {
+          const data = await response.json();
+          return data.success ? data.data : [];
+        }
+        return [];
+      } catch (error) {
+        console.error('Failed to fetch reports:', error);
+        return [];
+      }
+    }
+    
+    const originalStartScanning = startScanning;
+    startScanning = async function() {
+      const name = document.getElementById('input-name').value.trim();
+      const birthDate = document.getElementById('input-birthdate').value;
+      const birthTime = document.getElementById('input-birthtime').value;
+      const birthPlace = document.getElementById('input-birthplace').value.trim();
+      
+      if (!name || !birthDate || !birthTime || !birthPlace) {
+        alert('Please fill in all birth details');
+        return;
+      }
+      
+      await saveBirthData();
+      originalStartScanning();
+    };
+    
+    window.addEventListener('load', () => {
+      setTimeout(checkAuthStatus, 100);
+    });
   </script>
 </body>
 </html>
