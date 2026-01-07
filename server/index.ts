@@ -5,8 +5,8 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth/index.js";
 import { db } from "./db.js";
-import { birthData, reports, payments } from "../shared/schema.js";
-import { eq } from "drizzle-orm";
+import { birthData, reports, payments, users } from "../shared/schema.js";
+import { eq, sql, desc } from "drizzle-orm";
 
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
@@ -726,10 +726,158 @@ async function startServer() {
     }
   });
 
+  // ============================================
+  // ADMIN ROUTES
+  // ============================================
+
+  // Admin authentication middleware
+  const isAdmin = async (req: any, res: any, next: any) => {
+    if (!req.user || !req.user.claims) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+    
+    const userId = req.user.claims.sub;
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Admin access required" });
+    }
+    
+    req.adminUser = user;
+    next();
+  };
+
+  // Check if current user is admin
+  app.get("/api/admin/check", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      
+      // First-time setup: If no admins exist, make the first user who checks an admin
+      if (user) {
+        const [adminCount] = await db.select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(eq(users.role, 'admin'));
+        
+        if (Number(adminCount.count) === 0) {
+          // No admins exist - make this user the first admin
+          await db.update(users).set({ role: 'admin' }).where(eq(users.id, userId));
+          console.log(`🔐 First admin created: ${user.email || userId}`);
+          
+          // Refetch with updated role
+          const [updatedUser] = await db.select().from(users).where(eq(users.id, userId));
+          return res.json({
+            success: true,
+            isAdmin: true,
+            user: updatedUser,
+            message: "You have been set as the first admin!"
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        isAdmin: user?.role === 'admin',
+        user: user || null
+      });
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      res.status(500).json({ success: false, message: "Failed to check admin status" });
+    }
+  });
+
+  // Get admin dashboard stats
+  app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const [reportCount] = await db.select({ count: sql<number>`count(*)` }).from(reports);
+      const [paymentCount] = await db.select({ count: sql<number>`count(*)` }).from(payments);
+      const [revenueResult] = await db.select({ 
+        total: sql<number>`COALESCE(SUM(CASE WHEN verified = true THEN amount ELSE 0 END), 0)` 
+      }).from(payments);
+      
+      res.json({
+        success: true,
+        stats: {
+          totalUsers: Number(userCount.count),
+          totalReports: Number(reportCount.count),
+          totalPayments: Number(paymentCount.count),
+          totalRevenue: Number(revenueResult.total)
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch stats" });
+    }
+  });
+
+  // Get all users
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+      const allBirthData = await db.select().from(birthData);
+      
+      res.json({
+        success: true,
+        users: allUsers,
+        birthData: allBirthData
+      });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch users" });
+    }
+  });
+
+  // Update user role
+  app.put("/api/admin/users/:userId/role", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+      
+      if (!['user', 'admin'].includes(role)) {
+        return res.status(400).json({ success: false, message: "Invalid role" });
+      }
+      
+      await db.update(users).set({ role }).where(eq(users.id, userId));
+      
+      res.json({ success: true, message: "User role updated" });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ success: false, message: "Failed to update user role" });
+    }
+  });
+
+  // Get all reports
+  app.get("/api/admin/reports", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const allReports = await db.select().from(reports).orderBy(desc(reports.createdAt));
+      res.json({ success: true, reports: allReports });
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch reports" });
+    }
+  });
+
+  // Get all payments
+  app.get("/api/admin/payments", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const allPayments = await db.select().from(payments).orderBy(desc(payments.createdAt));
+      res.json({ success: true, payments: allPayments });
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch payments" });
+    }
+  });
+
+  // Serve admin.html for /admin route
+  app.get("/admin", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "admin.html"));
+  });
+
   app.use(express.static(path.join(process.cwd())));
 
   app.use((req, res, next) => {
-    if (!req.path.startsWith("/api")) {
+    if (!req.path.startsWith("/api") && req.path !== "/admin") {
       res.sendFile(path.join(process.cwd(), "index.html"));
     } else {
       next();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ssumitra-v2';
+const CACHE_NAME = 'ssumitra-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -50,6 +50,12 @@ self.addEventListener('fetch', (event) => {
   
   // Skip API requests - always fetch fresh
   if (event.request.url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
+  // Skip admin pages - always fetch fresh (not part of PWA)
+  if (event.request.url.includes('/admin')) {
     event.respondWith(fetch(event.request));
     return;
   }
