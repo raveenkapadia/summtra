@@ -7,7 +7,8 @@ channel = "stable-25_05"
 
 [deployment]
 run = ["sh", "-c", "npx serve -s . -l 3000"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "static"
+publicDir = "."
 
 [[ports]]
 localPort = 5000
