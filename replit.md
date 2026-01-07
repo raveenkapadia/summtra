@@ -20,6 +20,10 @@ Preferred communication style: Simple, everyday language.
 - **Mobile-First Design**: Fixed 375px viewport targeting mobile devices with responsive adaptations
 - **Manifest**: `manifest.json` configures standalone app behavior with portrait orientation
 - **Icon Generation**: Utility HTML tool (`generate-icons.html`) creates PWA icons in required sizes
+- **Form Input Design**:
+  - Birth date uses DD/MM/YYYY format via three dropdown selects (Day, Month, Year) - standard Indian format
+  - Birth place uses Google Places Autocomplete for accurate coordinate capture
+  - Coordinates stored in hidden fields and passed to API for precise astrology calculations
 
 **Design Rationale**: Framework-free approach keeps the frontend lightweight and fast-loading, critical for a conversion-optimized landing page with PWA capabilities.
 
