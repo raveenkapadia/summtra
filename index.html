@@ -995,6 +995,43 @@
     .form-input:focus { outline: none; border-color: var(--gold); }
     .form-input::placeholder { color: var(--text-dim); }
     
+    /* Google Places Autocomplete Dropdown Styling */
+    .pac-container {
+      background-color: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      margin-top: 4px;
+      font-family: 'Montserrat', sans-serif;
+      z-index: 10000 !important;
+    }
+    .pac-item {
+      padding: 10px 14px;
+      color: var(--text);
+      cursor: pointer;
+      border-top: 1px solid rgba(212, 168, 84, 0.1);
+    }
+    .pac-item:first-child {
+      border-top: none;
+    }
+    .pac-item:hover {
+      background-color: rgba(212, 168, 84, 0.15);
+    }
+    .pac-item-selected {
+      background-color: rgba(212, 168, 84, 0.2);
+    }
+    .pac-icon {
+      display: none;
+    }
+    .pac-item-query {
+      color: var(--gold);
+      font-weight: 500;
+    }
+    .pac-matched {
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+    
     /* ============ TOGGLE SWITCH ============ */
     .scope-toggle {
       display: flex;
@@ -2501,20 +2538,44 @@
           <input type="text" id="input-name" class="form-input" placeholder="As per birth certificate">
         </div>
         
-        <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1;">
-            <label class="form-label">Birth Date</label>
-            <input type="date" id="input-birthdate" class="form-input">
-          </div>
-          <div class="form-group" style="flex: 1;">
-            <label class="form-label">Birth Time</label>
-            <input type="time" id="input-birthtime" class="form-input">
+        <div class="form-group">
+          <label class="form-label">Birth Date (DD/MM/YYYY)</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="input-birthday" class="form-input" style="flex: 1; padding: 10px 8px;">
+              <option value="">Day</option>
+            </select>
+            <select id="input-birthmonth" class="form-input" style="flex: 1.2; padding: 10px 8px;">
+              <option value="">Month</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <select id="input-birthyear" class="form-input" style="flex: 1; padding: 10px 8px;">
+              <option value="">Year</option>
+            </select>
           </div>
         </div>
         
         <div class="form-group">
+          <label class="form-label">Birth Time</label>
+          <input type="time" id="input-birthtime" class="form-input">
+        </div>
+        
+        <div class="form-group">
           <label class="form-label">Birth Place</label>
-          <input type="text" id="input-birthplace" class="form-input" placeholder="City, State">
+          <input type="text" id="input-birthplace" class="form-input" placeholder="Start typing city name...">
+          <input type="hidden" id="input-latitude">
+          <input type="hidden" id="input-longitude">
+          <input type="hidden" id="input-place-formatted">
         </div>
         
         <div class="form-group">
@@ -2875,6 +2936,101 @@
       setTimeout(() => { document.getElementById('loading').classList.add('hidden'); }, 1800);
     });
     
+    // Initialize date dropdowns
+    function initializeDateDropdowns() {
+      const daySelect = document.getElementById('input-birthday');
+      const yearSelect = document.getElementById('input-birthyear');
+      
+      for (let d = 1; d <= 31; d++) {
+        const option = document.createElement('option');
+        option.value = d.toString().padStart(2, '0');
+        option.textContent = d;
+        daySelect.appendChild(option);
+      }
+      
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 1920; y--) {
+        const option = document.createElement('option');
+        option.value = y.toString();
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      }
+    }
+    
+    function getBirthDate() {
+      const day = document.getElementById('input-birthday').value;
+      const month = document.getElementById('input-birthmonth').value;
+      const year = document.getElementById('input-birthyear').value;
+      if (day && month && year) {
+        return `${year}-${month}-${day}`;
+      }
+      return '';
+    }
+    
+    function setBirthDate(dateStr) {
+      if (!dateStr) return;
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        document.getElementById('input-birthyear').value = parts[0];
+        document.getElementById('input-birthmonth').value = parts[1];
+        document.getElementById('input-birthday').value = parts[2];
+      }
+    }
+    
+    let placesAutocomplete = null;
+    let selectedPlaceCoords = { lat: null, lng: null };
+    
+    function initPlacesAutocomplete() {
+      const input = document.getElementById('input-birthplace');
+      if (!input || !window.google || !google.maps || !google.maps.places) {
+        console.log('Google Places not ready, retrying...');
+        setTimeout(initPlacesAutocomplete, 500);
+        return;
+      }
+      
+      placesAutocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['(cities)'],
+        fields: ['formatted_address', 'geometry', 'name']
+      });
+      
+      placesAutocomplete.addListener('place_changed', function() {
+        const place = placesAutocomplete.getPlace();
+        if (place.geometry && place.geometry.location) {
+          selectedPlaceCoords.lat = place.geometry.location.lat();
+          selectedPlaceCoords.lng = place.geometry.location.lng();
+          document.getElementById('input-latitude').value = selectedPlaceCoords.lat;
+          document.getElementById('input-longitude').value = selectedPlaceCoords.lng;
+          document.getElementById('input-place-formatted').value = place.formatted_address || place.name;
+          console.log('📍 Place selected:', place.name, selectedPlaceCoords);
+        }
+      });
+      
+      console.log('✅ Google Places Autocomplete initialized');
+    }
+    
+    async function loadGooglePlacesAPI() {
+      try {
+        const response = await fetch('/api/config/places');
+        const data = await response.json();
+        if (data.success && data.apiKey) {
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places&callback=initPlacesAutocomplete`;
+          script.async = true;
+          script.defer = true;
+          document.head.appendChild(script);
+        } else {
+          console.warn('Google Places API key not available');
+        }
+      } catch (error) {
+        console.error('Failed to load Google Places API:', error);
+      }
+    }
+    
+    window.addEventListener('load', () => {
+      initializeDateDropdowns();
+      loadGooglePlacesAPI();
+    });
+    
     // Onboarding
     let currentSlide = 0;
     const totalSlides = 7;
@@ -2965,13 +3121,21 @@
       // Collect form data
       const name = document.getElementById('input-name')?.value || 'Test User';
       const email = document.getElementById('input-email')?.value || 'test@example.com';
-      const birthDate = document.getElementById('input-birthdate')?.value;
+      const birthDate = getBirthDate();
       const birthTime = document.getElementById('input-birthtime')?.value;
       const birthPlace = document.getElementById('input-birthplace')?.value;
+      const latitude = document.getElementById('input-latitude')?.value;
+      const longitude = document.getElementById('input-longitude')?.value;
 
       if (!birthDate || !birthTime || !birthPlace) {
         overlay.classList.remove('active');
         alert('Please fill in all birth details (date, time, and place)');
+        return;
+      }
+      
+      if (!latitude || !longitude) {
+        overlay.classList.remove('active');
+        alert('Please select a city from the dropdown suggestions to ensure accurate coordinates');
         return;
       }
 
@@ -3007,6 +3171,8 @@
             birthDate,
             birthTime,
             birthPlace,
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
             reportType
           })
         });
@@ -3303,9 +3469,11 @@
           if (data.success && data.data && data.data.length > 0) {
             const birthInfo = data.data[0];
             if (birthInfo.name) document.getElementById('input-name').value = birthInfo.name;
-            if (birthInfo.birthDate) document.getElementById('input-birthdate').value = birthInfo.birthDate;
+            if (birthInfo.birthDate) setBirthDate(birthInfo.birthDate);
             if (birthInfo.birthTime) document.getElementById('input-birthtime').value = birthInfo.birthTime;
             if (birthInfo.birthPlace) document.getElementById('input-birthplace').value = birthInfo.birthPlace;
+            if (birthInfo.latitude) document.getElementById('input-latitude').value = birthInfo.latitude;
+            if (birthInfo.longitude) document.getElementById('input-longitude').value = birthInfo.longitude;
           }
         }
       } catch (error) {
@@ -3315,9 +3483,11 @@
     
     async function saveBirthData() {
       const name = document.getElementById('input-name').value;
-      const birthDate = document.getElementById('input-birthdate').value;
+      const birthDate = getBirthDate();
       const birthTime = document.getElementById('input-birthtime').value;
       const birthPlace = document.getElementById('input-birthplace').value;
+      const latitude = document.getElementById('input-latitude').value;
+      const longitude = document.getElementById('input-longitude').value;
       
       if (!name || !birthDate || !birthTime || !birthPlace) {
         return false;
@@ -3325,7 +3495,7 @@
       
       if (!currentUser) {
         localStorage.setItem('ssumitra_pending_birth_data', JSON.stringify({
-          name, birthDate, birthTime, birthPlace
+          name, birthDate, birthTime, birthPlace, latitude, longitude
         }));
         return true;
       }
@@ -3335,7 +3505,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ name, birthDate, birthTime, birthPlace })
+          body: JSON.stringify({ name, birthDate, birthTime, birthPlace, latitude, longitude })
         });
         
         if (response.ok) {
@@ -3367,7 +3537,7 @@
     const originalStartScanning = startScanning;
     startScanning = async function() {
       const name = document.getElementById('input-name').value.trim();
-      const birthDate = document.getElementById('input-birthdate').value;
+      const birthDate = getBirthDate();
       const birthTime = document.getElementById('input-birthtime').value;
       const birthPlace = document.getElementById('input-birthplace').value.trim();
       

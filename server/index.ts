@@ -39,6 +39,14 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  app.get("/api/config/places", (req, res) => {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, message: "Google API key not configured" });
+    }
+    res.json({ success: true, apiKey });
+  });
+
   app.post("/api/birth-data", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -279,7 +287,7 @@ async function startServer() {
   // NOW USES REAL APIs for actual astrocartography data!
   app.post("/api/test-report", async (req, res) => {
     try {
-      const { name, email, birthDate, birthTime, birthPlace, reportType = "india" } = req.body;
+      const { name, email, birthDate, birthTime, birthPlace, latitude, longitude, reportType = "india" } = req.body;
 
       if (!name || !email || !birthDate || !birthTime || !birthPlace) {
         return res.status(400).json({ 
@@ -295,12 +303,32 @@ async function startServer() {
       console.log(`📍 Birth: ${birthDate} at ${birthTime} in ${birthPlace}`);
       console.log(`📊 Report Type: ${reportType}`);
 
-      // Step 1: Get coordinates and timezone from city name
-      console.log("\n📍 Step 1: Geocoding birth place...");
-      const locationData = await getLocationData(birthPlace);
-      console.log(`   ✅ Found: ${locationData.formattedAddress}`);
-      console.log(`   📌 Coordinates: ${locationData.lat}, ${locationData.lng}`);
-      console.log(`   🕐 Timezone: ${locationData.timezone}`);
+      // Step 1: Get coordinates - use frontend-provided coords or fallback to geocoding
+      let locationData: any;
+      if (latitude && longitude) {
+        console.log("\n📍 Step 1: Using provided coordinates...");
+        console.log(`   ✅ Coordinates from Places Autocomplete: ${latitude}, ${longitude}`);
+        locationData = {
+          lat: parseFloat(latitude),
+          lng: parseFloat(longitude),
+          formattedAddress: birthPlace,
+          timezone: 'Asia/Calcutta'
+        };
+        // Get timezone for the coordinates
+        try {
+          const tzData = await getLocationData(birthPlace);
+          locationData.timezone = tzData.timezone;
+          console.log(`   🕐 Timezone: ${locationData.timezone}`);
+        } catch (e) {
+          console.log(`   🕐 Using default timezone: Asia/Calcutta`);
+        }
+      } else {
+        console.log("\n📍 Step 1: Geocoding birth place...");
+        locationData = await getLocationData(birthPlace);
+        console.log(`   ✅ Found: ${locationData.formattedAddress}`);
+        console.log(`   📌 Coordinates: ${locationData.lat}, ${locationData.lng}`);
+        console.log(`   🕐 Timezone: ${locationData.timezone}`);
+      }
 
       // Step 2: Prepare birth data for astrology API
       const birthData = {
