@@ -30,8 +30,30 @@ async function apiCall(method, endpoint, data = null) {
     return { success: true, data: response.data };
   } catch (error) {
     console.error(`❌ API Error (${endpoint}):`, error.response?.data?.message || error.message);
+    console.error(`   Details:`, JSON.stringify(error.response?.data || error.message));
     return { success: false, error: error.response?.data || error.message };
   }
+}
+
+// Convert simple birthData to API subject format
+function formatBirthDataForAPI(birthData) {
+  const [year, month, day] = birthData.date.split('-').map(Number);
+  const [hour, minute] = birthData.time.split(':').map(Number);
+  
+  return {
+    subject: {
+      birth_data: {
+        year,
+        month,
+        day,
+        hour,
+        minute: minute || 0,
+        longitude: birthData.longitude,
+        latitude: birthData.latitude,
+        timezone: birthData.timezone || 'Asia/Kolkata'
+      }
+    }
+  };
 }
 
 // ============================================
@@ -40,12 +62,10 @@ async function apiCall(method, endpoint, data = null) {
 async function getAstrocartographyLines(birthData) {
   console.log('📡 [1/9] Fetching astrocartography lines (all planets)...');
   
+  const formattedData = formatBirthDataForAPI(birthData);
+  
   const result = await apiCall('POST', '/api/v3/astrocartography/lines', {
-    datetime: `${birthData.date}T${birthData.time}:00`,
-    latitude: birthData.latitude,
-    longitude: birthData.longitude,
-    timezone: birthData.timezone,
-    // Request ALL planets
+    ...formattedData,
     planets: [
       'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
       'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
@@ -63,16 +83,22 @@ async function getAstrocartographyLines(birthData) {
 async function findPowerZones(birthData, options = {}) {
   console.log(`📡 [2/9] Finding power zones (${options.region || 'global'})...`);
   
+  const formattedData = formatBirthDataForAPI(birthData);
+  
   const result = await apiCall('POST', '/api/v3/astrocartography/power-zones', {
-    datetime: `${birthData.date}T${birthData.time}:00`,
-    latitude: birthData.latitude,
-    longitude: birthData.longitude,
-    timezone: birthData.timezone,
+    ...formattedData,
     region: options.region || 'global',
     limit: options.limit || 25
   });
   
-  if (result.success) console.log(`   ✅ Power zones received (${result.data?.length || 0} cities)`);
+  // Extract power_zones from response
+  if (result.success && result.data?.power_zones) {
+    const zones = result.data.power_zones;
+    console.log(`   ✅ Power zones received (${zones.length} zones)`);
+    return { success: true, data: zones };
+  }
+  
+  if (result.success) console.log(`   ✅ Power zones received (${result.data?.length || 0} zones)`);
   return result;
 }
 
