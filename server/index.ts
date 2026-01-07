@@ -178,6 +178,31 @@ async function startServer() {
     }
   });
 
+  // TEST MODE: Bypass payment for testing (only works when Razorpay not configured)
+  app.post("/api/test-bypass-payment", async (req: any, res) => {
+    try {
+      // Only allow bypass when Razorpay is NOT configured (development/testing)
+      if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        return res.status(403).json({
+          success: false,
+          message: "Test bypass not available - use real payment"
+        });
+      }
+      
+      console.log("🧪 TEST MODE: Bypassing payment for testing");
+      
+      res.json({
+        success: true,
+        message: "Payment bypassed for testing",
+        testMode: true,
+        payment_id: "test_payment_" + Date.now(),
+      });
+    } catch (error) {
+      console.error("Error in test bypass:", error);
+      res.status(500).json({ success: false, message: "Test bypass failed" });
+    }
+  });
+
   // Generate report endpoint (authenticated)
   app.post("/api/generate-report", isAuthenticated, async (req: any, res) => {
     try {
