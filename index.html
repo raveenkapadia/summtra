@@ -3161,33 +3161,23 @@
       document.getElementById('scope-both').classList.toggle('active', scope === 'both');
       
       const hint = document.getElementById('scope-hint');
-      const price = document.getElementById('price-text');
-      const originalPrice = document.getElementById('price-original');
-      const discountBadge = document.getElementById('discount-badge');
       const discover = document.getElementById('discover-text');
       
       if (scope === 'india') {
         hint.textContent = 'Top 10 cities within India';
         hint.classList.remove('highlight');
-        originalPrice.textContent = '₹1,999';
-        price.textContent = '₹999';
-        discountBadge.textContent = '50% OFF';
         discover.textContent = 'Top 10 Indian cities ranked';
       } else if (scope === 'world') {
         hint.textContent = 'Top 10 cities worldwide';
         hint.classList.remove('highlight');
-        originalPrice.textContent = '₹1,999';
-        price.textContent = '₹999';
-        discountBadge.textContent = '50% OFF';
         discover.textContent = 'Top 10 cities worldwide ranked';
       } else {
         hint.textContent = '🎁 Best Value! India + Worldwide (20 cities)';
         hint.classList.add('highlight');
-        originalPrice.textContent = '₹2,499';
-        price.textContent = '₹1,499';
-        discountBadge.textContent = '40% OFF';
         discover.textContent = 'Top 10 Indian + 10 International cities';
       }
+      
+      updatePriceDisplay();
     }
     
     // Navigation
@@ -3273,6 +3263,54 @@
       complete: { icon: '✨', title: 'Complete Report' }
     };
     
+    // Pricing configuration
+    const PRICING = {
+      education: { india: 699, worldwide: 999, both: 1299 },
+      career: { india: 699, worldwide: 999, both: 1299 },
+      love: { india: 699, worldwide: 999, both: 1299 },
+      relocation: { india: 699, worldwide: 999, both: 1299 },
+      wealth: { india: 999, worldwide: 1499, both: 1799 },
+      complete: { india: 1299, worldwide: 1799, both: 2499 }
+    };
+    
+    const ORIGINAL_PRICING = {
+      education: { india: 1399, worldwide: 1999, both: 2599 },
+      career: { india: 1399, worldwide: 1999, both: 2599 },
+      love: { india: 1399, worldwide: 1999, both: 2599 },
+      relocation: { india: 1399, worldwide: 1999, both: 2599 },
+      wealth: { india: 1999, worldwide: 2999, both: 3599 },
+      complete: { india: 2599, worldwide: 3599, both: 4999 }
+    };
+    
+    function getPrice(goal, scope) {
+      const goalKey = goal || 'complete';
+      const scopeKey = scope === 'world' ? 'worldwide' : scope;
+      return PRICING[goalKey]?.[scopeKey] || PRICING.complete.both;
+    }
+    
+    function getOriginalPrice(goal, scope) {
+      const goalKey = goal || 'complete';
+      const scopeKey = scope === 'world' ? 'worldwide' : scope;
+      return ORIGINAL_PRICING[goalKey]?.[scopeKey] || ORIGINAL_PRICING.complete.both;
+    }
+    
+    function updatePriceDisplay() {
+      const goal = reportGoal || sessionStorage.getItem('selectedGoal') || 'complete';
+      const scope = searchScope || 'india';
+      
+      const price = getPrice(goal, scope);
+      const originalPrice = getOriginalPrice(goal, scope);
+      const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+      
+      const priceEl = document.getElementById('price-text');
+      const originalPriceEl = document.getElementById('price-original');
+      const discountBadge = document.getElementById('discount-badge');
+      
+      if (priceEl) priceEl.textContent = '₹' + price.toLocaleString('en-IN');
+      if (originalPriceEl) originalPriceEl.textContent = '₹' + originalPrice.toLocaleString('en-IN');
+      if (discountBadge) discountBadge.textContent = discount + '% OFF';
+    }
+    
     function toggleGoalDropdown() {
       const dropdown = document.getElementById('goalDropdown');
       dropdown.classList.toggle('show');
@@ -3285,6 +3323,7 @@
       document.getElementById('selectedGoalIcon').textContent = icon;
       document.getElementById('selectedGoalTitle').textContent = title;
       document.getElementById('goalDropdown').classList.remove('show');
+      updatePriceDisplay();
     }
     
     function loadFormGoal() {
@@ -3294,6 +3333,7 @@
         document.getElementById('selectedGoalIcon').textContent = goalData[passedGoal].icon;
         document.getElementById('selectedGoalTitle').textContent = goalData[passedGoal].title;
       }
+      updatePriceDisplay();
     }
     
     // Close dropdown when clicking outside
