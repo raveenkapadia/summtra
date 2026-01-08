@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ssumitra-v15';
+const CACHE_NAME = 'ssumitra-v16';
 const urlsToCache = [
   '/',
   '/index.html',
