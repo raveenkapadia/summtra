@@ -40,11 +40,22 @@ Preferred communication style: Simple, everyday language.
   - `/api/birth-data` - Submit/retrieve user birth information (authenticated)
   - `/api/user-profile` - Get authenticated user profile
   - `/api/reports` - Fetch user's generated reports
+  - `/api/astro-map-data` - Get astrocartography lines for map visualization (public with personalized data for authenticated users)
   - `/api/create-order` - Create Razorpay payment order
   - `/api/verify-payment` - Verify payment and store record
   - `/api/login` - Redirect to Replit Auth login
   - `/api/logout` - Clear session and logout
   - `/api/auth/user` - Get current authenticated user
+
+- **Astrocartography Map** (`/astro-map`):
+  - Interactive world map using Leaflet.js with dark CartoDB tiles
+  - Displays planetary lines (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto)
+  - Four line types per planet: Ascendant (AC), Descendant (DC), Midheaven (MC), Imum Coeli (IC)
+  - Color-coded lines with tooltips and popups showing planetary meanings
+  - Legend showing all planets and line type styles
+  - Demo mode for unauthenticated users with sample lines
+  - Personalized lines for authenticated users with birth data
+  - Falls back to demo lines if RapidAPI astrology endpoint fails
 
 - **Authentication**: Replit Auth integration using OpenID Connect
   - Session management via PostgreSQL-backed connect-pg-simple

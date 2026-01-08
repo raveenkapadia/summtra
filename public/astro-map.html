@@ -405,9 +405,14 @@
           return;
         }
         
-        updateUserInfo(data.user, data.birth);
+        updateUserInfo(data.user, data.birth, data.isDemo);
         drawPlanetaryLines(data.lines);
         buildLegend(data.lines);
+        
+        // Show demo banner if this is sample data
+        if (data.isDemo) {
+          showDemoBanner(data.message);
+        }
         
         document.getElementById('loadingOverlay').classList.add('hidden');
         
@@ -417,7 +422,32 @@
       }
     }
     
-    function updateUserInfo(user, birth) {
+    function showDemoBanner(message) {
+      const banner = document.createElement('div');
+      banner.id = 'demoBanner';
+      banner.style.cssText = `
+        position: absolute;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.9), rgba(184, 134, 11, 0.9));
+        color: #0a0a1a;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-family: 'Cinzel', serif;
+        font-size: 0.9rem;
+        z-index: 1001;
+        text-align: center;
+        max-width: 90%;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      `;
+      banner.innerHTML = `
+        <strong>Sample Map</strong> - <a href="/" style="color: #0a0a1a; text-decoration: underline;">Enter your birth details</a> to see your personalized lines
+      `;
+      document.querySelector('.map-container').appendChild(banner);
+    }
+    
+    function updateUserInfo(user, birth, isDemo = false) {
       if (user) {
         document.getElementById('userName').textContent = user.name || 'You';
       }

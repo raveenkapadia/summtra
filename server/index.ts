@@ -284,10 +284,19 @@ async function startServer() {
         }
       }
       
-      // Not logged in or no birth data - return demo lines
+      // Not logged in or no birth data - return sample demo lines for preview
+      const sampleBirth = {
+        latitude: 28.6139, // Delhi coordinates as sample
+        longitude: 77.2090
+      };
+      
       return res.json({ 
-        success: false, 
-        message: "No birth data found. Please enter your birth details first." 
+        success: true, 
+        isDemo: true,
+        user: { name: 'Explorer' },
+        birth: null,
+        lines: generateDemoLines(sampleBirth),
+        message: "This is a sample map. Enter your birth details to see your personalized planetary lines."
       });
       
     } catch (error: any) {
