@@ -1,0 +1,87 @@
+const GOAL_FOCUS = {
+  'education': {
+    theme: 'academic success, learning, and intellectual growth',
+    keywords: 'studies, exams, research, knowledge, university, scholarship, teachers',
+    planets: 'Mercury (communication & learning), Jupiter (wisdom & higher education)',
+    scoreBoosts: {
+      'Mercury-MC': 20,
+      'Mercury-AC': 15,
+      'Jupiter-MC': 20,
+      'Jupiter-AC': 15,
+      'Sun-MC': 10,
+      'Saturn-MC': 5
+    }
+  },
+  
+  'career': {
+    theme: 'professional success, job opportunities, and career advancement',
+    keywords: 'promotion, leadership, business, income, recognition, achievements',
+    planets: 'Sun (recognition & authority), Saturn (career & discipline), Mars (ambition & drive)',
+    scoreBoosts: {
+      'Sun-MC': 25,
+      'Sun-AC': 15,
+      'Saturn-MC': 15,
+      'Mars-MC': 10,
+      'Jupiter-MC': 15,
+      'Mercury-MC': 10
+    }
+  },
+  
+  'love': {
+    theme: 'romantic relationships, finding a partner, and love life',
+    keywords: 'soulmate, marriage, romance, connection, attraction, partnership',
+    planets: 'Venus (love & beauty), Moon (emotions & nurturing), Neptune (spiritual connection)',
+    scoreBoosts: {
+      'Venus-AC': 25,
+      'Venus-DC': 25,
+      'Venus-MC': 10,
+      'Moon-AC': 15,
+      'Moon-DC': 15,
+      'Mars-DC': 5
+    }
+  },
+  
+  'settlement': {
+    theme: 'settling down, finding the right place to live, and overall life quality',
+    keywords: 'home, comfort, community, stability, environment, opportunities',
+    planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)',
+    scoreBoosts: {
+      'Moon-IC': 25,
+      'Jupiter-IC': 20,
+      'Venus-IC': 15,
+      'Sun-IC': 10,
+      'Moon-AC': 10,
+      'Saturn-IC': -10
+    }
+  },
+  
+  'wealth': {
+    theme: 'financial prosperity, abundance, and material success',
+    keywords: 'money, investments, business, income, property, abundance, prosperity',
+    planets: 'Jupiter (luck & expansion), Venus (money & luxury), Part of Fortune (prosperity)',
+    scoreBoosts: {
+      'Jupiter-MC': 25,
+      'Sun-MC': 20,
+      'Venus-MC': 15,
+      'Mercury-MC': 10,
+      'Jupiter-AC': 10,
+      'Saturn-MC': 10
+    }
+  },
+  
+  'complete': {
+    theme: 'overall life success including career, love, wealth, and personal growth',
+    keywords: 'holistic success, balance, all life areas, opportunities, potential',
+    planets: 'All planetary influences for complete life transformation',
+    scoreBoosts: {
+      'Jupiter-MC': 10,
+      'Jupiter-AC': 10,
+      'Venus-AC': 10,
+      'Venus-MC': 10,
+      'Sun-MC': 10,
+      'Sun-AC': 10,
+      'Moon-AC': 5,
+      'Moon-IC': 5
+    }
+  }
+};
