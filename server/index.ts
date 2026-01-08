@@ -11,7 +11,7 @@ import { eq, sql, desc } from "drizzle-orm";
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
 const { getLocationData, findNearestIndianCity, findNearestInternationalCity, getTimezone } = require("./services/geocodingService.js");
-const { generateCityInterpretations, getZodiacSign } = require("./services/claudeService.js");
+const { generateCityInterpretations, getZodiacSign, applyGoalScoreBoost } = require("./services/claudeService.js");
 const { getAstrocartographyLines } = require("./services/astrologyApi.js");
 
 const app = express();
@@ -709,6 +709,22 @@ async function startServer() {
         .map(formatInternationalZone)
         .filter((city: any) => city !== null);
 
+      // Apply goal-based score boosts to city rankings
+      console.log(`\n🎯 Applying goal-based score boosts for: ${reportGoal.toUpperCase()}`);
+      indiaCities = indiaCities.map((city: any) => ({
+        ...city,
+        score: applyGoalScoreBoost(city.score, city.lines || [], reportGoal)
+      }));
+      internationalCities = internationalCities.map((city: any) => ({
+        ...city,
+        score: applyGoalScoreBoost(city.score, city.lines || [], reportGoal)
+      }));
+
+      // Re-sort cities by adjusted score
+      indiaCities.sort((a: any, b: any) => b.score - a.score);
+      internationalCities.sort((a: any, b: any) => b.score - a.score);
+      console.log(`   ✅ Scores adjusted and cities re-ranked`);
+
       // Step 6: Generate AI interpretations using Claude
       const userData = { name, birthDate, email, reportGoal };
       const zodiac = getZodiacSign(birthDate);
@@ -827,7 +843,7 @@ async function startServer() {
   });
 
   // Generate demo results for quick preview
-  function generateDemoResults(name: string, birthDate: string, birthTime: string, birthPlace: string, reportType: string, locationData: any) {
+  function generateDemoResults(name: string, birthDate: string, birthTime: string, birthPlace: string, reportType: string, locationData: any, reportGoal: string = 'complete') {
     // Parse birth data to create personalized demo results
     const birthMonth = new Date(birthDate).getMonth();
     const birthHour = parseInt(birthTime.split(':')[0]);
@@ -887,19 +903,29 @@ async function startServer() {
       internationalCities[4].score = 94;
     }
 
-    // Sort by score
-    indiaCities.sort((a, b) => b.score - a.score);
-    internationalCities.sort((a, b) => b.score - a.score);
+    // Apply goal-based score boosts
+    const adjustedIndiaCities = indiaCities.map(city => ({
+      ...city,
+      score: applyGoalScoreBoost(city.score, city.lines || [], reportGoal)
+    }));
+    const adjustedIntlCities = internationalCities.map(city => ({
+      ...city,
+      score: applyGoalScoreBoost(city.score, city.lines || [], reportGoal)
+    }));
+
+    // Sort by adjusted score
+    adjustedIndiaCities.sort((a, b) => b.score - a.score);
+    adjustedIntlCities.sort((a, b) => b.score - a.score);
 
     // Calculate top match based on report type
     let topMatch: number;
     if (reportType === 'india') {
-      topMatch = indiaCities[0].score;
+      topMatch = adjustedIndiaCities[0].score;
     } else if (reportType === 'international') {
-      topMatch = internationalCities[0].score;
+      topMatch = adjustedIntlCities[0].score;
     } else {
       // combo - take the highest from both
-      topMatch = Math.max(indiaCities[0].score, internationalCities[0].score);
+      topMatch = Math.max(adjustedIndiaCities[0].score, adjustedIntlCities[0].score);
     }
 
     return {
@@ -913,10 +939,11 @@ async function startServer() {
         avoidCities: 3,
         topMatch
       },
-      indiaCities: reportType === 'international' ? [] : indiaCities,
-      internationalCities: reportType === 'india' ? [] : internationalCities,
+      indiaCities: reportType === 'international' ? [] : adjustedIndiaCities,
+      internationalCities: reportType === 'india' ? [] : adjustedIntlCities,
       avoidCities,
-      reportType
+      reportType,
+      reportGoal
     };
   }
 

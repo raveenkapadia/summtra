@@ -101,39 +101,111 @@ function getZodiacSign(birthDate) {
 // INTERPRETATION GENERATORS
 // ============================================
 
-// Goal-specific focus areas for interpretations
+// Goal-specific focus areas for interpretations with score boosts
 const GOAL_FOCUS = {
   'education': {
     theme: 'academic success, learning, and intellectual growth',
     keywords: 'studies, exams, research, knowledge, university, scholarship, teachers',
-    planets: 'Mercury (communication & learning), Jupiter (wisdom & higher education)'
+    planets: 'Mercury (communication & learning), Jupiter (wisdom & higher education)',
+    scoreBoosts: {
+      'Mercury-MC': 20,
+      'Mercury-AC': 15,
+      'Jupiter-MC': 20,
+      'Jupiter-AC': 15,
+      'Sun-MC': 10,
+      'Saturn-MC': 5
+    }
   },
   'career': {
     theme: 'professional success, job opportunities, and career advancement',
     keywords: 'promotion, leadership, business, income, recognition, achievements',
-    planets: 'Sun (recognition & authority), Saturn (career & discipline), Mars (ambition & drive)'
+    planets: 'Sun (recognition & authority), Saturn (career & discipline), Mars (ambition & drive)',
+    scoreBoosts: {
+      'Sun-MC': 25,
+      'Sun-AC': 15,
+      'Saturn-MC': 15,
+      'Mars-MC': 10,
+      'Jupiter-MC': 15,
+      'Mercury-MC': 10
+    }
   },
   'love': {
     theme: 'romantic relationships, finding a partner, and love life',
     keywords: 'soulmate, marriage, romance, connection, attraction, partnership',
-    planets: 'Venus (love & beauty), Moon (emotions & nurturing), Neptune (spiritual connection)'
+    planets: 'Venus (love & beauty), Moon (emotions & nurturing), Neptune (spiritual connection)',
+    scoreBoosts: {
+      'Venus-AC': 25,
+      'Venus-DC': 25,
+      'Venus-MC': 10,
+      'Moon-AC': 15,
+      'Moon-DC': 15,
+      'Mars-DC': 5
+    }
   },
   'relocation': {
     theme: 'settling down, finding the right place to live, and overall life quality',
     keywords: 'home, comfort, community, stability, environment, opportunities',
-    planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)'
+    planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)',
+    scoreBoosts: {
+      'Moon-IC': 25,
+      'Jupiter-IC': 20,
+      'Venus-IC': 15,
+      'Sun-IC': 10,
+      'Moon-AC': 10,
+      'Saturn-IC': -10
+    }
   },
   'wealth': {
     theme: 'financial prosperity, abundance, and material success',
     keywords: 'money, investments, business, income, property, abundance, prosperity',
-    planets: 'Jupiter (luck & expansion), Venus (money & luxury), Part of Fortune (prosperity)'
+    planets: 'Jupiter (luck & expansion), Venus (money & luxury), Part of Fortune (prosperity)',
+    scoreBoosts: {
+      'Jupiter-MC': 25,
+      'Sun-MC': 20,
+      'Venus-MC': 15,
+      'Mercury-MC': 10,
+      'Jupiter-AC': 10,
+      'Saturn-MC': 10
+    }
   },
   'complete': {
     theme: 'overall life success including career, love, wealth, and personal growth',
     keywords: 'holistic success, balance, all life areas, opportunities, potential',
-    planets: 'All planetary influences for complete life transformation'
+    planets: 'All planetary influences for complete life transformation',
+    scoreBoosts: {
+      'Jupiter-MC': 10,
+      'Jupiter-AC': 10,
+      'Venus-AC': 10,
+      'Venus-MC': 10,
+      'Sun-MC': 10,
+      'Sun-AC': 10,
+      'Moon-AC': 5,
+      'Moon-IC': 5
+    }
   }
 };
+
+/**
+ * Apply goal-based score boost to a city based on its planetary lines
+ * @param {number} baseScore - The original city score
+ * @param {Array} lines - Array of planetary line strings (e.g., ['Jupiter-MC', 'Venus-AC'])
+ * @param {string} goal - The selected goal (education, career, love, etc.)
+ * @returns {number} - Adjusted score (capped at 100)
+ */
+function applyGoalScoreBoost(baseScore, lines, goal) {
+  const goalInfo = GOAL_FOCUS[goal] || GOAL_FOCUS['complete'];
+  const scoreBoosts = goalInfo.scoreBoosts || {};
+  
+  let totalBoost = 0;
+  for (const line of lines) {
+    if (scoreBoosts[line]) {
+      totalBoost += scoreBoosts[line];
+    }
+  }
+  
+  const adjustedScore = baseScore + totalBoost;
+  return Math.min(100, Math.max(0, adjustedScore));
+}
 
 /**
  * Generate quick, personalized city interpretation (2-3 sentences)
@@ -738,8 +810,10 @@ module.exports = {
   generateQuickCityInterpretation,
   generateCityInterpretations,
   getZodiacSign,
+  applyGoalScoreBoost,
   ALL_PLANETS,
   PLANET_SYMBOLS,
   PLANET_MEANINGS,
-  ZODIAC_SIGNS
+  ZODIAC_SIGNS,
+  GOAL_FOCUS
 };
