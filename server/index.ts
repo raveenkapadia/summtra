@@ -7,6 +7,7 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 import { db } from "./db.js";
 import { birthData, reports, payments, users, apiCalls } from "../shared/schema.js";
 import { eq, sql, desc } from "drizzle-orm";
+import { getPrice } from "../shared/pricing.js";
 
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
@@ -338,13 +339,24 @@ async function startServer() {
         return res.status(400).json({ success: false, message: "Amount is required" });
       }
 
+      // Validate price matches expected pricing
+      const goal = reportGoal || 'complete';
+      const scope = searchScope || 'india';
+      const expectedPrice = getPrice(goal, scope);
+      const expectedAmountInPaise = expectedPrice * 100;
+
+      if (amount !== expectedAmountInPaise) {
+        console.warn(`Price mismatch: received ${amount} paise, expected ${expectedAmountInPaise} paise for goal="${goal}" scope="${scope}"`);
+        return res.status(400).json({ success: false, message: "Invalid price" });
+      }
+
       const options = {
         amount: amount,
         currency,
         receipt: "receipt_" + Math.random().toString(36).substring(7),
         notes: {
-          reportGoal: reportGoal || 'complete',
-          searchScope: searchScope || 'india'
+          reportGoal: goal,
+          searchScope: scope
         }
       };
 
