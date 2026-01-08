@@ -80,7 +80,7 @@ Preferred communication style: Simple, everyday language.
   - `sessions` - Auth session storage (required for Replit Auth)
   - `users` - User profiles with email and name fields
   - `birth_data` - User-submitted birth information (date, time, location, coordinates)
-  - `reports` - Generated report records with status and PDF URLs
+  - `reports` - Generated report records with status, PDF URLs, and `reportGoal` for goal-based customization
   - `payments` - Razorpay payment tracking with verification status
 
 - **Migrations**: Managed via drizzle-kit with output to `/migrations` directory
@@ -90,7 +90,7 @@ Preferred communication style: Simple, everyday language.
 Located in `server/services/`, each service handles a specific concern:
 
 1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines
-2. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API
+2. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API with goal-specific customization (Education, Career, Love, Relocation, Wealth, Complete)
 3. **pdfGenerator.js** - Uses Puppeteer to convert HTML templates to PDF reports
 4. **emailService.js** - Sends reports and confirmations via Resend email API
 5. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API
