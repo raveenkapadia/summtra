@@ -10,11 +10,102 @@ import { eq, sql, desc } from "drizzle-orm";
 
 // Import services
 const { generateReport } = require("./services/reportGenerator.js");
-const { getLocationData, findNearestIndianCity, findNearestInternationalCity } = require("./services/geocodingService.js");
+const { getLocationData, findNearestIndianCity, findNearestInternationalCity, getTimezone } = require("./services/geocodingService.js");
 const { generateCityInterpretations, getZodiacSign } = require("./services/claudeService.js");
+const { getAstrocartographyLines } = require("./services/astrologyApi.js");
 
 const app = express();
 const PORT = 5000;
+
+// Helper function to generate demo astrocartography lines for visualization
+function generateDemoLines(birthData: any) {
+  const planets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+  const angles = ['AC', 'DC', 'MC', 'IC'];
+  const lines: any = {};
+  
+  // Generate lines based on birth coordinates to create unique patterns
+  const baseLat = parseFloat(birthData.latitude) || 0;
+  const baseLng = parseFloat(birthData.longitude) || 0;
+  
+  planets.forEach((planet, planetIndex) => {
+    lines[planet] = {};
+    angles.forEach((angle, angleIndex) => {
+      // Create unique line pattern based on planet and angle
+      const offset = (planetIndex * 25 + angleIndex * 90) % 360 - 180;
+      const wobbleAmount = 10 + (planetIndex % 5) * 5;
+      
+      const points = [];
+      for (let lat = -85; lat <= 85; lat += 5) {
+        const wobble = Math.sin((lat + baseLat) * Math.PI / 180) * wobbleAmount;
+        const lng = (offset + wobble + baseLng) % 360;
+        points.push([lat, lng > 180 ? lng - 360 : lng < -180 ? lng + 360 : lng]);
+      }
+      
+      lines[planet][angle] = points;
+    });
+  });
+  
+  return lines;
+}
+
+// Normalize RapidAPI astrocartography response to our expected format
+function normalizeAstrocartographyData(apiData: any): any {
+  const normalized: any = {};
+  
+  // Handle different API response formats
+  if (!apiData) return normalized;
+  
+  // If data is already in our expected format (planet -> angle -> points)
+  if (typeof apiData === 'object' && !Array.isArray(apiData)) {
+    const sampleKey = Object.keys(apiData)[0];
+    if (sampleKey && apiData[sampleKey] && typeof apiData[sampleKey] === 'object') {
+      const sampleAngle = Object.keys(apiData[sampleKey])[0];
+      if (sampleAngle && Array.isArray(apiData[sampleKey][sampleAngle])) {
+        return apiData; // Already normalized
+      }
+    }
+  }
+  
+  // Handle array format: [{planet, angle, coordinates/geometry}, ...]
+  if (Array.isArray(apiData)) {
+    apiData.forEach((line: any) => {
+      const planet = line.planet || line.celestialBody || line.body;
+      const angle = line.angle || line.type || 'AC';
+      
+      if (!planet) return;
+      
+      if (!normalized[planet]) {
+        normalized[planet] = {};
+      }
+      
+      // Extract coordinates
+      let coords: any[] = [];
+      if (line.coordinates) {
+        coords = line.coordinates;
+      } else if (line.geometry?.coordinates) {
+        // GeoJSON format: [lng, lat] -> [lat, lng]
+        coords = line.geometry.coordinates.map((c: any) => [c[1], c[0]]);
+      } else if (line.points) {
+        coords = line.points.map((p: any) => [p.lat || p.latitude, p.lng || p.lon || p.longitude]);
+      }
+      
+      normalized[planet][angle] = coords;
+    });
+    return normalized;
+  }
+  
+  // Handle lines wrapper: {lines: [...]}
+  if (apiData.lines && Array.isArray(apiData.lines)) {
+    return normalizeAstrocartographyData(apiData.lines);
+  }
+  
+  // Handle astrocartography wrapper: {astrocartography: {...}}
+  if (apiData.astrocartography) {
+    return normalizeAstrocartographyData(apiData.astrocartography);
+  }
+  
+  return normalized;
+}
 
 app.use(cors());
 app.use(express.json());
@@ -116,6 +207,92 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching reports:", error);
       res.status(500).json({ success: false, message: "Failed to fetch reports" });
+    }
+  });
+
+  // Astrocartography Map Data endpoint (public with optional auth for personalized data)
+  app.get("/api/astro-map-data", async (req: any, res) => {
+    try {
+      // Check if user is authenticated
+      const isLoggedIn = req.user && req.user.claims && req.user.claims.sub;
+      
+      if (isLoggedIn) {
+        const userId = req.user.claims.sub;
+        
+        // Get user's latest birth data
+        const userBirthData = await db.select()
+          .from(birthData)
+          .where(eq(birthData.userId, userId))
+          .orderBy(desc(birthData.createdAt))
+          .limit(1);
+        
+        if (userBirthData && userBirthData.length > 0) {
+          const birth = userBirthData[0];
+          
+          // Get timezone for the birth location
+          let timezone = 'Asia/Kolkata';
+          try {
+            if (birth.latitude && birth.longitude) {
+              timezone = await getTimezone(birth.latitude, birth.longitude);
+            }
+          } catch (e) {
+            console.log('Using default timezone');
+          }
+          
+          // Format birth data for API
+          const apiFormatBirth = {
+            date: birth.birthDate,
+            time: birth.birthTime,
+            latitude: parseFloat(birth.latitude || '0'),
+            longitude: parseFloat(birth.longitude || '0'),
+            timezone: timezone
+          };
+          
+          // Try to fetch astrocartography lines from RapidAPI
+          let lines = null;
+          try {
+            console.log('Fetching astrocartography lines for map...');
+            const linesResult = await getAstrocartographyLines(apiFormatBirth);
+            
+            // Check if we got valid data
+            if (linesResult.success && linesResult.data) {
+              // Normalize the API response to our expected format
+              lines = normalizeAstrocartographyData(linesResult.data);
+            }
+          } catch (apiError) {
+            console.log('RapidAPI call failed, using demo lines:', apiError);
+          }
+          
+          // If no valid lines, generate demo lines
+          if (!lines || Object.keys(lines).length === 0) {
+            console.log('Generating demo astrocartography lines...');
+            lines = generateDemoLines(apiFormatBirth);
+          }
+          
+          return res.json({
+            success: true,
+            user: {
+              name: birth.name || req.user.claims.first_name || 'You'
+            },
+            birth: {
+              date: birth.birthDate,
+              time: birth.birthTime,
+              city: birth.birthPlace
+            },
+            lines: lines
+          });
+        }
+      }
+      
+      // Not logged in or no birth data - return demo lines
+      return res.json({ 
+        success: false, 
+        message: "No birth data found. Please enter your birth details first." 
+      });
+      
+    } catch (error: any) {
+      console.error("Error fetching astro map data:", error);
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch astrocartography data" });
     }
   });
 
@@ -979,6 +1156,11 @@ async function startServer() {
       console.error("Error fetching live API stats:", error);
       res.status(500).json({ success: false, message: "Failed to fetch live API stats" });
     }
+  });
+
+  // Serve astro-map.html for /astro-map route
+  app.get("/astro-map", (req: any, res) => {
+    res.sendFile(path.join(process.cwd(), "public", "astro-map.html"));
   });
 
   // Serve admin.html for /admin route (protected server-side)

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Your Astrocartography Map - Ssumitra</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+      color: #e8d5b7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .header {
+      background: rgba(10, 10, 26, 0.95);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+    
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.5rem;
+      color: #d4af37;
+      text-decoration: none;
+    }
+    
+    .back-btn {
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: rgba(212, 175, 55, 0.4);
+    }
+    
+    .main-content {
+      padding-top: 70px;
+      min-height: 100vh;
+    }
+    
+    .map-container {
+      position: relative;
+      height: calc(100vh - 70px);
+      width: 100%;
+    }
+    
+    #astroMap {
+      height: 100%;
+      width: 100%;
+      background: #0a0a1a;
+    }
+    
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1000;
+      max-width: 280px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .legend h3 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      padding-bottom: 8px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .legend-line {
+      width: 30px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    
+    .legend-item.angle {
+      margin-left: 15px;
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+    
+    .legend-item.angle .legend-line {
+      height: 2px;
+    }
+    
+    .info-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1000;
+      max-width: 300px;
+    }
+    
+    .info-panel h3 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    
+    .info-panel p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .user-info {
+      background: rgba(212, 175, 55, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .user-info strong {
+      color: #d4af37;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(10, 10, 26, 0.98);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    
+    .loading-overlay.hidden {
+      display: none;
+    }
+    
+    .cosmic-loader {
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(212, 175, 55, 0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 1.2rem;
+    }
+    
+    .no-data-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      background: rgba(10, 10, 26, 0.95);
+      padding: 30px;
+      border-radius: 16px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      z-index: 1000;
+    }
+    
+    .no-data-message h2 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      margin-bottom: 15px;
+    }
+    
+    .no-data-message p {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .cta-btn {
+      background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+      color: #0a0a1a;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    
+    .cta-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .toggle-legend {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      padding: 10px 15px;
+      border-radius: 8px;
+      z-index: 999;
+      cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+      .legend {
+        display: none;
+        bottom: 60px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+      }
+      
+      .legend.visible {
+        display: block;
+      }
+      
+      .toggle-legend {
+        display: block;
+      }
+      
+      .info-panel {
+        top: auto;
+        bottom: 80px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        display: none;
+      }
+    }
+    
+    .leaflet-tile {
+      filter: brightness(0.6) saturate(0.8) hue-rotate(200deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="cosmic-loader"></div>
+    <p class="loading-text">Mapping your cosmic lines...</p>
+  </div>
+
+  <header class="header">
+    <a href="/" class="logo">✧ Ssumitra</a>
+    <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+  </header>
+
+  <main class="main-content">
+    <div class="map-container">
+      <div id="astroMap"></div>
+      
+      <div class="info-panel" id="infoPanel">
+        <h3>Your Astrocartography</h3>
+        <div class="user-info" id="userInfo">
+          <p><strong>Name:</strong> <span id="userName">-</span></p>
+          <p><strong>Birth:</strong> <span id="userBirth">-</span></p>
+        </div>
+        <p id="lineInfo">Click on any planetary line to see its meaning and influence.</p>
+      </div>
+      
+      <div class="legend" id="legend">
+        <h3>Planetary Lines</h3>
+        <div id="legendContent"></div>
+      </div>
+      
+      <button class="toggle-legend" id="toggleLegend">☰ Legend</button>
+    </div>
+  </main>
+
+  <div class="no-data-message" id="noDataMessage" style="display: none;">
+    <h2>✧ Birth Data Required</h2>
+    <p>To view your personal astrocartography map with planetary lines,<br>please enter your birth details first.</p>
+    <a href="/" class="cta-btn">Enter Birth Details</a>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const PLANET_COLORS = {
+      'Sun': '#FFD700',
+      'Moon': '#C0C0C0',
+      'Mercury': '#87CEEB',
+      'Venus': '#FF69B4',
+      'Mars': '#FF4500',
+      'Jupiter': '#9370DB',
+      'Saturn': '#8B4513',
+      'Uranus': '#00CED1',
+      'Neptune': '#4169E1',
+      'Pluto': '#800080',
+      'NorthNode': '#32CD32',
+      'SouthNode': '#DC143C',
+      'Chiron': '#FF8C00',
+      'Vertex': '#00FA9A',
+      'PartOfFortune': '#FFD700'
+    };
+    
+    const ANGLE_STYLES = {
+      'AC': { dash: null, opacity: 1, name: 'Ascendant' },
+      'DC': { dash: '10, 5', opacity: 0.8, name: 'Descendant' },
+      'MC': { dash: '5, 5', opacity: 0.9, name: 'Midheaven' },
+      'IC': { dash: '2, 4', opacity: 0.7, name: 'Imum Coeli' }
+    };
+    
+    const PLANET_MEANINGS = {
+      'Sun': 'Identity, vitality, self-expression, leadership',
+      'Moon': 'Emotions, home, nurturing, intuition',
+      'Mercury': 'Communication, learning, travel, ideas',
+      'Venus': 'Love, beauty, relationships, prosperity',
+      'Mars': 'Energy, action, courage, passion',
+      'Jupiter': 'Expansion, luck, wisdom, abundance',
+      'Saturn': 'Structure, discipline, karmic lessons',
+      'Uranus': 'Innovation, freedom, sudden changes',
+      'Neptune': 'Spirituality, creativity, dreams',
+      'Pluto': 'Transformation, power, rebirth',
+      'NorthNode': 'Life purpose, destiny, growth',
+      'SouthNode': 'Past life skills, comfort zone',
+      'Chiron': 'Healing, wisdom through wounds',
+      'Vertex': 'Fated encounters, destiny points',
+      'PartOfFortune': 'Prosperity, worldly success'
+    };
+    
+    let map;
+    let lineLayer;
+    
+    async function init() {
+      map = L.map('astroMap', {
+        center: [20, 0],
+        zoom: 2,
+        minZoom: 1,
+        maxZoom: 8,
+        worldCopyJump: true
+      });
+      
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+      
+      lineLayer = L.layerGroup().addTo(map);
+      
+      await loadAstrocartographyData();
+      
+      document.getElementById('toggleLegend').addEventListener('click', () => {
+        document.getElementById('legend').classList.toggle('visible');
+      });
+    }
+    
+    async function loadAstrocartographyData() {
+      try {
+        const response = await fetch('/api/astro-map-data');
+        const data = await response.json();
+        
+        if (!data.success || !data.lines) {
+          showNoDataMessage();
+          return;
+        }
+        
+        updateUserInfo(data.user, data.birth);
+        drawPlanetaryLines(data.lines);
+        buildLegend(data.lines);
+        
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        
+      } catch (error) {
+        console.error('Error loading astrocartography data:', error);
+        showNoDataMessage();
+      }
+    }
+    
+    function updateUserInfo(user, birth) {
+      if (user) {
+        document.getElementById('userName').textContent = user.name || 'You';
+      }
+      if (birth) {
+        const dateStr = birth.date ? formatDate(birth.date) : '';
+        const timeStr = birth.time || '';
+        const cityStr = birth.city || '';
+        document.getElementById('userBirth').textContent = `${dateStr} ${timeStr}${cityStr ? ' at ' + cityStr : ''}`;
+      }
+    }
+    
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    
+    function drawPlanetaryLines(linesData) {
+      lineLayer.clearLayers();
+      
+      if (!linesData || typeof linesData !== 'object') {
+        console.log('No valid lines data to draw');
+        return;
+      }
+      
+      let linesDrawn = 0;
+      
+      Object.entries(linesData).forEach(([planet, angles]) => {
+        if (!angles || typeof angles !== 'object') return;
+        
+        const color = PLANET_COLORS[planet] || '#FFFFFF';
+        
+        Object.entries(angles).forEach(([angle, lineData]) => {
+          const angleStyle = ANGLE_STYLES[angle] || ANGLE_STYLES['AC'];
+          
+          let coordinates = [];
+          
+          // Handle different data formats
+          if (Array.isArray(lineData)) {
+            coordinates = lineData.map(point => {
+              if (Array.isArray(point)) return point;
+              if (point && point.lat !== undefined && point.lng !== undefined) {
+                return [point.lat, point.lng];
+              }
+              if (point && point.latitude !== undefined && point.longitude !== undefined) {
+                return [point.latitude, point.longitude];
+              }
+              return null;
+            }).filter(p => p !== null && !isNaN(p[0]) && !isNaN(p[1]));
+          } else if (lineData && lineData.coordinates) {
+            coordinates = lineData.coordinates;
+          } else if (lineData && lineData.points) {
+            coordinates = lineData.points.map(p => [p.lat || p.latitude, p.lng || p.longitude]);
+          }
+          
+          // Validate we have enough points
+          if (coordinates.length < 2) {
+            return; // Skip this line - not enough data
+          }
+          
+          try {
+            const polyline = L.polyline(coordinates, {
+              color: color,
+              weight: 3,
+              opacity: angleStyle.opacity,
+              dashArray: angleStyle.dash,
+              className: `line-${planet}-${angle}`
+            });
+            
+            const meaning = PLANET_MEANINGS[planet] || 'Unique cosmic energy';
+            
+            polyline.bindPopup(`
+              <div style="font-family: 'Cormorant Garamond', serif; min-width: 200px;">
+                <h4 style="color: ${color}; margin: 0 0 8px 0; font-size: 1.1rem;">
+                  ${planet} ${angleStyle.name} Line
+                </h4>
+                <p style="margin: 0 0 8px 0; font-size: 0.9rem; line-height: 1.4;">
+                  <strong>Influence:</strong> ${meaning}
+                </p>
+                <p style="margin: 0; font-size: 0.85rem; opacity: 0.8;">
+                  This line marks where ${planet}'s energy is strongest at the ${angleStyle.name}.
+                </p>
+              </div>
+            `, {
+              className: 'astro-popup'
+            });
+            
+            polyline.on('mouseover', function(e) {
+              this.setStyle({ weight: 5, opacity: 1 });
+              document.getElementById('lineInfo').innerHTML = `
+                <strong style="color: ${color}">${planet} ${angleStyle.name}</strong><br>
+                ${meaning}
+              `;
+            });
+            
+            polyline.on('mouseout', function(e) {
+              this.setStyle({ weight: 3, opacity: angleStyle.opacity });
+            });
+            
+            lineLayer.addLayer(polyline);
+            linesDrawn++;
+          } catch (e) {
+            console.error(`Error drawing ${planet} ${angle} line:`, e);
+          }
+        });
+      });
+      
+      console.log(`Drew ${linesDrawn} planetary lines on map`);
+    }
+    
+    function generateGreatCircleLine(planet, angle) {
+      const planetIndex = Object.keys(PLANET_COLORS).indexOf(planet);
+      const angleOffset = { 'AC': 0, 'DC': 180, 'MC': 90, 'IC': -90 }[angle] || 0;
+      
+      const baseLongitude = ((planetIndex * 24) + angleOffset) % 360 - 180;
+      
+      const points = [];
+      for (let lat = -85; lat <= 85; lat += 5) {
+        const wobble = Math.sin(lat * Math.PI / 180) * 15;
+        points.push([lat, baseLongitude + wobble]);
+      }
+      
+      return points;
+    }
+    
+    function buildLegend(linesData) {
+      const legendContent = document.getElementById('legendContent');
+      legendContent.innerHTML = '';
+      
+      const planetsInData = linesData ? Object.keys(linesData) : Object.keys(PLANET_COLORS);
+      
+      planetsInData.forEach(planet => {
+        const color = PLANET_COLORS[planet] || '#FFFFFF';
+        
+        const planetDiv = document.createElement('div');
+        planetDiv.className = 'legend-item';
+        planetDiv.innerHTML = `
+          <div class="legend-line" style="background: ${color};"></div>
+          <span>${planet}</span>
+        `;
+        planetDiv.style.cursor = 'pointer';
+        planetDiv.addEventListener('click', () => highlightPlanetLines(planet));
+        legendContent.appendChild(planetDiv);
+      });
+      
+      const angleSection = document.createElement('div');
+      angleSection.style.marginTop = '15px';
+      angleSection.style.paddingTop = '10px';
+      angleSection.style.borderTop = '1px solid rgba(212, 175, 55, 0.3)';
+      angleSection.innerHTML = '<p style="font-size: 0.8rem; margin-bottom: 8px; color: #d4af37;">Line Types:</p>';
+      
+      Object.entries(ANGLE_STYLES).forEach(([angle, style]) => {
+        const angleDiv = document.createElement('div');
+        angleDiv.className = 'legend-item angle';
+        angleDiv.innerHTML = `
+          <div class="legend-line" style="background: #d4af37; ${style.dash ? `background: repeating-linear-gradient(90deg, #d4af37, #d4af37 ${style.dash.split(',')[0]}px, transparent ${style.dash.split(',')[0]}px, transparent ${parseInt(style.dash.split(',')[0]) + parseInt(style.dash.split(',')[1])}px);` : ''}"></div>
+          <span>${style.name} (${angle})</span>
+        `;
+        angleSection.appendChild(angleDiv);
+      });
+      
+      legendContent.appendChild(angleSection);
+    }
+    
+    function highlightPlanetLines(planet) {
+      lineLayer.eachLayer(layer => {
+        if (layer.options.className && layer.options.className.includes(`line-${planet}`)) {
+          layer.setStyle({ weight: 5, opacity: 1 });
+          layer.bringToFront();
+          setTimeout(() => {
+            const angleStyle = ANGLE_STYLES[layer.options.className.split('-')[2]] || ANGLE_STYLES['AC'];
+            layer.setStyle({ weight: 3, opacity: angleStyle.opacity });
+          }, 2000);
+        }
+      });
+    }
+    
+    function showNoDataMessage() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+      document.getElementById('noDataMessage').style.display = 'block';
+      document.getElementById('infoPanel').style.display = 'none';
+      document.getElementById('legend').style.display = 'none';
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
