@@ -501,7 +501,7 @@ async function startServer() {
   // NOW USES REAL APIs for actual astrocartography data!
   app.post("/api/test-report", async (req, res) => {
     try {
-      const { name, email, birthDate, birthTime, birthPlace, latitude, longitude, reportType = "india" } = req.body;
+      const { name, email, birthDate, birthTime, birthPlace, latitude, longitude, reportType = "india", reportGoal = "complete" } = req.body;
 
       if (!name || !email || !birthDate || !birthTime || !birthPlace) {
         return res.status(400).json({ 
@@ -516,6 +516,7 @@ async function startServer() {
       console.log(`📋 User: ${name}`);
       console.log(`📍 Birth: ${birthDate} at ${birthTime} in ${birthPlace}`);
       console.log(`📊 Report Type: ${reportType}`);
+      console.log(`🎯 Report Goal: ${reportGoal}`);
 
       // Step 1: Get coordinates - use frontend-provided coords or fallback to geocoding
       let locationData: any;
@@ -706,7 +707,7 @@ async function startServer() {
         .filter((city: any) => city !== null);
 
       // Step 6: Generate AI interpretations using Claude
-      const userData = { name, birthDate, email };
+      const userData = { name, birthDate, email, reportGoal };
       const zodiac = getZodiacSign(birthDate);
       console.log(`\n🤖 Step 3: Generating Claude AI interpretations...`);
       console.log(`   ♈ Zodiac: ${zodiac.name} (${zodiac.symbol}) - born in ${zodiac.monthName}`);
@@ -795,6 +796,7 @@ async function startServer() {
           { name: 'Check full report', reason: 'Saturn-IC challenges' }
         ],
         reportType,
+        reportGoal,
         apiSource: 'RapidAPI Astrocartography',
         astroLinesAvailable: !!astroLines
       };

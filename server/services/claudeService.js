@@ -101,13 +101,50 @@ function getZodiacSign(birthDate) {
 // INTERPRETATION GENERATORS
 // ============================================
 
+// Goal-specific focus areas for interpretations
+const GOAL_FOCUS = {
+  'education': {
+    theme: 'academic success, learning, and intellectual growth',
+    keywords: 'studies, exams, research, knowledge, university, scholarship, teachers',
+    planets: 'Mercury (communication & learning), Jupiter (wisdom & higher education)'
+  },
+  'career': {
+    theme: 'professional success, job opportunities, and career advancement',
+    keywords: 'promotion, leadership, business, income, recognition, achievements',
+    planets: 'Sun (recognition & authority), Saturn (career & discipline), Mars (ambition & drive)'
+  },
+  'love': {
+    theme: 'romantic relationships, finding a partner, and love life',
+    keywords: 'soulmate, marriage, romance, connection, attraction, partnership',
+    planets: 'Venus (love & beauty), Moon (emotions & nurturing), Neptune (spiritual connection)'
+  },
+  'relocation': {
+    theme: 'settling down, finding the right place to live, and overall life quality',
+    keywords: 'home, comfort, community, stability, environment, opportunities',
+    planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)'
+  },
+  'wealth': {
+    theme: 'financial prosperity, abundance, and material success',
+    keywords: 'money, investments, business, income, property, abundance, prosperity',
+    planets: 'Jupiter (luck & expansion), Venus (money & luxury), Part of Fortune (prosperity)'
+  },
+  'complete': {
+    theme: 'overall life success including career, love, wealth, and personal growth',
+    keywords: 'holistic success, balance, all life areas, opportunities, potential',
+    planets: 'All planetary influences for complete life transformation'
+  }
+};
+
 /**
  * Generate quick, personalized city interpretation (2-3 sentences)
  * Optimized for test-report endpoint - fast and lightweight
+ * NOW CUSTOMIZED based on user's selected goal
  */
 async function generateQuickCityInterpretation(cityData, userData) {
   const anthropic = getAnthropicClient();
   const zodiac = getZodiacSign(userData.birthDate);
+  const goal = userData.reportGoal || 'complete';
+  const goalInfo = GOAL_FOCUS[goal] || GOAL_FOCUS['complete'];
   
   const cityName = cityData.name || cityData.city;
   const country = cityData.country || cityData.state || '';
@@ -134,12 +171,17 @@ POWER SCORE: ${score}%
 CATEGORY: ${category}
 ACTIVE PLANETARY LINES: ${lineDetails || lines.join(', ')}
 
+USER'S GOAL: ${goal.toUpperCase()}
+FOCUS ON: ${goalInfo.theme}
+KEY ASPECTS: ${goalInfo.keywords}
+RELEVANT PLANETS: ${goalInfo.planets}
+
 Write exactly 2-3 warm, encouraging sentences that:
 1. Start with "As a ${zodiac.name} born in ${zodiac.monthName}..."
-2. Explain specifically how their planetary lines (${lines.join(', ')}) affect them in ${cityName}
-3. Mention what opportunities or gifts await them there
+2. Explain specifically how their planetary lines (${lines.join(', ')}) affect their ${goal.toUpperCase()} prospects in ${cityName}
+3. Mention specific ${goal}-related opportunities or gifts that await them there
 
-Be specific about the planetary lines and their effects. Keep it personal and uplifting. NO bullet points, NO paragraphs - just 2-3 flowing sentences.`;
+IMPORTANT: Focus the interpretation specifically on ${goalInfo.theme}. Be specific about how the planetary lines support their ${goal} goals. Keep it personal and uplifting. NO bullet points, NO paragraphs - just 2-3 flowing sentences.`;
 
   try {
     const response = await anthropic.messages.create({
@@ -150,15 +192,15 @@ Be specific about the planetary lines and their effects. Keep it personal and up
     return response.content[0].text;
   } catch (error) {
     console.error(`Error generating interpretation for ${cityName}:`, error.message);
-    return generateFallbackInterpretation(cityData, zodiac);
+    return generateFallbackInterpretation(cityData, zodiac, goal);
   }
 }
 
-function generateFallbackInterpretation(cityData, zodiac) {
+function generateFallbackInterpretation(cityData, zodiac, goal = 'complete') {
   const cityName = cityData.name || cityData.city || 'this location';
   const country = cityData.country || cityData.state || '';
   const lines = cityData.lines || [];
-  const category = cityData.category || 'general';
+  const goalInfo = GOAL_FOCUS[goal] || GOAL_FOCUS['complete'];
   
   const lineDescriptions = lines.map(line => {
     const parts = line.split('-');
@@ -168,22 +210,23 @@ function generateFallbackInterpretation(cityData, zodiac) {
     return { line, planet, angle, meaning };
   });
   
-  const categoryText = {
-    'love': 'romantic connections and heartfelt relationships',
-    'career': 'professional success and public recognition',
-    'wealth': 'abundance and financial prosperity',
-    'health': 'vitality and well-being',
-    'creativity': 'artistic expression and creative inspiration',
-    'family': 'domestic harmony and family bonds'
+  // Goal-specific text
+  const goalText = {
+    'education': 'academic excellence and intellectual growth',
+    'career': 'professional success and career advancement',
+    'love': 'romantic connections and finding your soulmate',
+    'relocation': 'settling down and building a happy life',
+    'wealth': 'financial prosperity and abundance',
+    'complete': 'overall life success and transformation'
   };
   
   if (lineDescriptions.length >= 2) {
-    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} activates ${lineDescriptions[0].meaning.toLowerCase()}, while your ${lineDescriptions[1].line} line enhances ${lineDescriptions[1].meaning.toLowerCase()}. Together, these planetary alignments create an exceptional environment for ${categoryText[category] || 'personal growth and transformation'}.`;
+    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} activates ${lineDescriptions[0].meaning.toLowerCase()}, while your ${lineDescriptions[1].line} line enhances ${lineDescriptions[1].meaning.toLowerCase()}. Together, these planetary alignments create an exceptional environment for ${goalText[goal] || 'personal growth and transformation'}.`;
   } else if (lineDescriptions.length === 1) {
-    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} powerfully activates ${lineDescriptions[0].meaning.toLowerCase()}. This location offers you wonderful opportunities for ${categoryText[category] || 'personal growth'} that resonate deeply with your ${zodiac.element} nature.`;
+    return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lineDescriptions[0].line} line in ${cityName} powerfully activates ${lineDescriptions[0].meaning.toLowerCase()}. This location offers you wonderful opportunities for ${goalText[goal] || 'personal growth'} that resonate deeply with your ${zodiac.element} nature.`;
   }
   
-  return `As a ${zodiac.name} born in ${zodiac.monthName}, ${cityName}${country ? ', ' + country : ''} offers you powerful cosmic alignments that support ${categoryText[category] || 'personal growth and success'}. This location holds special potential aligned with your ${zodiac.element} nature.`;
+  return `As a ${zodiac.name} born in ${zodiac.monthName}, ${cityName}${country ? ', ' + country : ''} offers you powerful cosmic alignments that support ${goalText[goal] || 'personal growth and success'}. This location holds special potential aligned with your ${zodiac.element} nature.`;
 }
 
 /**
@@ -194,6 +237,8 @@ async function generateCityInterpretations(cities, userData) {
   console.log(`🤖 Generating AI interpretations for ${cities.length} cities in PARALLEL...`);
   
   const zodiac = getZodiacSign(userData.birthDate);
+  const goal = userData.reportGoal || 'complete';
+  console.log(`   🎯 Goal: ${goal.toUpperCase()}`);
   
   // Process all cities in parallel for speed
   const results = await Promise.allSettled(
@@ -208,7 +253,7 @@ async function generateCityInterpretations(cities, userData) {
         console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
         return {
           ...city,
-          aiInterpretation: generateFallbackInterpretation(city, zodiac)
+          aiInterpretation: generateFallbackInterpretation(city, zodiac, goal)
         };
       }
     })
@@ -223,7 +268,7 @@ async function generateCityInterpretations(cities, userData) {
       console.error(`   ❌ ${cities[index].name || cities[index].city}: Promise rejected`);
       return {
         ...cities[index],
-        aiInterpretation: generateFallbackInterpretation(cities[index], zodiac)
+        aiInterpretation: generateFallbackInterpretation(cities[index], zodiac, goal)
       };
     }
   });
