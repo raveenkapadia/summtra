@@ -332,16 +332,20 @@ async function startServer() {
       }
 
       const userId = req.user.claims.sub;
-      const { amount, currency = "INR", reportId } = req.body;
+      const { amount, currency = "INR", reportId, reportGoal, searchScope } = req.body;
 
       if (!amount) {
         return res.status(400).json({ success: false, message: "Amount is required" });
       }
 
       const options = {
-        amount: amount * 100,
+        amount: amount,
         currency,
         receipt: "receipt_" + Math.random().toString(36).substring(7),
+        notes: {
+          reportGoal: reportGoal || 'complete',
+          searchScope: searchScope || 'india'
+        }
       };
 
       const order = await razorpay.orders.create(options);
@@ -350,7 +354,7 @@ async function startServer() {
         userId,
         reportId,
         razorpayOrderId: order.id,
-        amount: amount,
+        amount: Math.round(amount / 100),
         currency,
         status: "created",
       }).returning();

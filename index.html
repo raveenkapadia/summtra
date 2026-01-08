@@ -1932,6 +1932,7 @@
     }
     .back-btn:active { color: var(--gold); }
   </style>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -3156,6 +3157,7 @@
     let searchScope = 'india';
     function setScope(scope) {
       searchScope = scope;
+      sessionStorage.setItem('searchScope', scope);
       document.getElementById('scope-india').classList.toggle('active', scope === 'india');
       document.getElementById('scope-world').classList.toggle('active', scope === 'world');
       document.getElementById('scope-both').classList.toggle('active', scope === 'both');
@@ -3311,6 +3313,81 @@
       if (discountBadge) discountBadge.textContent = discount + '% OFF';
     }
     
+    async function initiatePayment(formData) {
+      const goal = sessionStorage.getItem('selectedGoal') || 'complete';
+      const scope = sessionStorage.getItem('searchScope') || 'india';
+      const price = getPrice(goal, scope);
+      const amountInPaise = price * 100;
+      
+      try {
+        const response = await fetch('/api/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: amountInPaise,
+            reportGoal: goal,
+            searchScope: scope
+          })
+        });
+        
+        const orderData = await response.json();
+        
+        if (!orderData.success) {
+          throw new Error(orderData.message || 'Failed to create order');
+        }
+        
+        return new Promise((resolve, reject) => {
+          const options = {
+            key: orderData.key_id,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'Ssumitra',
+            description: `Astrocartography Report - ${goal.charAt(0).toUpperCase() + goal.slice(1)}`,
+            order_id: orderData.order_id,
+            handler: async function(response) {
+              try {
+                const verifyRes = await fetch('/api/verify-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+                
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                  resolve({ success: true, paymentId: response.razorpay_payment_id });
+                } else {
+                  reject(new Error('Payment verification failed'));
+                }
+              } catch (err) {
+                reject(err);
+              }
+            },
+            prefill: {
+              name: formData.name,
+              email: formData.email
+            },
+            theme: {
+              color: '#D4A854'
+            },
+            modal: {
+              ondismiss: function() {
+                reject(new Error('Payment cancelled'));
+              }
+            }
+          };
+          
+          const rzp = new Razorpay(options);
+          rzp.open();
+        });
+      } catch (error) {
+        throw error;
+      }
+    }
+    
     function toggleGoalDropdown() {
       const dropdown = document.getElementById('goalDropdown');
       dropdown.classList.toggle('show');
@@ -3361,7 +3438,6 @@
     async function startScanning() {
       const overlay = document.getElementById('scanning');
       const status = document.getElementById('scanning-status');
-      overlay.classList.add('active');
       
       // Collect form data
       const name = document.getElementById('input-name')?.value || 'Test User';
@@ -3373,19 +3449,35 @@
       const longitude = document.getElementById('input-longitude')?.value;
 
       if (!birthDate || !birthTime || !birthPlace) {
-        overlay.classList.remove('active');
         alert('Please fill in all birth details (date, time, and place)');
         return;
       }
       
       if (!latitude || !longitude) {
-        overlay.classList.remove('active');
         alert('Please select a city from the dropdown suggestions to ensure accurate coordinates');
         return;
       }
 
       // Map searchScope to reportType
       const reportType = searchScope === 'india' ? 'india' : searchScope === 'world' ? 'international' : 'combo';
+      const currentReportGoal = sessionStorage.getItem('selectedGoal') || 'complete';
+      
+      // Try payment first (if user is logged in and Razorpay is configured)
+      try {
+        status.textContent = 'Initiating payment...';
+        const paymentResult = await initiatePayment({ name, email });
+        console.log('Payment successful:', paymentResult);
+      } catch (paymentError) {
+        if (paymentError.message === 'Payment cancelled') {
+          console.log('Payment cancelled by user');
+          return;
+        }
+        // If payment fails due to not being configured or user not logged in, continue with test mode
+        console.log('Payment skipped (test mode):', paymentError.message);
+      }
+      
+      // Show scanning overlay after payment
+      overlay.classList.add('active');
       
       // Show scanning animation while API processes
       let steps;
@@ -3406,9 +3498,6 @@
       }, 800);
 
       try {
-        // Get the selected goal from sessionStorage or default
-        const reportGoal = sessionStorage.getItem('selectedGoal') || 'complete';
-        
         // Call the test API (no login required)
         const response = await fetch('/api/test-report', {
           method: 'POST',
@@ -3422,7 +3511,7 @@
             latitude: parseFloat(latitude),
             longitude: parseFloat(longitude),
             reportType,
-            reportGoal
+            reportGoal: currentReportGoal
           })
         });
 
