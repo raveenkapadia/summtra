@@ -1005,6 +1005,60 @@
     .form-input:focus { outline: none; border-color: var(--gold); }
     .form-input::placeholder { color: var(--text-dim); }
     
+    .goal-selector { position: relative; }
+    .goal-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .goal-display:hover { border-color: var(--gold); }
+    .goal-display span:first-child { font-size: 20px; }
+    .goal-display span:nth-child(2) { 
+      flex: 1; 
+      color: var(--gold); 
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+    }
+    .goal-change { 
+      color: var(--text-dim); 
+      font-size: 12px;
+      transition: color 0.2s;
+    }
+    .goal-display:hover .goal-change { color: var(--gold); }
+    .goal-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border: 1px solid rgba(212, 168, 84, 0.4);
+      border-radius: 8px;
+      margin-top: 4px;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .goal-dropdown.show { display: block; }
+    .goal-option {
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .goal-option:hover { 
+      background: rgba(212, 175, 55, 0.15); 
+      color: var(--gold);
+    }
+    .goal-option:first-child { border-radius: 8px 8px 0 0; }
+    .goal-option:last-child { border-radius: 0 0 8px 8px; }
+    
     /* Google Places Autocomplete Dropdown Styling */
     .pac-container {
       background-color: var(--bg-card);
@@ -2608,6 +2662,25 @@
         </div>
         
         <div class="form-group">
+          <label class="form-label">Your Goal</label>
+          <div class="goal-selector" id="goalSelector">
+            <div class="goal-display" onclick="toggleGoalDropdown()">
+              <span id="selectedGoalIcon">🎓</span>
+              <span id="selectedGoalTitle">Education</span>
+              <span class="goal-change">Change ▼</span>
+            </div>
+            <div class="goal-dropdown" id="goalDropdown">
+              <div class="goal-option" onclick="changeGoal('education', '🎓', 'Education')">🎓 Education</div>
+              <div class="goal-option" onclick="changeGoal('career', '💼', 'Career')">💼 Career</div>
+              <div class="goal-option" onclick="changeGoal('love', '💕', 'Love')">💕 Love</div>
+              <div class="goal-option" onclick="changeGoal('relocation', '🏠', 'Relocation')">🏠 Relocation</div>
+              <div class="goal-option" onclick="changeGoal('wealth', '💰', 'Wealth')">💰 Wealth</div>
+              <div class="goal-option" onclick="changeGoal('complete', '✨', 'Complete Report')">✨ Complete Report</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
           <label class="form-label">Email</label>
           <input type="email" id="input-email" class="form-input" placeholder="For report delivery">
         </div>
@@ -3210,6 +3283,48 @@
       navigateTo('form');
     }
     
+    // Goal selector on form page
+    let reportGoal = null;
+    const goalData = {
+      education: { icon: '🎓', title: 'Education' },
+      career: { icon: '💼', title: 'Career' },
+      love: { icon: '💕', title: 'Love' },
+      relocation: { icon: '🏠', title: 'Relocation' },
+      wealth: { icon: '💰', title: 'Wealth' },
+      complete: { icon: '✨', title: 'Complete Report' }
+    };
+    
+    function toggleGoalDropdown() {
+      const dropdown = document.getElementById('goalDropdown');
+      dropdown.classList.toggle('show');
+    }
+    
+    function changeGoal(goalId, icon, title) {
+      reportGoal = goalId;
+      selectedGoal = goalId;
+      sessionStorage.setItem('selectedGoal', goalId);
+      document.getElementById('selectedGoalIcon').textContent = icon;
+      document.getElementById('selectedGoalTitle').textContent = title;
+      document.getElementById('goalDropdown').classList.remove('show');
+    }
+    
+    function loadFormGoal() {
+      const passedGoal = sessionStorage.getItem('selectedGoal');
+      if (passedGoal && goalData[passedGoal]) {
+        reportGoal = passedGoal;
+        document.getElementById('selectedGoalIcon').textContent = goalData[passedGoal].icon;
+        document.getElementById('selectedGoalTitle').textContent = goalData[passedGoal].title;
+      }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const goalSelector = document.getElementById('goalSelector');
+      if (goalSelector && !goalSelector.contains(e.target)) {
+        document.getElementById('goalDropdown')?.classList.remove('show');
+      }
+    });
+    
     function navigateTo(page) {
       document.getElementById('page-' + currentPage)?.classList.remove('active');
       document.getElementById('page-' + page)?.classList.add('active');
@@ -3217,7 +3332,10 @@
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
       if (page === 'home') document.getElementById('nav-home')?.classList.add('active');
       if (page === 'results' || page === 'city-detail') document.getElementById('nav-results')?.classList.add('active');
-      if (page === 'form') document.getElementById('nav-profile')?.classList.add('active');
+      if (page === 'form') {
+        document.getElementById('nav-profile')?.classList.add('active');
+        loadFormGoal();
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
