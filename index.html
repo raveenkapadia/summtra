@@ -2599,23 +2599,6 @@
       
       <div class="card">
         <!-- Scope Toggle -->
-        <p class="form-label" style="margin-bottom: 8px;">Search Scope</p>
-        <div class="scope-toggle three-options">
-          <div class="scope-option active" onclick="setScope('india')" id="scope-india">
-            <span>🇮🇳</span>
-            India
-          </div>
-          <div class="scope-option" onclick="setScope('world')" id="scope-world">
-            <span>🌍</span>
-            Worldwide
-          </div>
-          <div class="scope-option" onclick="setScope('both')" id="scope-both">
-            <span>✨</span>
-            Both
-          </div>
-        </div>
-        <p id="scope-hint" class="scope-hint">Top 10 cities within India</p>
-        
         <div class="form-group">
           <label class="form-label">Full Name</label>
           <input type="text" id="input-name" class="form-input" placeholder="As per birth certificate">
@@ -2685,6 +2668,24 @@
           <input type="email" id="input-email" class="form-input" placeholder="For report delivery">
         </div>
         
+        <div class="form-group">
+          <label class="form-label">Search Scope</label>
+          <div class="scope-toggle three-options">
+            <div class="scope-option active" onclick="setScope('india')" id="scope-india">
+              <span>🇮🇳</span>
+              India
+            </div>
+            <div class="scope-option" onclick="setScope('world')" id="scope-world">
+              <span>🌍</span>
+              Worldwide
+            </div>
+            <div class="scope-option" onclick="setScope('both')" id="scope-both">
+              <span>✨</span>
+              Both
+            </div>
+          </div>
+          <p id="scope-hint" class="scope-hint">Top 10 cities within India</p>
+        </div>
         
         <div style="margin-top: 18px;">
           <button class="btn btn-primary" onclick="startScanning()">
