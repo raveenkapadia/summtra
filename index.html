@@ -3366,6 +3366,9 @@
       }, 800);
 
       try {
+        // Get the selected goal from sessionStorage or default
+        const reportGoal = sessionStorage.getItem('reportGoal') || 'complete';
+        
         // Call the test API (no login required)
         const response = await fetch('/api/test-report', {
           method: 'POST',
@@ -3378,7 +3381,8 @@
             birthPlace,
             latitude: parseFloat(latitude),
             longitude: parseFloat(longitude),
-            reportType
+            reportType,
+            reportGoal
           })
         });
 

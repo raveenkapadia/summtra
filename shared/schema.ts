@@ -20,6 +20,7 @@ export const reports = pgTable("reports", {
   userId: varchar("user_id").notNull(),
   birthDataId: varchar("birth_data_id").notNull(),
   reportType: varchar("report_type").notNull(),
+  reportGoal: varchar("report_goal"),
   status: varchar("status").default("pending"),
   pdfUrl: text("pdf_url"),
   createdAt: timestamp("created_at").defaultNow(),
