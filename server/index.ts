@@ -433,7 +433,7 @@ async function startServer() {
       const userEmail = req.user.claims.email || "";
       const userName = req.user.claims.first_name || "User";
       
-      const { birthDate, birthTime, birthPlace, reportType = "india" } = req.body;
+      const { birthDate, birthTime, birthPlace, reportType = "india", reportGoal = "complete" } = req.body;
 
       if (!birthDate || !birthTime || !birthPlace) {
         return res.status(400).json({ 
@@ -450,6 +450,7 @@ async function startServer() {
       const [reportRecord] = await db.insert(reports).values({
         userId,
         reportType,
+        reportGoal,
         status: "processing",
       }).returning();
 
@@ -458,6 +459,7 @@ async function startServer() {
         user: {
           name: userName,
           email: userEmail,
+          reportGoal,
         },
         birth: {
           date: birthDate,
@@ -469,6 +471,7 @@ async function startServer() {
           timezone: locationData.timezone,
         },
         reportType,
+        reportGoal,
       }).then(async (result: any) => {
         // Update report status when done
         await db.update(reports)
@@ -729,11 +732,11 @@ async function startServer() {
           // Add fallback interpretations when Claude fails
           indiaCities = indiaCities.map((city: any) => ({
             ...city,
-            aiInterpretation: generateFallbackText(city, zodiac)
+            aiInterpretation: generateFallbackText(city, zodiac, reportGoal)
           }));
           internationalCities = internationalCities.map((city: any) => ({
             ...city,
-            aiInterpretation: generateFallbackText(city, zodiac)
+            aiInterpretation: generateFallbackText(city, zodiac, reportGoal)
           }));
         }
       } else if (!process.env.ANTHROPIC_API_KEY) {
@@ -741,31 +744,33 @@ async function startServer() {
         // Add fallback interpretations when API key is missing
         indiaCities = indiaCities.map((city: any) => ({
           ...city,
-          aiInterpretation: generateFallbackText(city, zodiac)
+          aiInterpretation: generateFallbackText(city, zodiac, reportGoal)
         }));
         internationalCities = internationalCities.map((city: any) => ({
           ...city,
-          aiInterpretation: generateFallbackText(city, zodiac)
+          aiInterpretation: generateFallbackText(city, zodiac, reportGoal)
         }));
       }
       
-      // Helper function for fallback interpretations
-      function generateFallbackText(city: any, zodiac: any): string {
+      // Helper function for fallback interpretations - now goal-aware
+      function generateFallbackText(city: any, zodiac: any, goal: string = 'complete'): string {
         const lines = city.lines || [];
-        const category = city.category || 'general';
-        const categoryText: any = {
-          'love': 'romantic connections and heartfelt relationships',
-          'career': 'professional success and public recognition',
-          'wealth': 'abundance and financial prosperity',
-          'general': 'personal growth and transformation'
+        // Goal-specific text matching claudeService
+        const goalText: any = {
+          'education': 'academic excellence and intellectual growth',
+          'career': 'professional success and career advancement',
+          'love': 'romantic connections and finding your soulmate',
+          'relocation': 'settling down and building a happy life',
+          'wealth': 'financial prosperity and abundance',
+          'complete': 'overall life success and transformation'
         };
         
         if (lines.length >= 2) {
-          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} and ${lines[1]} lines in ${city.name} create powerful opportunities for ${categoryText[category] || 'success'}. This location holds exceptional potential for you.`;
+          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} and ${lines[1]} lines in ${city.name} create powerful opportunities for ${goalText[goal] || 'success'}. This location holds exceptional potential for you.`;
         } else if (lines.length === 1) {
-          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} line in ${city.name} activates extraordinary potential for ${categoryText[category] || 'growth'}. This city offers wonderful cosmic support for you.`;
+          return `As a ${zodiac.name} born in ${zodiac.monthName}, your ${lines[0]} line in ${city.name} activates extraordinary potential for ${goalText[goal] || 'growth'}. This city offers wonderful cosmic support for you.`;
         }
-        return `As a ${zodiac.name} born in ${zodiac.monthName}, ${city.name} offers powerful planetary alignments supporting ${categoryText[category] || 'personal success'}.`;
+        return `As a ${zodiac.name} born in ${zodiac.monthName}, ${city.name} offers powerful planetary alignments supporting ${goalText[goal] || 'personal success'}.`;
       }
 
       // Calculate top match based on report type
