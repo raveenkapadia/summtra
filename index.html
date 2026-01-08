@@ -424,7 +424,8 @@
     .slide.active { opacity: 1; transform: translateX(0); }
     .slide.prev { transform: translateX(-100%); }
     
-    .slide-icon { font-size: 56px; text-align: center; margin-bottom: 16px; }
+    .slide-icon { font-size: 56px; text-align: center; margin-bottom: 16px; display: inline-block; animation: rotateEarth 20s linear infinite; }
+    @keyframes rotateEarth { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .slide-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 26px;
