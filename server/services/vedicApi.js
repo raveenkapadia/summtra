@@ -454,6 +454,72 @@ export function generateDashaTimelineHTML(timelineData) {
   return html;
 }
 
+export function getDashaCityMatch(city, dashaInfo, antardashaTimeline) {
+  const cityLines = city.lines || [];
+  
+  const cityPlanets = cityLines.map(line => {
+    if (typeof line === 'string') {
+      return line.split('-')[0];
+    }
+    return line.planet || '';
+  }).filter(Boolean);
+  
+  const currentMaha = dashaInfo?.mahadasha?.planet || dashaInfo?.currentDashaLord;
+  const currentAntar = dashaInfo?.current?.planet || dashaInfo?.antardasha?.planet;
+  
+  const mahaMatch = cityPlanets.some(p => p.toLowerCase() === (currentMaha || '').toLowerCase());
+  const antarMatch = currentAntar && cityPlanets.some(p => p.toLowerCase() === currentAntar.toLowerCase());
+  
+  const upcomingMatches = (antardashaTimeline || [])
+    .filter(period => {
+      const parts = period.start?.split(/[-\s:]/);
+      if (parts && parts.length >= 3) {
+        const startDate = new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
+        return startDate > new Date();
+      }
+      return false;
+    })
+    .filter(period => cityPlanets.some(p => p.toLowerCase() === period.planet.toLowerCase()))
+    .slice(0, 2);
+  
+  let matchLevel, icon, message;
+  
+  if (mahaMatch && antarMatch) {
+    matchLevel = 'EXCELLENT';
+    icon = '⭐⭐⭐';
+    message = `Perfect timing! Both ${currentMaha} and ${currentAntar} lines active.`;
+  } else if (mahaMatch || antarMatch) {
+    matchLevel = 'GOOD';
+    icon = '⭐⭐';
+    const matchedPlanet = mahaMatch ? currentMaha : currentAntar;
+    message = `Good timing - ${matchedPlanet} line matches your current Dasha.`;
+  } else if (upcomingMatches.length > 0) {
+    matchLevel = 'FUTURE';
+    icon = '⭐';
+    const nextMatch = upcomingMatches[0];
+    const parts = nextMatch.start?.split(/[-\s:]/);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startFormatted = parts ? `${months[parseInt(parts[1]) - 1]} ${parts[2]}` : nextMatch.start;
+    message = `Better timing: ${currentMaha}-${nextMatch.planet} period (${startFormatted})`;
+  } else {
+    matchLevel = 'NEUTRAL';
+    icon = '○';
+    message = 'Timing is neutral - no Dasha-line alignment.';
+  }
+  
+  return {
+    matchLevel,
+    icon,
+    message,
+    currentMatch: { mahaMatch, antarMatch },
+    upcomingMatches: upcomingMatches.map(m => ({
+      planet: m.planet,
+      start: m.start,
+      end: m.end
+    }))
+  };
+}
+
 export function generateDashaTimelineText(timelineData) {
   if (!timelineData || !timelineData.periods || timelineData.periods.length === 0) {
     return 'Dasha timeline not available';
