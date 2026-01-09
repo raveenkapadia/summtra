@@ -395,6 +395,88 @@
       color: #8a9bb0;
     }
     
+    .timing-card {
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .timing-content {
+      margin-top: 8px;
+    }
+    
+    .timing-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+    }
+    
+    .timing-label {
+      color: #8a9bb0;
+    }
+    
+    .timing-value {
+      color: #e8d5b7;
+    }
+    
+    .timing-match {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      padding: 6px 10px;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 6px;
+    }
+    
+    .match-icon {
+      font-size: 1rem;
+    }
+    
+    .match-level {
+      font-weight: bold;
+      color: #d4af37;
+      font-size: 0.85rem;
+    }
+    
+    .timing-message {
+      font-size: 0.75rem;
+      color: #8a9bb0;
+      margin-bottom: 8px;
+    }
+    
+    .upcoming-section {
+      background: rgba(90, 184, 122, 0.1);
+      border-radius: 6px;
+      padding: 8px;
+      margin: 8px 0;
+    }
+    
+    .upcoming-title {
+      font-size: 0.8rem;
+      color: #5ab87a;
+      margin-bottom: 6px;
+    }
+    
+    .upcoming-period {
+      font-size: 0.75rem;
+      color: #e8d5b7;
+      margin-bottom: 4px;
+      padding-left: 4px;
+    }
+    
+    .upcoming-period small {
+      color: #8a9bb0;
+    }
+    
+    .recommendation {
+      font-size: 0.75rem;
+      color: #e8d5b7;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 8px;
+    }
+    
     .vedic-close {
       position: absolute;
       top: 10px;
@@ -1041,7 +1123,13 @@
       panel.classList.add('visible');
       
       try {
-        const response = await fetch(`/api/vedic-insights?cityLat=${city.latitude}&cityLng=${city.longitude}&cityName=${encodeURIComponent(city.name)}`);
+        // Build city lines string from city data
+        const cityLines = (city.lines || []).map(line => {
+          if (typeof line === 'string') return line;
+          return `${line.planet}-${line.lineType || line.type}`;
+        }).join(',');
+        
+        const response = await fetch(`/api/vedic-insights?cityLat=${city.latitude}&cityLng=${city.longitude}&cityName=${encodeURIComponent(city.name)}&cityLines=${encodeURIComponent(cityLines)}`);
         const data = await response.json();
         
         if (!data.success) {
@@ -1100,6 +1188,54 @@
                 <div class="insight-title">Vastu Direction</div>
               </div>
               <div class="insight-detail">${insights.vastu.reason}</div>
+            </div>
+          `;
+        }
+        
+        // Timing Analysis Section
+        if (data.timing) {
+          const timing = data.timing;
+          const matchClass = timing.matchLevel === 'EXCELLENT' ? 'favorable' : 
+                             timing.matchLevel === 'GOOD' ? 'favorable' : 
+                             timing.matchLevel === 'FUTURE' ? 'neutral' : 'neutral';
+          
+          insightsHtml += `
+            <div class="insight-card timing-card">
+              <div class="insight-header">
+                <div class="insight-status ${matchClass}"></div>
+                <div class="insight-title">⏰ Timing Analysis</div>
+              </div>
+              <div class="timing-content">
+                <div class="timing-row">
+                  <span class="timing-label">Your Current Dasha:</span>
+                  <span class="timing-value">${timing.currentDasha}${timing.currentDashaEnd ? ' (until ' + timing.currentDashaEnd + ')' : ''}</span>
+                </div>
+                ${timing.cityLines ? `
+                <div class="timing-row">
+                  <span class="timing-label">City Lines:</span>
+                  <span class="timing-value">${timing.cityLines || 'None detected'}</span>
+                </div>
+                ` : ''}
+                <div class="timing-match">
+                  <span class="match-icon">${timing.matchIcon}</span>
+                  <span class="match-level">${timing.matchLevel}</span>
+                </div>
+                <div class="timing-message">${timing.matchMessage}</div>
+                ${timing.upcomingWindows && timing.upcomingWindows.length > 0 ? `
+                <div class="upcoming-section">
+                  <div class="upcoming-title">🔮 Better Timing Ahead:</div>
+                  ${timing.upcomingWindows.map(w => `
+                    <div class="upcoming-period">
+                      ⭐ ${timing.currentDasha.split('-')[0]}-${w.planet} (${w.startFormatted} - ${w.endFormatted})
+                      <br><small>${w.planet} line will activate!</small>
+                    </div>
+                  `).join('')}
+                </div>
+                ` : ''}
+                <div class="recommendation">
+                  💡 <strong>Recommendation:</strong> ${timing.recommendation}
+                </div>
+              </div>
             </div>
           `;
         }

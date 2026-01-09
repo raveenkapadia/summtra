@@ -14,7 +14,7 @@ const { generateReport } = require("./services/reportGenerator.js");
 const { getLocationData, findNearestIndianCity, findNearestInternationalCity, getTimezone } = require("./services/geocodingService.js");
 const { generateCityInterpretations, getZodiacSign, applyGoalScoreBoost } = require("./services/claudeService.js");
 const { getAstrocartographyLines } = require("./services/astrologyApi.js");
-const { getVedicProfile, getDashaInsight, checkNakshatraDirectionMatch, getDirectionFromBirthPlace, getAntardashaTimeline } = require("./services/vedicApi.js");
+const { getVedicProfile, getDashaInsight, checkNakshatraDirectionMatch, getDirectionFromBirthPlace, getAntardashaTimeline, generateTimingSection } = require("./services/vedicApi.js");
 
 const app = express();
 const PORT = 5000;
@@ -631,6 +631,26 @@ async function startServer() {
       const vastuFavorable = birth.lagna && lagnaFavorableDirections[birth.lagna] ?
         lagnaFavorableDirections[birth.lagna].some(d => direction.includes(d)) : null;
       
+      // Parse antardasha timeline for timing analysis
+      let antardashaTimeline: any[] = [];
+      if (birth.antardashaTimeline) {
+        try {
+          antardashaTimeline = JSON.parse(birth.antardashaTimeline);
+        } catch (e) {
+          console.error('Error parsing antardasha timeline:', e);
+        }
+      }
+      
+      // Get city lines from query or default empty
+      const cityLines = req.query.cityLines ? (req.query.cityLines as string).split(',') : [];
+      
+      // Generate timing section
+      const timingSection = generateTimingSection(
+        { name: cityName, lines: cityLines },
+        { currentDashaLord: birth.currentDashaLord, currentDashaEnd: birth.currentDashaEnd },
+        antardashaTimeline
+      );
+      
       res.json({
         success: true,
         cityName: cityName || 'Unknown',
@@ -657,7 +677,8 @@ async function startServer() {
               `${direction} direction is neutral for ${birth.lagna} Lagna` :
               'Lagna data not available'
           }
-        }
+        },
+        timing: timingSection
       });
     } catch (error) {
       console.error("Error fetching Vedic insights:", error);

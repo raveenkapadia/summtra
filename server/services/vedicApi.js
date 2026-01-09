@@ -454,6 +454,82 @@ export function generateDashaTimelineHTML(timelineData) {
   return html;
 }
 
+export function generateRecommendation(match, cityName) {
+  if (match.matchLevel === 'EXCELLENT') {
+    return `Excellent time to move! Your current Dasha aligns with ${cityName}'s planetary lines.`;
+  } else if (match.matchLevel === 'GOOD') {
+    return `Good timing for ${cityName}. Your Dasha partially aligns.`;
+  } else if (match.upcomingMatches && match.upcomingMatches.length > 0) {
+    const next = match.upcomingMatches[0];
+    const parts = next.start?.split(/[-\s:]/);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startFormatted = parts ? `${months[parseInt(parts[1]) - 1]} ${parts[2]}` : next.start;
+    return `Consider moving after ${startFormatted} when ${next.planet} Antardasha activates this city's ${next.planet} line.`;
+  } else {
+    return `Timing is neutral. Focus on astrocartography score for this city.`;
+  }
+}
+
+export function generateTimingSection(city, vedicProfile, antardashaTimeline) {
+  const currentMaha = vedicProfile?.currentDashaLord;
+  const currentDashaEnd = vedicProfile?.currentDashaEnd;
+  
+  if (!currentMaha) {
+    return null;
+  }
+  
+  let currentAntar = null;
+  if (antardashaTimeline && Array.isArray(antardashaTimeline)) {
+    const now = new Date();
+    const current = antardashaTimeline.find(period => {
+      const parts = period.start?.split(/[-\s:]/);
+      const endParts = period.end?.split(/[-\s:]/);
+      if (parts && endParts && parts.length >= 3 && endParts.length >= 3) {
+        const start = new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
+        const end = new Date(endParts[2], parseInt(endParts[1]) - 1, parseInt(endParts[0]));
+        return now >= start && now <= end;
+      }
+      return false;
+    });
+    currentAntar = current?.planet;
+  }
+  
+  const dashaInfo = {
+    mahadasha: { planet: currentMaha },
+    current: { planet: currentAntar }
+  };
+  
+  const match = getDashaCityMatch(city, dashaInfo, antardashaTimeline || []);
+  
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  let currentDashaEndFormatted = currentDashaEnd;
+  if (currentDashaEnd) {
+    const parts = currentDashaEnd.split(/[-\s:]/);
+    if (parts.length >= 3) {
+      currentDashaEndFormatted = `${months[parseInt(parts[1]) - 1]} ${parts[2]}`;
+    }
+  }
+  
+  return {
+    currentDasha: currentAntar ? `${currentMaha}-${currentAntar}` : currentMaha,
+    currentDashaEnd: currentDashaEndFormatted,
+    cityLines: (city.lines || []).join(', '),
+    matchIcon: match.icon,
+    matchLevel: match.matchLevel,
+    matchMessage: match.message,
+    upcomingWindows: match.upcomingMatches.map(m => {
+      const parts = m.start?.split(/[-\s:]/);
+      const endParts = m.end?.split(/[-\s:]/);
+      return {
+        planet: m.planet,
+        startFormatted: parts ? `${months[parseInt(parts[1]) - 1]} ${parts[2]}` : m.start,
+        endFormatted: endParts ? `${months[parseInt(endParts[1]) - 1]} ${endParts[2]}` : m.end
+      };
+    }),
+    recommendation: generateRecommendation(match, city.name)
+  };
+}
+
 export function getDashaCityMatch(city, dashaInfo, antardashaTimeline) {
   const cityLines = city.lines || [];
   
