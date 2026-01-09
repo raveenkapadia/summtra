@@ -601,15 +601,15 @@ async function startServer() {
         console.log(`   ✅ Got scores for ${allScoredCities.length} cities from astrodynes API`);
       } else {
         console.log(`   ⚠️ Astrodynes API failed, using fallback random scores`);
-        // Fallback: assign random scores if API fails
-        allScoredCities = citiesToScore.map((city: any) => ({
+        // Fallback: assign random scores if API fails (lines will be assigned later by assignLinesToCities)
+        allScoredCities = citiesToScore.map((city: any, index: number) => ({
           name: city.name,
           state: city.state || null,
           country: city.country,
           lat: city.lat,
           lng: city.lng,
           score: Math.floor(Math.random() * 40) + 40, // Random 40-80
-          lines: ['Jupiter-MC', 'Venus-AC'],
+          lines: [], // Will be assigned by assignLinesToCities based on coordinates
           isIndian: city.country === 'India'
         }));
       }
@@ -620,13 +620,24 @@ async function startServer() {
       
       console.log(`   📊 Breakdown: ${indiaPowerZones.length} Indian, ${intlPowerZones.length} International cities scored`);
 
-      // Step 4: Get astrocartography lines
+      // Step 4: Get astrocartography lines and assign them to cities
       console.log("   📡 Fetching astrocartography lines...");
       const linesResult = await astrologyApi.getAstrocartographyLines(birthData);
       const astroLines = linesResult.success ? linesResult.data : null;
       if (astroLines) {
         console.log("   ✅ Astrocartography lines received");
+        // Assign planetary lines to each city based on longitude proximity
+        allScoredCities = astrologyApi.assignLinesToCities(allScoredCities, astroLines);
+        console.log("   ✅ Planetary lines assigned to cities based on coordinates");
+      } else {
+        console.log("   ⚠️ No astroLines data, using fallback line assignment");
+        // Still assign lines using the fallback method
+        allScoredCities = astrologyApi.assignLinesToCities(allScoredCities, null);
       }
+      
+      // Update the split arrays with line assignments
+      indiaPowerZones = allScoredCities.filter((city: any) => city.isIndian || city.country === 'India');
+      intlPowerZones = allScoredCities.filter((city: any) => !city.isIndian && city.country !== 'India');
 
       // Step 5: Calculate power direction from lines data
       const directions = ['NORTH', 'NORTH-EAST', 'EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST'];
@@ -668,13 +679,13 @@ async function startServer() {
         }
       }
 
-      // Cities are already formatted from astrodynes - just need to add frontend-compatible structure
+      // Cities already have lines assigned by assignLinesToCities - just add frontend-compatible structure
       let indiaCities = indiaPowerZones.map((city: any) => ({
         name: city.name,
         state: city.state,
         country: city.country || 'India',
         score: city.score,
-        lines: city.lines?.length > 0 ? city.lines : ['Jupiter-MC', 'Venus-AC'],
+        lines: city.lines, // Lines already assigned by assignLinesToCities
         reason: 'Strong planetary alignment',
         category: 'general',
         coordinates: { lat: city.lat, lng: city.lng },
@@ -685,7 +696,7 @@ async function startServer() {
         name: city.name,
         country: city.country,
         score: city.score,
-        lines: city.lines?.length > 0 ? city.lines : ['Jupiter-MC', 'Venus-AC'],
+        lines: city.lines, // Lines already assigned by assignLinesToCities
         reason: 'Strong planetary alignment',
         category: 'general',
         coordinates: { lat: city.lat, lng: city.lng },
