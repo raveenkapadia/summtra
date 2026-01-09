@@ -274,6 +274,138 @@
       color: #8a9bb0;
     }
     
+    .tooltip-vedic {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(212, 175, 55, 0.3);
+      font-size: 0.75rem;
+    }
+    
+    .vedic-item {
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .vedic-icon {
+      font-size: 0.9rem;
+    }
+    
+    .vedic-favorable {
+      color: #5ab87a;
+    }
+    
+    .vedic-neutral {
+      color: #e8a540;
+    }
+    
+    .vedic-unfavorable {
+      color: #e85454;
+    }
+    
+    .vedic-panel {
+      position: fixed;
+      top: 70px;
+      left: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1000;
+      max-width: 250px;
+      display: none;
+    }
+    
+    .vedic-panel.visible {
+      display: block;
+    }
+    
+    .vedic-panel h4 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .vedic-section {
+      margin-bottom: 12px;
+    }
+    
+    .vedic-section-title {
+      font-size: 0.75rem;
+      color: #8a9bb0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    
+    .vedic-profile-item {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: #e8d5b7;
+    }
+    
+    .vedic-profile-label {
+      color: #8a9bb0;
+    }
+    
+    .insight-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .insight-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    
+    .insight-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .insight-status.favorable {
+      background: #5ab87a;
+    }
+    
+    .insight-status.neutral {
+      background: #e8a540;
+    }
+    
+    .insight-status.unfavorable {
+      background: #e85454;
+    }
+    
+    .insight-title {
+      font-size: 0.85rem;
+      color: #e8d5b7;
+    }
+    
+    .insight-detail {
+      font-size: 0.75rem;
+      color: #8a9bb0;
+    }
+    
+    .vedic-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #8a9bb0;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    
     .info-panel {
       position: fixed;
       top: 70px;
@@ -462,6 +594,23 @@
     <div class="tooltip-title"></div>
     <div class="tooltip-score"></div>
     <div class="tooltip-lines"></div>
+    <div class="tooltip-vedic" id="tooltip-vedic"></div>
+  </div>
+
+  <div class="vedic-panel" id="vedic-panel">
+    <button class="vedic-close" onclick="closeVedicPanel()">×</button>
+    <h4>🕉️ Vedic Insights</h4>
+    <div id="vedic-city-name" style="font-size: 1rem; color: #d4af37; margin-bottom: 12px;"></div>
+    
+    <div class="vedic-section">
+      <div class="vedic-section-title">Your Vedic Profile</div>
+      <div id="vedic-profile-content"></div>
+    </div>
+    
+    <div class="vedic-section">
+      <div class="vedic-section-title">City Insights</div>
+      <div id="vedic-insights-content"></div>
+    </div>
   </div>
 
   <script>
@@ -783,8 +932,10 @@
           .attr('fill', color)
           .attr('stroke', '#fff')
           .attr('stroke-width', 1)
+          .style('cursor', 'pointer')
           .on('mouseover', (event) => showCityTooltip(event, city))
-          .on('mouseout', hideTooltip);
+          .on('mouseout', hideTooltip)
+          .on('click', (event) => showVedicInsights(city));
       });
     }
 
@@ -876,6 +1027,93 @@
         Pluto: { AC: 'Transformation', DC: 'Intense bonds', MC: 'Power & influence', IC: 'Deep roots' }
       };
       return meanings[planet]?.[lineType] || '';
+    }
+
+    async function showVedicInsights(city) {
+      const panel = document.getElementById('vedic-panel');
+      const cityNameEl = document.getElementById('vedic-city-name');
+      const profileEl = document.getElementById('vedic-profile-content');
+      const insightsEl = document.getElementById('vedic-insights-content');
+      
+      cityNameEl.textContent = city.name;
+      profileEl.innerHTML = '<div style="color: #8a9bb0;">Loading...</div>';
+      insightsEl.innerHTML = '';
+      panel.classList.add('visible');
+      
+      try {
+        const response = await fetch(`/api/vedic-insights?cityLat=${city.latitude}&cityLng=${city.longitude}&cityName=${encodeURIComponent(city.name)}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+          profileEl.innerHTML = `<div style="color: #e85454;">${data.message || 'Unable to load Vedic insights. Please enter your birth data first.'}</div>`;
+          return;
+        }
+        
+        const profile = data.vedicProfile;
+        const insights = data.insights;
+        
+        profileEl.innerHTML = `
+          ${profile.rashi ? `<div class="vedic-profile-item"><span class="vedic-profile-label">Rashi (Moon):</span> ${profile.rashi}</div>` : ''}
+          ${profile.nakshatra ? `<div class="vedic-profile-item"><span class="vedic-profile-label">Nakshatra:</span> ${profile.nakshatra}</div>` : ''}
+          ${profile.lagna ? `<div class="vedic-profile-item"><span class="vedic-profile-label">Lagna:</span> ${profile.lagna}</div>` : ''}
+          ${profile.currentDashaLord ? `<div class="vedic-profile-item"><span class="vedic-profile-label">Current Dasha:</span> ${profile.currentDashaLord}</div>` : ''}
+          ${!profile.rashi && !profile.nakshatra ? '<div style="color: #8a9bb0;">No Vedic data available</div>' : ''}
+        `;
+        
+        let insightsHtml = '';
+        
+        if (insights.nakshatra) {
+          const nStatus = insights.nakshatra.matches === true ? 'favorable' : 
+                          insights.nakshatra.matches === false ? 'neutral' : 'neutral';
+          insightsHtml += `
+            <div class="insight-card">
+              <div class="insight-header">
+                <div class="insight-status ${nStatus}"></div>
+                <div class="insight-title">Nakshatra Direction</div>
+              </div>
+              <div class="insight-detail">${insights.nakshatra.reason}</div>
+            </div>
+          `;
+        }
+        
+        if (insights.dasha) {
+          const dStatus = insights.dasha.supports === true ? 'favorable' : 
+                          insights.dasha.supports === false ? 'neutral' : 'neutral';
+          insightsHtml += `
+            <div class="insight-card">
+              <div class="insight-header">
+                <div class="insight-status ${dStatus}"></div>
+                <div class="insight-title">Dasha Period</div>
+              </div>
+              <div class="insight-detail">${insights.dasha.reason}${insights.dasha.description ? ` - ${insights.dasha.description}` : ''}</div>
+            </div>
+          `;
+        }
+        
+        if (insights.vastu) {
+          const vStatus = insights.vastu.favorable === true ? 'favorable' : 
+                          insights.vastu.favorable === false ? 'neutral' : 'neutral';
+          insightsHtml += `
+            <div class="insight-card">
+              <div class="insight-header">
+                <div class="insight-status ${vStatus}"></div>
+                <div class="insight-title">Vastu Direction</div>
+              </div>
+              <div class="insight-detail">${insights.vastu.reason}</div>
+            </div>
+          `;
+        }
+        
+        insightsEl.innerHTML = insightsHtml || '<div style="color: #8a9bb0;">No insights available</div>';
+        
+      } catch (error) {
+        console.error('Error fetching Vedic insights:', error);
+        profileEl.innerHTML = '<div style="color: #e85454;">Error loading insights. Please try again.</div>';
+      }
+    }
+
+    function closeVedicPanel() {
+      document.getElementById('vedic-panel').classList.remove('visible');
     }
 
     function switchView(view) {

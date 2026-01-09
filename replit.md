@@ -98,7 +98,7 @@ Preferred communication style: Simple, everyday language.
 - **Tables**:
   - `sessions` - Auth session storage (required for Replit Auth)
   - `users` - User profiles with email and name fields
-  - `birth_data` - User-submitted birth information (date, time, location, coordinates)
+  - `birth_data` - User-submitted birth information (date, time, location, coordinates) + Vedic profile (rashi, nakshatra, lagna, dasha)
   - `reports` - Generated report records with status, PDF URLs, and `reportGoal` for goal-based customization
   - `payments` - Razorpay payment tracking with verification status
 
@@ -109,11 +109,12 @@ Preferred communication style: Simple, everyday language.
 Located in `server/services/`, each service handles a specific concern:
 
 1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines. Uses `getScoresForAllCities()` with astrodynes endpoint to score ALL 86 cities (31 India + 55 International) instead of limited power zones
-2. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API with goal-specific customization (Education, Career, Love, Relocation, Wealth, Complete)
-3. **pdfGenerator.js** - Uses Puppeteer to convert HTML templates to PDF reports
-4. **emailService.js** - Sends reports and confirmations via Resend email API
-5. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API. Also exports `INDIAN_CITIES` (31), `INTERNATIONAL_CITIES` (55), and `ALL_CITIES` arrays with coordinates
-6. **reportGenerator.js** - Orchestrates the complete report generation workflow
+2. **vedicApi.js** - Integrates with AstrologyAPI.com for Vedic astrology data (Rashi, Nakshatra, Lagna, Dasha periods). Provides `getVedicProfile()`, `getDashaInsight()`, `checkNakshatraDirectionMatch()`, and `getDirectionFromBirthPlace()` functions
+3. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API with goal-specific customization (Education, Career, Love, Relocation, Wealth, Complete)
+4. **pdfGenerator.js** - Uses Puppeteer to convert HTML templates to PDF reports
+5. **emailService.js** - Sends reports and confirmations via Resend email API
+6. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API. Also exports `INDIAN_CITIES` (31), `INTERNATIONAL_CITIES` (55), and `ALL_CITIES` arrays with coordinates
+7. **reportGenerator.js** - Orchestrates the complete report generation workflow
 
 ### Report Generation Workflow
 
@@ -131,6 +132,7 @@ Located in `server/services/`, each service handles a specific concern:
 | Service | Purpose | Environment Variable |
 |---------|---------|---------------------|
 | RapidAPI (Best Astrology API) | Natal charts, astrocartography lines | `RAPIDAPI_KEY` |
+| AstrologyAPI.com | Vedic astrology (Rashi, Nakshatra, Dasha) | `ASTROLOGY_API_USER_ID`, `ASTROLOGY_API_KEY` |
 | Anthropic Claude | AI-powered astrological interpretations | `ANTHROPIC_API_KEY` |
 | Resend | Transactional email delivery | `RESEND_API_KEY` |
 | Google Geocoding | City to coordinates conversion | `GOOGLE_API_KEY` |

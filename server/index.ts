@@ -14,6 +14,7 @@ const { generateReport } = require("./services/reportGenerator.js");
 const { getLocationData, findNearestIndianCity, findNearestInternationalCity, getTimezone } = require("./services/geocodingService.js");
 const { generateCityInterpretations, getZodiacSign, applyGoalScoreBoost } = require("./services/claudeService.js");
 const { getAstrocartographyLines } = require("./services/astrologyApi.js");
+const { getVedicProfile, getDashaInsight, checkNakshatraDirectionMatch, getDirectionFromBirthPlace } = require("./services/vedicApi.js");
 
 const app = express();
 const PORT = 5000;
@@ -411,6 +412,19 @@ async function startServer() {
       const userId = req.user.claims.sub;
       const { name, birthDate, birthTime, birthPlace, latitude, longitude } = req.body;
 
+      let vedicProfile: any = {};
+      try {
+        vedicProfile = await getVedicProfile({
+          birthDate,
+          birthTime: birthTime || '12:00',
+          latitude,
+          longitude
+        });
+        console.log('Vedic profile fetched:', vedicProfile.rashi, vedicProfile.nakshatra, vedicProfile.currentDashaLord);
+      } catch (vedicError) {
+        console.error('Vedic API error (non-blocking):', vedicError);
+      }
+
       const [data] = await db.insert(birthData).values({
         userId,
         name,
@@ -419,6 +433,16 @@ async function startServer() {
         birthPlace,
         latitude,
         longitude,
+        rashi: vedicProfile.rashi || null,
+        rashiLord: vedicProfile.rashiLord || null,
+        nakshatra: vedicProfile.nakshatra || null,
+        nakshatraLord: vedicProfile.nakshatraLord || null,
+        nakshatraPada: vedicProfile.nakshatraPada || null,
+        lagna: vedicProfile.lagna || null,
+        lagnaLord: vedicProfile.lagnaLord || null,
+        sunSign: vedicProfile.sunSign || null,
+        currentDashaLord: vedicProfile.currentDashaLord || null,
+        currentDashaEnd: vedicProfile.currentDashaEnd || null,
       }).returning();
 
       res.json({ success: true, data });
@@ -542,6 +566,89 @@ async function startServer() {
     } catch (error: any) {
       console.error("Error fetching astro map data:", error);
       res.status(500).json({ success: false, message: error.message || "Failed to fetch astrocartography data" });
+    }
+  });
+
+  app.get("/api/vedic-insights", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { cityLat, cityLng, cityName } = req.query;
+      
+      const userBirthData = await db.select()
+        .from(birthData)
+        .where(eq(birthData.userId, userId))
+        .orderBy(desc(birthData.createdAt))
+        .limit(1);
+      
+      if (!userBirthData || userBirthData.length === 0) {
+        return res.status(400).json({ success: false, message: "No birth data found" });
+      }
+      
+      const birth = userBirthData[0];
+      const birthLat = parseFloat(birth.latitude || '0');
+      const birthLon = parseFloat(birth.longitude || '0');
+      const targetLat = parseFloat(cityLat as string);
+      const targetLon = parseFloat(cityLng as string);
+      
+      const nakshatraMatch = birth.nakshatra ? 
+        checkNakshatraDirectionMatch(birth.nakshatra, birthLat, birthLon, targetLat, targetLon) :
+        { matches: null, reason: 'Nakshatra data not available' };
+      
+      const dashaInsight = birth.currentDashaLord ? 
+        getDashaInsight(birth.currentDashaLord, []) :
+        { supports: null, reason: 'Dasha data not available' };
+      
+      const direction = getDirectionFromBirthPlace(birthLat, birthLon, targetLat, targetLon);
+      
+      const lagnaFavorableDirections: Record<string, string[]> = {
+        'Aries': ['East', 'Northeast'],
+        'Taurus': ['South', 'Southeast'],
+        'Gemini': ['West', 'Southwest'],
+        'Cancer': ['North', 'Northwest'],
+        'Leo': ['East', 'Northeast'],
+        'Virgo': ['South', 'Southeast'],
+        'Libra': ['West', 'Southwest'],
+        'Scorpio': ['North', 'Northwest'],
+        'Sagittarius': ['East', 'Northeast'],
+        'Capricorn': ['South', 'Southeast'],
+        'Aquarius': ['West', 'Southwest'],
+        'Pisces': ['North', 'Northwest']
+      };
+      
+      const vastuFavorable = birth.lagna && lagnaFavorableDirections[birth.lagna] ?
+        lagnaFavorableDirections[birth.lagna].some(d => direction.includes(d)) : null;
+      
+      res.json({
+        success: true,
+        cityName: cityName || 'Unknown',
+        vedicProfile: {
+          rashi: birth.rashi,
+          rashiLord: birth.rashiLord,
+          nakshatra: birth.nakshatra,
+          nakshatraLord: birth.nakshatraLord,
+          lagna: birth.lagna,
+          lagnaLord: birth.lagnaLord,
+          currentDashaLord: birth.currentDashaLord,
+          currentDashaEnd: birth.currentDashaEnd
+        },
+        insights: {
+          nakshatra: nakshatraMatch,
+          dasha: dashaInsight,
+          vastu: {
+            direction: direction,
+            favorable: vastuFavorable,
+            lagna: birth.lagna,
+            reason: vastuFavorable === true ? 
+              `${direction} direction is favorable for ${birth.lagna} Lagna` :
+              vastuFavorable === false ?
+              `${direction} direction is neutral for ${birth.lagna} Lagna` :
+              'Lagna data not available'
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching Vedic insights:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch Vedic insights" });
     }
   });
 
