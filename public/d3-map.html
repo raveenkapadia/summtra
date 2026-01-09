@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Astrocartography Map - Ssumitra</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+      color: #e8d5b7;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    
+    .header {
+      background: rgba(10, 10, 26, 0.95);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: 56px;
+    }
+    
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      color: #d4af37;
+      text-decoration: none;
+    }
+    
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .btn {
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      background: rgba(212, 175, 55, 0.4);
+    }
+    
+    .btn.active {
+      background: #d4af37;
+      color: #0a0a1a;
+    }
+    
+    .map-container {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0a0a1a;
+    }
+    
+    #map-svg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    
+    #map-svg:active {
+      cursor: grabbing;
+    }
+    
+    .country {
+      fill: #1a2a3a;
+      stroke: #2a3a4a;
+      stroke-width: 0.5;
+      transition: fill 0.2s;
+    }
+    
+    .country:hover {
+      fill: #2a3a4a;
+    }
+    
+    .india-boundary {
+      fill: #1e3a5f;
+      stroke: #d4af37;
+      stroke-width: 1.5;
+    }
+    
+    .india-boundary:hover {
+      fill: #254a6f;
+    }
+    
+    .ocean {
+      fill: #0a1520;
+    }
+    
+    .graticule {
+      fill: none;
+      stroke: rgba(100, 120, 140, 0.15);
+      stroke-width: 0.5;
+    }
+    
+    .planetary-line {
+      fill: none;
+      stroke-width: 2;
+      opacity: 0.8;
+      pointer-events: stroke;
+    }
+    
+    .planetary-line:hover {
+      stroke-width: 3.5;
+      opacity: 1;
+    }
+    
+    .planetary-line.ac { stroke-dasharray: none; }
+    .planetary-line.dc { stroke-dasharray: 8, 4; }
+    .planetary-line.mc { stroke-dasharray: 4, 2; }
+    .planetary-line.ic { stroke-dasharray: 2, 2; }
+    
+    .city-marker {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .city-marker:hover {
+      transform: scale(1.3);
+    }
+    
+    .birth-star {
+      fill: #ff4444;
+      stroke: #ffffff;
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.8));
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.1); }
+    }
+    
+    .legend {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1000;
+      max-width: 260px;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    
+    .legend h3 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      padding-bottom: 6px;
+    }
+    
+    .legend-section {
+      margin-bottom: 12px;
+    }
+    
+    .legend-section-title {
+      font-size: 0.8rem;
+      color: #8a9bb0;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+    
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 1px;
+    }
+    
+    .legend-circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .legend-star {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid #ff4444;
+      position: relative;
+    }
+    
+    .legend-star::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: -6px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #ff4444;
+    }
+    
+    .tooltip {
+      position: fixed;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid #d4af37;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      pointer-events: none;
+      z-index: 2000;
+      max-width: 250px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .tooltip.visible {
+      opacity: 1;
+    }
+    
+    .tooltip-title {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+    
+    .tooltip-score {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #5ab87a;
+      margin-bottom: 5px;
+    }
+    
+    .tooltip-lines {
+      font-size: 0.8rem;
+      color: #8a9bb0;
+    }
+    
+    .info-panel {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1000;
+      max-width: 220px;
+    }
+    
+    .info-panel h4 {
+      font-family: 'Cinzel', serif;
+      color: #d4af37;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    
+    .info-item {
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+      color: #8a9bb0;
+    }
+    
+    .info-item span {
+      color: #e8d5b7;
+    }
+    
+    .zoom-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+    
+    .zoom-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(10, 10, 26, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      border-radius: 8px;
+      color: #d4af37;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .zoom-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+    }
+    
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 3000;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(212, 175, 55, 0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      .legend {
+        max-width: 200px;
+        padding: 10px;
+        font-size: 0.75rem;
+      }
+      
+      .info-panel {
+        max-width: 180px;
+        padding: 10px;
+      }
+      
+      .header {
+        padding: 10px 15px;
+      }
+      
+      .logo {
+        font-size: 1.1rem;
+      }
+      
+      .btn {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">Ssumitra</a>
+    <div class="header-controls">
+      <button class="btn active" id="india-view-btn">India</button>
+      <button class="btn" id="world-view-btn">World</button>
+      <button class="btn" id="back-btn" onclick="window.location.href='/'">Back</button>
+    </div>
+  </header>
+
+  <div class="map-container">
+    <svg id="map-svg"></svg>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div>Loading map data...</div>
+  </div>
+
+  <div class="legend" id="legend">
+    <h3>Planetary Lines</h3>
+    <div class="legend-section">
+      <div class="legend-section-title">Planets</div>
+      <div id="planet-legend"></div>
+    </div>
+    <div class="legend-section">
+      <div class="legend-section-title">Line Types</div>
+      <div class="legend-item">
+        <div class="legend-line" style="background: #888;"></div>
+        <span>AC - Ascendant (solid)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background: #888; background: repeating-linear-gradient(90deg, #888 0, #888 8px, transparent 8px, transparent 12px);"></div>
+        <span>DC - Descendant (dashed)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background: repeating-linear-gradient(90deg, #888 0, #888 4px, transparent 4px, transparent 6px);"></div>
+        <span>MC - Midheaven (dotted)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background: repeating-linear-gradient(90deg, #888 0, #888 2px, transparent 2px, transparent 4px);"></div>
+        <span>IC - Imum Coeli (fine)</span>
+      </div>
+    </div>
+    <div class="legend-section">
+      <div class="legend-section-title">Markers</div>
+      <div class="legend-item">
+        <div class="legend-circle" style="background: #5ab87a;"></div>
+        <span>City (size = score)</span>
+      </div>
+      <div class="legend-item">
+        <div style="color: #ff4444; font-size: 16px;">★</div>
+        <span>Birth Location</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-panel" id="info-panel">
+    <h4>Birth Data</h4>
+    <div class="info-item">Name: <span id="info-name">-</span></div>
+    <div class="info-item">Date: <span id="info-date">-</span></div>
+    <div class="info-item">Time: <span id="info-time">-</span></div>
+    <div class="info-item">Place: <span id="info-place">-</span></div>
+    <div class="info-item">Goal: <span id="info-goal">-</span></div>
+  </div>
+
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoom-in">+</button>
+    <button class="zoom-btn" id="zoom-out">−</button>
+    <button class="zoom-btn" id="zoom-reset">⟲</button>
+  </div>
+
+  <div class="tooltip" id="tooltip">
+    <div class="tooltip-title"></div>
+    <div class="tooltip-score"></div>
+    <div class="tooltip-lines"></div>
+  </div>
+
+  <script>
+    const PLANET_COLORS = {
+      Sun: '#FFD700',
+      Moon: '#C0C0C0',
+      Mercury: '#87CEEB',
+      Venus: '#FF69B4',
+      Mars: '#FF4500',
+      Jupiter: '#FFA500',
+      Saturn: '#8B4513',
+      Uranus: '#00CED1',
+      Neptune: '#4169E1',
+      Pluto: '#9932CC'
+    };
+
+    const LINE_TYPES = ['AC', 'DC', 'MC', 'IC'];
+
+    let svg, g, projection, path, zoom;
+    let worldData, indiaData;
+    let birthData = null;
+    let citiesData = [];
+    let planetaryLines = [];
+    let currentView = 'india';
+
+    const width = window.innerWidth;
+    const height = window.innerHeight - 56;
+
+    const indiaCenter = [82, 22];
+    const worldCenter = [0, 20];
+    const indiaScale = Math.min(width, height) * 2.5;
+    const worldScale = Math.min(width, height) / 5;
+
+    async function init() {
+      setupSVG();
+      await loadMapData();
+      await loadUserData();
+      renderMap();
+      setupEventListeners();
+      document.getElementById('loading').classList.add('hidden');
+    }
+
+    function setupSVG() {
+      svg = d3.select('#map-svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      g = svg.append('g');
+
+      projection = d3.geoMercator()
+        .center(indiaCenter)
+        .scale(indiaScale)
+        .translate([width / 2, height / 2]);
+
+      path = d3.geoPath().projection(projection);
+
+      zoom = d3.zoom()
+        .scaleExtent([0.5, 20])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+
+      svg.call(zoom);
+    }
+
+    async function loadMapData() {
+      try {
+        const [worldResponse, indiaResponse] = await Promise.all([
+          fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json'),
+          fetch('https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/IND/ADM0/geoBoundaries-IND-ADM0.geojson')
+        ]);
+
+        const worldTopo = await worldResponse.json();
+        worldData = topojson.feature(worldTopo, worldTopo.objects.countries);
+        
+        indiaData = await indiaResponse.json();
+      } catch (error) {
+        console.error('Error loading map data:', error);
+        showFallbackMessage();
+      }
+    }
+
+    async function loadUserData() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const goal = urlParams.get('goal') || 'career';
+        const scope = urlParams.get('scope') || 'both';
+
+        const mapDataResponse = await fetch(`/api/astro-map-data?goal=${goal}&scope=${scope}`, { credentials: 'include' });
+
+        if (mapDataResponse.ok) {
+          const mapResult = await mapDataResponse.json();
+          console.log('API response:', mapResult);
+          
+          if (mapResult.success) {
+            if (mapResult.birth) {
+              birthData = {
+                name: mapResult.user?.name || 'You',
+                birthDate: mapResult.birth.date,
+                birthTime: mapResult.birth.time,
+                birthPlace: mapResult.birth.city
+              };
+              
+              const birthResponse = await fetch('/api/birth-data', { credentials: 'include' });
+              if (birthResponse.ok) {
+                const birthResult = await birthResponse.json();
+                if (birthResult.data && birthResult.data.length > 0) {
+                  const bd = birthResult.data[0];
+                  birthData.latitude = parseFloat(bd.latitude);
+                  birthData.longitude = parseFloat(bd.longitude);
+                }
+              }
+            }
+            
+            if (mapResult.lines) {
+              planetaryLines = convertApiLinesToD3Format(mapResult.lines);
+            }
+          }
+        }
+
+        if (!birthData) {
+          birthData = getDemoBirthData();
+        }
+        
+        updateInfoPanel(birthData, goal);
+
+        if (citiesData.length === 0) {
+          citiesData = getDemoCities();
+        }
+
+        if (planetaryLines.length === 0) {
+          planetaryLines = generateDemoLines();
+        }
+
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        birthData = getDemoBirthData();
+        citiesData = getDemoCities();
+        planetaryLines = generateDemoLines();
+        updateInfoPanel(birthData, 'career');
+      }
+    }
+
+    function convertApiLinesToD3Format(apiLines) {
+      const d3Lines = [];
+      
+      Object.entries(apiLines).forEach(([planet, angles]) => {
+        Object.entries(angles).forEach(([lineType, points]) => {
+          if (Array.isArray(points) && points.length > 0) {
+            const coordinates = points.map(p => {
+              if (Array.isArray(p) && p.length >= 2) {
+                return [p[1], p[0]];
+              }
+              return [0, 0];
+            });
+            
+            d3Lines.push({
+              planet,
+              lineType,
+              coordinates
+            });
+          }
+        });
+      });
+      
+      return d3Lines;
+    }
+
+    function getDemoBirthData() {
+      return {
+        name: 'Demo User',
+        birthDate: '1990-01-15',
+        birthTime: '10:30',
+        birthPlace: 'Mumbai, India',
+        latitude: 19.076,
+        longitude: 72.8777
+      };
+    }
+
+    function getDemoCities() {
+      return [
+        { name: 'Delhi', latitude: 28.6139, longitude: 77.209, score: 88, lines: ['Jupiter-MC', 'Saturn-MC'] },
+        { name: 'Mumbai', latitude: 19.076, longitude: 72.8777, score: 85, lines: ['Sun-MC', 'Venus-AC'] },
+        { name: 'Bangalore', latitude: 12.9716, longitude: 77.5946, score: 82, lines: ['Mercury-MC', 'Jupiter-AC'] },
+        { name: 'Chennai', latitude: 13.0827, longitude: 80.2707, score: 79, lines: ['Moon-AC', 'Mars-MC'] },
+        { name: 'Kolkata', latitude: 22.5726, longitude: 88.3639, score: 91, lines: ['Jupiter-MC', 'Saturn-MC'] },
+        { name: 'Dubai', latitude: 25.2048, longitude: 55.2708, score: 87, lines: ['Sun-MC', 'Moon-AC'] },
+        { name: 'Singapore', latitude: 1.3521, longitude: 103.8198, score: 84, lines: ['Venus-AC', 'Mercury-MC'] },
+        { name: 'London', latitude: 51.5074, longitude: -0.1278, score: 76, lines: ['Saturn-MC', 'Neptune-AC'] },
+        { name: 'New York', latitude: 40.7128, longitude: -74.006, score: 72, lines: ['Mars-MC', 'Uranus-AC'] },
+        { name: 'Tokyo', latitude: 35.6762, longitude: 139.6503, score: 81, lines: ['Sun-MC', 'Moon-AC'] }
+      ];
+    }
+
+    function generateDemoLines() {
+      const lines = [];
+      const planets = Object.keys(PLANET_COLORS);
+      
+      planets.forEach(planet => {
+        const baseLon = (Math.random() - 0.5) * 300;
+        
+        LINE_TYPES.forEach(lineType => {
+          const offset = LINE_TYPES.indexOf(lineType) * 20 - 30;
+          lines.push({
+            planet,
+            lineType,
+            coordinates: [
+              [baseLon + offset, -60],
+              [baseLon + offset + (Math.random() - 0.5) * 20, 0],
+              [baseLon + offset, 60]
+            ]
+          });
+        });
+      });
+      
+      return lines;
+    }
+
+    function updateInfoPanel(data, goal) {
+      document.getElementById('info-name').textContent = data.name || '-';
+      document.getElementById('info-date').textContent = formatDate(data.birthDate) || '-';
+      document.getElementById('info-time').textContent = data.birthTime || '-';
+      document.getElementById('info-place').textContent = data.birthPlace || '-';
+      document.getElementById('info-goal').textContent = capitalizeFirst(goal);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function renderMap() {
+      g.selectAll('*').remove();
+
+      g.append('rect')
+        .attr('class', 'ocean')
+        .attr('x', -width * 10)
+        .attr('y', -height * 10)
+        .attr('width', width * 20)
+        .attr('height', height * 20);
+
+      const graticule = d3.geoGraticule();
+      g.append('path')
+        .datum(graticule)
+        .attr('class', 'graticule')
+        .attr('d', path);
+
+      if (worldData) {
+        g.selectAll('.country')
+          .data(worldData.features.filter(d => d.properties.name !== 'India'))
+          .enter()
+          .append('path')
+          .attr('class', 'country')
+          .attr('d', path);
+      }
+
+      if (indiaData) {
+        g.selectAll('.india-boundary')
+          .data(indiaData.features || [indiaData])
+          .enter()
+          .append('path')
+          .attr('class', 'india-boundary')
+          .attr('d', path);
+      }
+
+      renderPlanetaryLines();
+      renderCityMarkers();
+      renderBirthLocation();
+      renderPlanetLegend();
+    }
+
+    function renderPlanetaryLines() {
+      const lineGenerator = d3.line()
+        .x(d => projection(d)[0])
+        .y(d => projection(d)[1])
+        .curve(d3.curveCardinal.tension(0.5));
+
+      const linesGroup = g.append('g').attr('class', 'planetary-lines');
+
+      planetaryLines.forEach(line => {
+        const coords = line.coordinates.map(c => [c[0], c[1]]);
+        
+        linesGroup.append('path')
+          .datum(coords)
+          .attr('class', `planetary-line ${line.lineType.toLowerCase()}`)
+          .attr('d', lineGenerator)
+          .attr('stroke', PLANET_COLORS[line.planet] || '#888')
+          .on('mouseover', (event) => showLineTooltip(event, line))
+          .on('mouseout', hideTooltip);
+      });
+    }
+
+    function renderCityMarkers() {
+      const markersGroup = g.append('g').attr('class', 'city-markers');
+
+      citiesData.forEach(city => {
+        if (!city.latitude || !city.longitude) return;
+        
+        const [x, y] = projection([city.longitude, city.latitude]);
+        if (isNaN(x) || isNaN(y)) return;
+
+        const radius = 4 + (city.score / 100) * 8;
+        const color = getScoreColor(city.score);
+
+        markersGroup.append('circle')
+          .attr('class', 'city-marker')
+          .attr('cx', x)
+          .attr('cy', y)
+          .attr('r', radius)
+          .attr('fill', color)
+          .attr('stroke', '#fff')
+          .attr('stroke-width', 1)
+          .on('mouseover', (event) => showCityTooltip(event, city))
+          .on('mouseout', hideTooltip);
+      });
+    }
+
+    function renderBirthLocation() {
+      if (!birthData || !birthData.latitude || !birthData.longitude) return;
+
+      const [x, y] = projection([birthData.longitude, birthData.latitude]);
+      if (isNaN(x) || isNaN(y)) return;
+
+      const starSize = 12;
+      const starPoints = 5;
+      const outerRadius = starSize;
+      const innerRadius = starSize / 2.5;
+
+      let starPath = '';
+      for (let i = 0; i < starPoints * 2; i++) {
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const angle = (i * Math.PI) / starPoints - Math.PI / 2;
+        const px = x + radius * Math.cos(angle);
+        const py = y + radius * Math.sin(angle);
+        starPath += (i === 0 ? 'M' : 'L') + px + ',' + py;
+      }
+      starPath += 'Z';
+
+      g.append('path')
+        .attr('class', 'birth-star')
+        .attr('d', starPath);
+    }
+
+    function renderPlanetLegend() {
+      const container = document.getElementById('planet-legend');
+      container.innerHTML = '';
+
+      Object.entries(PLANET_COLORS).forEach(([planet, color]) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <div class="legend-line" style="background: ${color};"></div>
+          <span>${planet}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function getScoreColor(score) {
+      if (score >= 85) return '#5ab87a';
+      if (score >= 75) return '#e89830';
+      if (score >= 65) return '#4a90b8';
+      return '#8a9bb0';
+    }
+
+    function showCityTooltip(event, city) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.querySelector('.tooltip-title').textContent = city.name;
+      tooltip.querySelector('.tooltip-score').textContent = `${city.score}% Match`;
+      tooltip.querySelector('.tooltip-lines').textContent = (city.lines || []).join(', ');
+      
+      tooltip.style.left = (event.pageX + 15) + 'px';
+      tooltip.style.top = (event.pageY + 15) + 'px';
+      tooltip.classList.add('visible');
+    }
+
+    function showLineTooltip(event, line) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.querySelector('.tooltip-title').textContent = `${line.planet} ${line.lineType}`;
+      tooltip.querySelector('.tooltip-score').textContent = '';
+      tooltip.querySelector('.tooltip-lines').textContent = getPlanetMeaning(line.planet, line.lineType);
+      
+      tooltip.style.left = (event.pageX + 15) + 'px';
+      tooltip.style.top = (event.pageY + 15) + 'px';
+      tooltip.classList.add('visible');
+    }
+
+    function hideTooltip() {
+      document.getElementById('tooltip').classList.remove('visible');
+    }
+
+    function getPlanetMeaning(planet, lineType) {
+      const meanings = {
+        Sun: { AC: 'Identity & vitality', DC: 'Partnerships', MC: 'Career success', IC: 'Home foundations' },
+        Moon: { AC: 'Emotional comfort', DC: 'Nurturing bonds', MC: 'Public recognition', IC: 'Family roots' },
+        Venus: { AC: 'Love & attraction', DC: 'Romantic partners', MC: 'Creative fame', IC: 'Domestic harmony' },
+        Mars: { AC: 'Energy & drive', DC: 'Competitive partners', MC: 'Career ambition', IC: 'Family conflicts' },
+        Jupiter: { AC: 'Luck & growth', DC: 'Beneficial partners', MC: 'Career expansion', IC: 'Spiritual home' },
+        Saturn: { AC: 'Discipline & limits', DC: 'Serious partners', MC: 'Career authority', IC: 'Family duty' },
+        Mercury: { AC: 'Communication', DC: 'Intellectual bonds', MC: 'Business success', IC: 'Learning at home' },
+        Uranus: { AC: 'Innovation', DC: 'Unconventional ties', MC: 'Unique career', IC: 'Sudden changes' },
+        Neptune: { AC: 'Intuition', DC: 'Spiritual bonds', MC: 'Creative vision', IC: 'Dream home' },
+        Pluto: { AC: 'Transformation', DC: 'Intense bonds', MC: 'Power & influence', IC: 'Deep roots' }
+      };
+      return meanings[planet]?.[lineType] || '';
+    }
+
+    function switchView(view) {
+      currentView = view;
+      
+      document.getElementById('india-view-btn').classList.toggle('active', view === 'india');
+      document.getElementById('world-view-btn').classList.toggle('active', view === 'world');
+
+      const center = view === 'india' ? indiaCenter : worldCenter;
+      const scale = view === 'india' ? indiaScale : worldScale;
+
+      projection
+        .center(center)
+        .scale(scale)
+        .translate([width / 2, height / 2]);
+
+      path = d3.geoPath().projection(projection);
+
+      svg.transition()
+        .duration(750)
+        .call(zoom.transform, d3.zoomIdentity);
+
+      renderMap();
+    }
+
+    function setupEventListeners() {
+      document.getElementById('india-view-btn').addEventListener('click', () => switchView('india'));
+      document.getElementById('world-view-btn').addEventListener('click', () => switchView('world'));
+
+      document.getElementById('zoom-in').addEventListener('click', () => {
+        svg.transition().duration(300).call(zoom.scaleBy, 1.5);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', () => {
+        svg.transition().duration(300).call(zoom.scaleBy, 0.67);
+      });
+
+      document.getElementById('zoom-reset').addEventListener('click', () => {
+        svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+      });
+
+      window.addEventListener('resize', () => {
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight - 56;
+        
+        svg.attr('width', newWidth).attr('height', newHeight);
+        projection.translate([newWidth / 2, newHeight / 2]);
+        path = d3.geoPath().projection(projection);
+        renderMap();
+      });
+    }
+
+    function showFallbackMessage() {
+      document.getElementById('loading').innerHTML = `
+        <div style="color: #c45c4a;">
+          Unable to load map data. Please check your connection.
+        </div>
+        <button class="btn" style="margin-top: 15px;" onclick="location.reload()">
+          Retry
+        </button>
+      `;
+    }
+
+    init();
+  </script>
+</body>
+</html>

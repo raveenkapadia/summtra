@@ -1453,6 +1453,11 @@ async function startServer() {
     res.sendFile(path.join(process.cwd(), "public", "astro-map.html"));
   });
 
+  // Serve d3-map.html for /d3-map route (D3.js version with accurate borders)
+  app.get("/d3-map", (req: any, res) => {
+    res.sendFile(path.join(process.cwd(), "public", "d3-map.html"));
+  });
+
   // Serve admin.html for /admin route (protected server-side)
   app.get("/admin", async (req: any, res) => {
     // Check if user has a valid session
