@@ -159,6 +159,165 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // Debug endpoint to test astrocartography API response and line assignment
+  app.get("/api/debug-astro-lines", async (req, res) => {
+    try {
+      const astrologyApi = require('./services/astrologyApi');
+      const { INDIAN_CITIES } = require('./services/geocodingService');
+      
+      // Sample birth data (you can override with query params)
+      const sampleBirth = {
+        date: (req.query.date as string) || '1990-01-15',
+        time: (req.query.time as string) || '10:30',
+        latitude: parseFloat(req.query.lat as string) || 28.6139,
+        longitude: parseFloat(req.query.lng as string) || 77.2090,
+        timezone: 'Asia/Kolkata'
+      };
+      
+      console.log('\n=== DEBUG: Testing Astrocartography Lines API ===');
+      console.log('Birth Data:', sampleBirth);
+      
+      // Step 1: Get astrocartography lines from API
+      const linesResult = await astrologyApi.getAstrocartographyLines(sampleBirth);
+      
+      const apiResponse = {
+        success: linesResult.success,
+        hasData: !!linesResult.data,
+        dataType: typeof linesResult.data,
+        dataKeys: linesResult.data ? Object.keys(linesResult.data) : [],
+        rawSample: linesResult.data ? JSON.stringify(linesResult.data).substring(0, 1000) + '...' : null
+      };
+      
+      console.log('API Response Structure:', JSON.stringify(apiResponse, null, 2));
+      
+      // Step 2: Test line assignment for Mumbai, Delhi, Chennai
+      const testCities = INDIAN_CITIES.filter((c: any) => 
+        ['Mumbai', 'Delhi', 'Chennai'].includes(c.name)
+      ).map((c: any, index: number) => ({
+        ...c,
+        score: 75 - (index * 5), // Give them slightly different scores
+        lines: []
+      }));
+      
+      console.log('\nTest Cities (before line assignment):');
+      testCities.forEach((c: any) => console.log(`  ${c.name}: lng=${c.lng}, score=${c.score}`));
+      
+      // Step 3: Assign lines to these cities
+      const citiesWithLines = astrologyApi.assignLinesToCities(testCities, linesResult.data);
+      
+      // Step 4: Get detailed line proximity info for each city
+      const detailedResults = citiesWithLines.map((city: any) => {
+        // Try to find all nearby lines (not just top 2)
+        const allNearbyLines: any[] = [];
+        
+        if (linesResult.data && linesResult.data.lines) {
+          const mainPlanets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+          const lineTypes = ['AC', 'DC', 'MC', 'IC'];
+          
+          const linesData = linesResult.data.lines;
+          
+          if (typeof linesData === 'object' && !Array.isArray(linesData)) {
+            for (const planet of mainPlanets) {
+              const planetData = linesData[planet];
+              if (!planetData) continue;
+              
+              for (const lineType of lineTypes) {
+                const linePoints = planetData[lineType];
+                if (!linePoints || !Array.isArray(linePoints)) continue;
+                
+                // Find closest point on this line to the city
+                let minDistance = Infinity;
+                for (const point of linePoints) {
+                  const pointLng = point.lng || point.longitude || point.lon;
+                  if (pointLng === undefined) continue;
+                  
+                  let lngDiff = Math.abs(pointLng - city.lng);
+                  if (lngDiff > 180) lngDiff = 360 - lngDiff;
+                  
+                  if (lngDiff < minDistance) {
+                    minDistance = lngDiff;
+                  }
+                }
+                
+                if (minDistance < Infinity) {
+                  allNearbyLines.push({
+                    line: `${planet}-${lineType}`,
+                    distanceDegrees: Math.round(minDistance * 100) / 100
+                  });
+                }
+              }
+            }
+          }
+        }
+        
+        // Sort by distance
+        allNearbyLines.sort((a, b) => a.distanceDegrees - b.distanceDegrees);
+        
+        return {
+          city: city.name,
+          longitude: city.lng,
+          latitude: city.lat,
+          score: city.score,
+          assignedLines: city.lines,
+          assignmentMethod: allNearbyLines.length > 0 ? 'API_PROXIMITY' : 'FALLBACK_DETERMINISTIC',
+          nearestLines: allNearbyLines.slice(0, 6) // Show top 6 nearest lines
+        };
+      });
+      
+      console.log('\nDetailed Results:');
+      detailedResults.forEach((r: any) => {
+        console.log(`\n${r.city} (lng: ${r.longitude}):`);
+        console.log(`  Assigned: ${r.assignedLines.join(', ')}`);
+        console.log(`  Method: ${r.assignmentMethod}`);
+        console.log(`  Nearest lines: ${r.nearestLines.map((l: any) => `${l.line}(${l.distanceDegrees}°)`).join(', ')}`);
+      });
+      
+      // Scan all lines to find which ones pass near India (longitude 70-90)
+      const linesNearIndia: any[] = [];
+      if (linesResult.data && linesResult.data.lines && Array.isArray(linesResult.data.lines)) {
+        for (const line of linesResult.data.lines) {
+          if (line.points && Array.isArray(line.points)) {
+            for (const point of line.points) {
+              const lng = point.longitude;
+              const lat = point.latitude;
+              // Check if this point is near India (lat: 8-35, lng: 68-97)
+              if (lng >= 68 && lng <= 97 && lat >= 8 && lat <= 35) {
+                linesNearIndia.push({
+                  planet: line.planet,
+                  lineType: line.line_type,
+                  latitude: lat,
+                  longitude: lng
+                });
+                break; // Only need one point per line
+              }
+            }
+          }
+        }
+      }
+      
+      res.json({
+        success: true,
+        birthData: sampleBirth,
+        apiResponse,
+        cityResults: detailedResults,
+        linesNearIndia: linesNearIndia,
+        summary: {
+          apiReturnsLines: linesResult.success && linesResult.data && Object.keys(linesResult.data).length > 0,
+          lineAssignmentMethod: detailedResults[0]?.assignmentMethod || 'UNKNOWN',
+          linesPassingThroughIndia: linesNearIndia.length
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('Debug endpoint error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        stack: error.stack 
+      });
+    }
+  });
+
   app.get("/api/config/places", (req, res) => {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {

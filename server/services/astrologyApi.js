@@ -473,7 +473,7 @@ async function fetchAllAstrologyData(birthData, reportType) {
 function findLinesNearCity(astroLines, cityLat, cityLng, toleranceDegrees = 15) {
   const nearbyLines = [];
   
-  if (!astroLines || !astroLines.lines) {
+  if (!astroLines) {
     return [];
   }
   
@@ -481,11 +481,18 @@ function findLinesNearCity(astroLines, cityLat, cityLng, toleranceDegrees = 15) 
   const mainPlanets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
   const lineTypes = ['AC', 'DC', 'MC', 'IC']; // Ascendant, Descendant, Midheaven, Imum Coeli
   
-  // astroLines.lines is expected to be an object like:
-  // { Sun: { AC: [{lat, lng}, ...], MC: [...], ... }, Moon: {...}, ... }
-  // OR an array of line objects with planet, type, and coordinates
+  // Handle different API response formats:
+  // Format 1: { lines: [...] } - RapidAPI returns this
+  // Format 2: [...] - direct array
+  // Format 3: { Sun: { AC: [...] }, Moon: {...} } - nested object
   
-  const linesData = astroLines.lines || astroLines;
+  let linesData = astroLines.lines || astroLines;
+  
+  // If astroLines has a nested 'lines' property that's an array, use that
+  if (astroLines.lines && Array.isArray(astroLines.lines)) {
+    linesData = astroLines.lines;
+  }
+  
   
   // Handle object format: { Sun: { AC: [...], MC: [...] }, Moon: {...} }
   if (typeof linesData === 'object' && !Array.isArray(linesData)) {
@@ -525,26 +532,47 @@ function findLinesNearCity(astroLines, cityLat, cityLng, toleranceDegrees = 15) 
     }
   }
   
-  // Handle array format: [{ planet: 'Sun', type: 'AC', longitude: 45.5 }, ...]
+  // Handle array format from RapidAPI: [{ planet: 'Sun', line_type: 'AC', points: [{latitude, longitude}, ...] }, ...]
   if (Array.isArray(linesData)) {
+    
     for (const line of linesData) {
       if (!mainPlanets.includes(line.planet)) continue;
       
-      const lineLng = line.longitude || line.lng || line.lon;
-      if (lineLng === undefined) continue;
+      const lineType = line.type || line.line_type || line.angle;
       
-      let lngDiff = Math.abs(lineLng - cityLng);
-      if (lngDiff > 180) lngDiff = 360 - lngDiff;
-      
-      if (lngDiff <= toleranceDegrees) {
-        nearbyLines.push({
-          line: `${line.planet}-${line.type || line.line_type}`,
-          distance: lngDiff,
-          planet: line.planet,
-          type: line.type || line.line_type
-        });
+      // If line has points array, find the closest point by LONGITUDE only
+      // (because astrocartography lines curve, we match by closest longitude)
+      if (line.points && Array.isArray(line.points)) {
+        let closestDistance = Infinity;
+        let closestPoint = null;
+        
+        for (const point of line.points) {
+          const pointLng = point.longitude || point.lng || point.lon;
+          
+          if (pointLng === undefined) continue;
+          
+          // Calculate longitude distance (wrap around for 180/-180)
+          let lngDiff = Math.abs(pointLng - cityLng);
+          if (lngDiff > 180) lngDiff = 360 - lngDiff;
+          
+          if (lngDiff < closestDistance) {
+            closestDistance = lngDiff;
+            closestPoint = point;
+          }
+        }
+        
+        // If any point on this line is within tolerance, include it
+        if (closestDistance <= toleranceDegrees) {
+          nearbyLines.push({
+            line: `${line.planet}-${lineType}`,
+            distance: closestDistance,
+            planet: line.planet,
+            type: lineType
+          });
+        }
       }
     }
+    
   }
   
   // Sort by distance (closest first) and return top 2 unique lines
