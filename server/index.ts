@@ -318,6 +318,97 @@ async function startServer() {
     }
   });
 
+  // Debug endpoint to test power zones API (what reports actually use)
+  app.get("/api/debug-city-scores", async (req, res) => {
+    try {
+      const astrologyApi = require('./services/astrologyApi');
+      
+      // Raveen's birth data from user request
+      const birthData = {
+        date: (req.query.date as string) || '1982-11-15',
+        time: (req.query.time as string) || '08:20',
+        latitude: parseFloat(req.query.lat as string) || 23.0225,  // Ahmedabad
+        longitude: parseFloat(req.query.lng as string) || 72.5714,
+        timezone: 'Asia/Kolkata'
+      };
+      
+      console.log('\n=== DEBUG: Testing Power Zones API (actual report flow) ===');
+      console.log('Birth Data:', birthData);
+      
+      // Get India power zones (what reports use)
+      const indiaPowerResult = await astrologyApi.findPowerZones(birthData, { region: 'india', limit: 25 });
+      const intlPowerResult = await astrologyApi.findPowerZones(birthData, { region: 'global', limit: 25 });
+      
+      const indiaCities = indiaPowerResult.success ? (indiaPowerResult.data || []) : [];
+      const intlCities = intlPowerResult.success ? (intlPowerResult.data || []) : [];
+      
+      // Log the raw response structure
+      console.log('\n[DEBUG] India Power Zones Response:');
+      console.log(`   Success: ${indiaPowerResult.success}`);
+      console.log(`   Cities count: ${indiaCities.length}`);
+      if (indiaCities.length > 0) {
+        console.log(`   First city structure:`, JSON.stringify(indiaCities[0], null, 2).substring(0, 500));
+      }
+      
+      console.log('\n[DEBUG] International Power Zones Response:');
+      console.log(`   Success: ${intlPowerResult.success}`);
+      console.log(`   Cities count: ${intlCities.length}`);
+      if (intlCities.length > 0) {
+        console.log(`   First city structure:`, JSON.stringify(intlCities[0], null, 2).substring(0, 500));
+      }
+      
+      // Extract scores from cities
+      const allCities = [...indiaCities, ...intlCities];
+      const scores = allCities.map((c: any) => c.score || c.power || c.total_score || 0);
+      const minScore = scores.length > 0 ? Math.min(...scores) : null;
+      const maxScore = scores.length > 0 ? Math.max(...scores) : null;
+      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null;
+      
+      // Get key cities
+      const sampleCities = allCities.filter((c: any) => 
+        ['Mumbai', 'Delhi', 'Chennai', 'Bangalore', 'New York', 'London', 'Tokyo', 'Singapore'].includes(c.name || c.city)
+      );
+      
+      console.log(`\nScore Distribution: min=${minScore}, max=${maxScore}, avg=${avgScore}`);
+      console.log('\nIndia Top 5:');
+      indiaCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name || c.city}: ${c.score || c.power || 'N/A'}`));
+      console.log('\nInternational Top 5:');
+      intlCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name || c.city}: ${c.score || c.power || 'N/A'}`));
+      
+      res.json({
+        success: true,
+        birthData,
+        indiaCitiesCount: indiaCities.length,
+        intlCitiesCount: intlCities.length,
+        scoreDistribution: { min: minScore, max: maxScore, avg: avgScore },
+        indiaTop5: indiaCities.slice(0, 5).map((c: any) => ({ 
+          name: c.name || c.city, 
+          score: c.score || c.power,
+          lines: c.lines || c.planetary_lines || []
+        })),
+        intlTop5: intlCities.slice(0, 5).map((c: any) => ({ 
+          name: c.name || c.city, 
+          score: c.score || c.power,
+          lines: c.lines || c.planetary_lines || []
+        })),
+        sampleCities: sampleCities.map((c: any) => ({ 
+          name: c.name || c.city, 
+          score: c.score || c.power,
+          lines: c.lines || c.planetary_lines || []
+        })),
+        rawIndiaSample: indiaCities[0] || null,
+        rawIntlSample: intlCities[0] || null
+      });
+      
+    } catch (error: any) {
+      console.error('Debug city scores error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message
+      });
+    }
+  });
+
   app.get("/api/config/places", (req, res) => {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {

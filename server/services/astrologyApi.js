@@ -650,11 +650,11 @@ function assignLinesToCities(scoredCities, astroLines) {
 async function getScoresForAllCities(birthData, cities) {
   console.log(`📡 Scoring ALL ${cities.length} cities using astrodynes endpoint...`);
   
+  // Use the proper subject format that the API expects
+  const formattedData = formatBirthDataForAPI(birthData);
+  
   const result = await apiCall('POST', '/api/v3/astrocartography/astrodynes', {
-    datetime: `${birthData.date}T${birthData.time}:00`,
-    latitude: birthData.latitude,
-    longitude: birthData.longitude,
-    timezone: birthData.timezone || 'Asia/Kolkata',
+    ...formattedData,
     locations: cities.map(city => ({
       name: city.name,
       latitude: city.lat,
@@ -663,8 +663,39 @@ async function getScoresForAllCities(birthData, cities) {
   });
   
   if (result.success) {
-    const scores = result.data?.locations || result.data || [];
+    // Debug: Log full API response structure
+    console.log(`   [DEBUG] Raw astrodynes response type: ${typeof result.data}`);
+    console.log(`   [DEBUG] Raw astrodynes response keys:`, result.data ? Object.keys(result.data) : 'null');
+    console.log(`   [DEBUG] Raw astrodynes sample:`, JSON.stringify(result.data).substring(0, 500));
+    
+    // Handle various response structures
+    let scores = [];
+    if (Array.isArray(result.data?.locations)) {
+      scores = result.data.locations;
+    } else if (Array.isArray(result.data)) {
+      scores = result.data;
+    } else if (result.data?.results && Array.isArray(result.data.results)) {
+      scores = result.data.results;
+    } else if (result.data?.cities && Array.isArray(result.data.cities)) {
+      scores = result.data.cities;
+    } else if (result.data?.scores && Array.isArray(result.data.scores)) {
+      scores = result.data.scores;
+    }
+    
     console.log(`   ✅ Astrodynes scores received for ${scores.length} cities`);
+    
+    // Debug: Log raw API response structure for first few cities
+    if (scores.length > 0) {
+      console.log(`   [DEBUG] Raw API score fields for first city:`, JSON.stringify(scores[0], null, 2).substring(0, 500));
+      const sampleScores = scores.slice(0, 5).map((s, i) => ({
+        city: cities[i]?.name,
+        total_score: s.total_score,
+        score: s.score,
+        power: s.power,
+        extracted: s.total_score || s.score || s.power || 50
+      }));
+      console.log(`   [DEBUG] First 5 city scores:`, JSON.stringify(sampleScores));
+    }
     
     return {
       success: true,
