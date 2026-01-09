@@ -21,6 +21,7 @@ export const birthData = pgTable("birth_data", {
   sunSign: varchar("sun_sign"),
   currentDashaLord: varchar("current_dasha_lord"),
   currentDashaEnd: varchar("current_dasha_end"),
+  antardashaTimeline: text("antardasha_timeline"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

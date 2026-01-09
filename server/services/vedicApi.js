@@ -128,6 +128,36 @@ export async function getDailyNakshatraPrediction(birthData) {
   return callAstrologyApi('daily_nakshatra_prediction', birthData);
 }
 
+const PLANET_API_NAMES = {
+  'Sun': 'sun', 'Moon': 'moon', 'Mars': 'mars',
+  'Mercury': 'mercury', 'Jupiter': 'jupiter', 'Venus': 'venus',
+  'Saturn': 'saturn', 'Rahu': 'rahu', 'Ketu': 'ketu'
+};
+
+export async function getAntardashaTimeline(birthData, mahadashaPlanet) {
+  const apiName = PLANET_API_NAMES[mahadashaPlanet];
+  if (!apiName) {
+    console.error('Unknown mahadasha planet:', mahadashaPlanet);
+    return null;
+  }
+  
+  const formattedData = formatBirthData(birthData);
+  
+  try {
+    const response = await axios.post(`${BASE_URL}/sub_vdasha/${apiName}`, formattedData, {
+      headers: {
+        'Authorization': getAuthHeader(),
+        'Content-Type': 'application/json',
+        'Accept-Language': 'en'
+      }
+    });
+    return response.data.sub_dasha || response.data;
+  } catch (error) {
+    console.error('Error fetching Antardasha timeline:', error.response?.data || error.message);
+    return null;
+  }
+}
+
 export async function getVedicProfile(birthData) {
   try {
     const planets = await getPlanets(birthData);

@@ -14,7 +14,7 @@ const { generateReport } = require("./services/reportGenerator.js");
 const { getLocationData, findNearestIndianCity, findNearestInternationalCity, getTimezone } = require("./services/geocodingService.js");
 const { generateCityInterpretations, getZodiacSign, applyGoalScoreBoost } = require("./services/claudeService.js");
 const { getAstrocartographyLines } = require("./services/astrologyApi.js");
-const { getVedicProfile, getDashaInsight, checkNakshatraDirectionMatch, getDirectionFromBirthPlace } = require("./services/vedicApi.js");
+const { getVedicProfile, getDashaInsight, checkNakshatraDirectionMatch, getDirectionFromBirthPlace, getAntardashaTimeline } = require("./services/vedicApi.js");
 
 const app = express();
 const PORT = 5000;
@@ -413,6 +413,8 @@ async function startServer() {
       const { name, birthDate, birthTime, birthPlace, latitude, longitude } = req.body;
 
       let vedicProfile: any = {};
+      let antardashaData: any = null;
+      
       try {
         vedicProfile = await getVedicProfile({
           birthDate,
@@ -421,6 +423,16 @@ async function startServer() {
           longitude
         });
         console.log('Vedic profile fetched:', vedicProfile.rashi, vedicProfile.nakshatra, vedicProfile.currentDashaLord);
+        
+        if (vedicProfile.currentDashaLord) {
+          antardashaData = await getAntardashaTimeline({
+            birthDate,
+            birthTime: birthTime || '12:00',
+            latitude,
+            longitude
+          }, vedicProfile.currentDashaLord);
+          console.log('Antardasha timeline fetched:', antardashaData?.length || 0, 'periods');
+        }
       } catch (vedicError) {
         console.error('Vedic API error (non-blocking):', vedicError);
       }
@@ -443,6 +455,7 @@ async function startServer() {
         sunSign: vedicProfile.sunSign || null,
         currentDashaLord: vedicProfile.currentDashaLord || null,
         currentDashaEnd: vedicProfile.currentDashaEnd || null,
+        antardashaTimeline: antardashaData ? JSON.stringify(antardashaData) : null,
       }).returning();
 
       res.json({ success: true, data });
