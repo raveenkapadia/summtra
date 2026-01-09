@@ -466,6 +466,52 @@ async function fetchAllAstrologyData(birthData, reportType) {
   }
 }
 
+// ============================================
+// NEW: GET SCORES FOR ALL 86 CITIES
+// Uses astrodynes endpoint to score any cities we pass
+// ============================================
+async function getScoresForAllCities(birthData, cities) {
+  console.log(`📡 Scoring ALL ${cities.length} cities using astrodynes endpoint...`);
+  
+  const result = await apiCall('POST', '/api/v3/astrocartography/astrodynes', {
+    datetime: `${birthData.date}T${birthData.time}:00`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude,
+    timezone: birthData.timezone || 'Asia/Kolkata',
+    locations: cities.map(city => ({
+      name: city.name,
+      latitude: city.lat,
+      longitude: city.lng
+    }))
+  });
+  
+  if (result.success) {
+    const scores = result.data?.locations || result.data || [];
+    console.log(`   ✅ Astrodynes scores received for ${scores.length} cities`);
+    
+    return {
+      success: true,
+      data: scores.map((score, index) => {
+        const cityInfo = cities[index];
+        return {
+          name: cityInfo.name,
+          state: cityInfo.state || null,
+          country: cityInfo.country,
+          lat: cityInfo.lat,
+          lng: cityInfo.lng,
+          score: score.total_score || score.score || score.power || 50,
+          lines: score.planetary_lines || score.lines || [],
+          aspects: score.aspects || [],
+          isIndian: cityInfo.country === 'India'
+        };
+      })
+    };
+  }
+  
+  console.log('   ⚠️ Astrodynes API call failed, returning fallback scores');
+  return { success: false, error: result.error };
+}
+
 module.exports = {
   // Individual endpoints
   getAstrocartographyLines,
@@ -479,6 +525,7 @@ module.exports = {
   getRelocationChart,
   getNatalChart,
   getCurrentTransits,
+  getScoresForAllCities,
   
   // Main function
   fetchAllAstrologyData

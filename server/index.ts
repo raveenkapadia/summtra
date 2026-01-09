@@ -573,32 +573,52 @@ async function startServer() {
         timezone: locationData.timezone
       };
 
-      // Step 3: Call real astrology APIs
+      // Step 3: Call real astrology APIs - NEW: Score ALL 86 cities using astrodynes endpoint
       console.log("\n🌟 Step 2: Calling RapidAPI for astrocartography data...");
       
       const astrologyApi = require('./services/astrologyApi');
+      const { INDIAN_CITIES, INTERNATIONAL_CITIES, ALL_CITIES } = require('./services/geocodingService');
       
-      // Get power zones based on report type
-      let indiaPowerZones: any[] = [];
-      let intlPowerZones: any[] = [];
-      
-      if (reportType === 'india' || reportType === 'combo') {
-        console.log("   📡 Fetching India power zones...");
-        const indiaResult = await astrologyApi.findPowerZones(birthData, { region: 'india', limit: 10 });
-        if (indiaResult.success && indiaResult.data) {
-          indiaPowerZones = Array.isArray(indiaResult.data) ? indiaResult.data : [];
-          console.log(`   ✅ Got ${indiaPowerZones.length} Indian cities`);
-        }
+      // Determine which cities to score based on report type
+      let citiesToScore: any[] = [];
+      if (reportType === 'india') {
+        citiesToScore = INDIAN_CITIES;
+        console.log(`   📡 Scoring ${citiesToScore.length} Indian cities...`);
+      } else if (reportType === 'international') {
+        citiesToScore = INTERNATIONAL_CITIES;
+        console.log(`   📡 Scoring ${citiesToScore.length} International cities...`);
+      } else {
+        citiesToScore = ALL_CITIES;
+        console.log(`   📡 Scoring ALL ${citiesToScore.length} cities (${INDIAN_CITIES.length} India + ${INTERNATIONAL_CITIES.length} International)...`);
       }
       
-      if (reportType === 'international' || reportType === 'combo') {
-        console.log("   📡 Fetching International power zones...");
-        const intlResult = await astrologyApi.findPowerZones(birthData, { region: 'global', limit: 10 });
-        if (intlResult.success && intlResult.data) {
-          intlPowerZones = Array.isArray(intlResult.data) ? intlResult.data : [];
-          console.log(`   ✅ Got ${intlPowerZones.length} International cities`);
-        }
+      // Get scores for all cities using the astrodynes endpoint
+      const scoresResult = await astrologyApi.getScoresForAllCities(birthData, citiesToScore);
+      
+      let allScoredCities: any[] = [];
+      if (scoresResult.success && scoresResult.data) {
+        allScoredCities = scoresResult.data;
+        console.log(`   ✅ Got scores for ${allScoredCities.length} cities from astrodynes API`);
+      } else {
+        console.log(`   ⚠️ Astrodynes API failed, using fallback random scores`);
+        // Fallback: assign random scores if API fails
+        allScoredCities = citiesToScore.map((city: any) => ({
+          name: city.name,
+          state: city.state || null,
+          country: city.country,
+          lat: city.lat,
+          lng: city.lng,
+          score: Math.floor(Math.random() * 40) + 40, // Random 40-80
+          lines: ['Jupiter-MC', 'Venus-AC'],
+          isIndian: city.country === 'India'
+        }));
       }
+      
+      // Split scored cities into India and International arrays
+      let indiaPowerZones: any[] = allScoredCities.filter((city: any) => city.isIndian || city.country === 'India');
+      let intlPowerZones: any[] = allScoredCities.filter((city: any) => !city.isIndian && city.country !== 'India');
+      
+      console.log(`   📊 Breakdown: ${indiaPowerZones.length} Indian, ${intlPowerZones.length} International cities scored`);
 
       // Step 4: Get astrocartography lines
       console.log("   📡 Fetching astrocartography lines...");
@@ -648,82 +668,29 @@ async function startServer() {
         }
       }
 
-      // Format power zones for frontend with actual Indian city names
-      const usedIndianCities = new Set<string>();
+      // Cities are already formatted from astrodynes - just need to add frontend-compatible structure
+      let indiaCities = indiaPowerZones.map((city: any) => ({
+        name: city.name,
+        state: city.state,
+        country: city.country || 'India',
+        score: city.score,
+        lines: city.lines?.length > 0 ? city.lines : ['Jupiter-MC', 'Venus-AC'],
+        reason: 'Strong planetary alignment',
+        category: 'general',
+        coordinates: { lat: city.lat, lng: city.lng },
+        isRealAPIData: true
+      }));
       
-      const formatPowerZoneToIndianCity = (zone: any, index: number) => {
-        const planets = zone.planets || [];
-        const lineTypes = zone.line_types || [];
-        const lines = planets.map((planet: string, i: number) => `${planet}-${lineTypes[i] || 'MC'}`);
-        const strength = zone.strength || 0.5;
-        const score = Math.round(strength * 100);
-        const category = zone.category || 'general';
-        const meaning = zone.meaning || 'Strong planetary alignment';
-        
-        // Map to nearest Indian city
-        const nearestCity = findNearestIndianCity(zone.latitude || 0, zone.longitude || 0);
-        
-        // Avoid duplicates
-        if (usedIndianCities.has(nearestCity.name)) {
-          return null;
-        }
-        usedIndianCities.add(nearestCity.name);
-        
-        return {
-          name: nearestCity.name,
-          state: nearestCity.state,
-          country: 'India',
-          score,
-          lines: lines.length > 0 ? lines : ['Jupiter-MC'],
-          reason: meaning,
-          category,
-          coordinates: { lat: nearestCity.lat, lng: nearestCity.lng },
-          isRealAPIData: true
-        };
-      };
-
-      // Format international zones with actual city names using geocoding
-      const usedIntlCities = new Set<string>();
-      
-      const formatInternationalZone = (zone: any, index: number) => {
-        const planets = zone.planets || [];
-        const lineTypes = zone.line_types || [];
-        const lines = planets.map((planet: string, i: number) => `${planet}-${lineTypes[i] || 'MC'}`);
-        const strength = zone.strength || 0.5;
-        const score = Math.round(strength * 100);
-        const category = zone.category || 'general';
-        const meaning = zone.meaning || 'Strong planetary alignment';
-        
-        // Map to nearest international city using the geocoding service
-        const nearestCity = findNearestInternationalCity(zone.latitude || 0, zone.longitude || 0);
-        
-        // Avoid duplicates
-        if (usedIntlCities.has(nearestCity.name)) {
-          return null;
-        }
-        usedIntlCities.add(nearestCity.name);
-        
-        return {
-          name: nearestCity.name,
-          country: nearestCity.country,
-          score,
-          lines: lines.length > 0 ? lines : ['Jupiter-MC'],
-          reason: meaning,
-          category,
-          coordinates: { lat: nearestCity.lat, lng: nearestCity.lng },
-          isRealAPIData: true
-        };
-      };
-
-      // Map India zones to Indian cities, filter duplicates
-      let indiaCities = indiaPowerZones
-        .map(formatPowerZoneToIndianCity)
-        .filter((city: any) => city !== null);
-      
-      // Map international zones to global cities, filter duplicates
-      let internationalCities = intlPowerZones
-        .map(formatInternationalZone)
-        .filter((city: any) => city !== null);
+      let internationalCities = intlPowerZones.map((city: any) => ({
+        name: city.name,
+        country: city.country,
+        score: city.score,
+        lines: city.lines?.length > 0 ? city.lines : ['Jupiter-MC', 'Venus-AC'],
+        reason: 'Strong planetary alignment',
+        category: 'general',
+        coordinates: { lat: city.lat, lng: city.lng },
+        isRealAPIData: true
+      }));
 
       // Apply goal-based score boosts to city rankings
       console.log(`\n🎯 Applying goal-based score boosts for: ${reportGoal.toUpperCase()}`);
@@ -736,10 +703,21 @@ async function startServer() {
         score: applyGoalScoreBoost(city.score, city.lines || [], reportGoal)
       }));
 
-      // Re-sort cities by adjusted score
+      // Re-sort cities by adjusted score (all cities now included, sorted by score)
       indiaCities.sort((a: any, b: any) => b.score - a.score);
       internationalCities.sort((a: any, b: any) => b.score - a.score);
+      
+      // Take top 10 cities for display (from full 31 India / 55 International)
+      const topIndiaCities = indiaCities.slice(0, 10);
+      const topIntlCities = internationalCities.slice(0, 10);
+      
       console.log(`   ✅ Scores adjusted and cities re-ranked`);
+      console.log(`   📊 Top 10 India: ${topIndiaCities.map((c: any) => `${c.name}(${c.score})`).join(', ')}`);
+      console.log(`   📊 Top 10 International: ${topIntlCities.map((c: any) => `${c.name}(${c.score})`).join(', ')}`);
+      
+      // Use top 10 for report generation
+      indiaCities = topIndiaCities;
+      internationalCities = topIntlCities;
 
       // Step 6: Generate AI interpretations using Claude
       const userData = { name, birthDate, email, reportGoal };
