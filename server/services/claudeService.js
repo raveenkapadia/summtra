@@ -108,12 +108,9 @@ const GOAL_FOCUS = {
     keywords: 'studies, exams, research, knowledge, university, scholarship, teachers',
     planets: 'Mercury (communication & learning), Jupiter (wisdom & higher education)',
     scoreBoosts: {
-      'Mercury-MC': 20,
-      'Mercury-AC': 15,
-      'Jupiter-MC': 20,
-      'Jupiter-AC': 15,
-      'Sun-MC': 10,
-      'Saturn-MC': 5
+      'Mercury-MC': 10,
+      'Jupiter-MC': 10,
+      'Mercury-AC': 8
     }
   },
   'career': {
@@ -121,12 +118,10 @@ const GOAL_FOCUS = {
     keywords: 'promotion, leadership, business, income, recognition, achievements',
     planets: 'Sun (recognition & authority), Saturn (career & discipline), Mars (ambition & drive)',
     scoreBoosts: {
-      'Sun-MC': 25,
-      'Sun-AC': 15,
-      'Saturn-MC': 15,
-      'Mars-MC': 10,
-      'Jupiter-MC': 15,
-      'Mercury-MC': 10
+      'Sun-MC': 10,
+      'Saturn-MC': 8,
+      'Jupiter-MC': 8,
+      'Mars-MC': 5
     }
   },
   'love': {
@@ -134,12 +129,20 @@ const GOAL_FOCUS = {
     keywords: 'soulmate, marriage, romance, connection, attraction, partnership',
     planets: 'Venus (love & beauty), Moon (emotions & nurturing), Neptune (spiritual connection)',
     scoreBoosts: {
-      'Venus-AC': 25,
-      'Venus-DC': 25,
-      'Venus-MC': 10,
-      'Moon-AC': 15,
-      'Moon-DC': 15,
-      'Mars-DC': 5
+      'Venus-AC': 10,
+      'Venus-DC': 10,
+      'Moon-AC': 8,
+      'Moon-DC': 8
+    }
+  },
+  'settlement': {
+    theme: 'settling down, finding the right place to live, and overall life quality',
+    keywords: 'home, comfort, community, stability, environment, opportunities',
+    planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)',
+    scoreBoosts: {
+      'Moon-IC': 10,
+      'Jupiter-IC': 8,
+      'Venus-IC': 8
     }
   },
   'relocation': {
@@ -147,12 +150,9 @@ const GOAL_FOCUS = {
     keywords: 'home, comfort, community, stability, environment, opportunities',
     planets: 'Moon (home & comfort), Jupiter (luck & expansion), IC line (roots & foundation)',
     scoreBoosts: {
-      'Moon-IC': 25,
-      'Jupiter-IC': 20,
-      'Venus-IC': 15,
-      'Sun-IC': 10,
-      'Moon-AC': 10,
-      'Saturn-IC': -10
+      'Moon-IC': 10,
+      'Jupiter-IC': 8,
+      'Venus-IC': 8
     }
   },
   'wealth': {
@@ -160,12 +160,9 @@ const GOAL_FOCUS = {
     keywords: 'money, investments, business, income, property, abundance, prosperity',
     planets: 'Jupiter (luck & expansion), Venus (money & luxury), Part of Fortune (prosperity)',
     scoreBoosts: {
-      'Jupiter-MC': 25,
-      'Sun-MC': 20,
-      'Venus-MC': 15,
-      'Mercury-MC': 10,
-      'Jupiter-AC': 10,
-      'Saturn-MC': 10
+      'Jupiter-MC': 10,
+      'Sun-MC': 8,
+      'Venus-MC': 8
     }
   },
   'complete': {
@@ -173,14 +170,9 @@ const GOAL_FOCUS = {
     keywords: 'holistic success, balance, all life areas, opportunities, potential',
     planets: 'All planetary influences for complete life transformation',
     scoreBoosts: {
-      'Jupiter-MC': 10,
-      'Jupiter-AC': 10,
-      'Venus-AC': 10,
-      'Venus-MC': 10,
-      'Sun-MC': 10,
-      'Sun-AC': 10,
-      'Moon-AC': 5,
-      'Moon-IC': 5
+      'Jupiter-MC': 5,
+      'Venus-AC': 5,
+      'Sun-MC': 5
     }
   }
 };
