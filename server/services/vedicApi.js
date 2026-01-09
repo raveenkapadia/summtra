@@ -250,38 +250,86 @@ export function getDashaInsight(dashaLord, cityLines = []) {
   };
 }
 
+export const NAKSHATRA_DIRECTIONS = {
+  'Ashwini': 'South',
+  'Bharani': 'East',
+  'Krittika': 'North',
+  'Rohini': 'East',
+  'Mrigashira': 'South',
+  'Ardra': 'North',
+  'Punarvasu': 'North',
+  'Pushya': 'East',
+  'Ashlesha': 'South',
+  'Magha': 'East',
+  'Purva Phalguni': 'South',
+  'Uttara Phalguni': 'North',
+  'Hasta': 'East',
+  'Chitra': 'South',
+  'Swati': 'Southwest',
+  'Vishakha': 'East',
+  'Anuradha': 'South',
+  'Jyeshtha': 'South',
+  'Mula': 'South',
+  'Purva Ashadha': 'South',
+  'Uttara Ashadha': 'North',
+  'Shravana': 'North',
+  'Dhanishta': 'East',
+  'Shatabhisha': 'South',
+  'Purva Bhadrapada': 'North',
+  'Uttara Bhadrapada': 'North',
+  'Revati': 'East'
+};
+
 export function getNakshatraDirection(nakshatra) {
-  const nakshatraDirections = {
-    'Ashwini': 'East',
-    'Bharani': 'East',
-    'Krittika': 'East',
-    'Rohini': 'East',
-    'Mrigashira': 'South',
-    'Ardra': 'North',
-    'Punarvasu': 'North',
-    'Pushya': 'North',
-    'Ashlesha': 'South',
-    'Magha': 'South',
-    'Purva Phalguni': 'South',
-    'Uttara Phalguni': 'East',
-    'Hasta': 'South',
-    'Chitra': 'West',
-    'Swati': 'North',
-    'Vishakha': 'East',
-    'Anuradha': 'South',
-    'Jyeshtha': 'South',
-    'Mula': 'West',
-    'Purva Ashadha': 'South',
-    'Uttara Ashadha': 'South',
-    'Shravana': 'North',
-    'Dhanishta': 'West',
-    'Shatabhisha': 'South',
-    'Purva Bhadrapada': 'West',
-    'Uttara Bhadrapada': 'North',
-    'Revati': 'West'
-  };
+  return NAKSHATRA_DIRECTIONS[nakshatra] || null;
+}
+
+export function checkNakshatraCityMatch(nakshatra, cityDirection) {
+  if (!nakshatra || !cityDirection) {
+    return { matches: null, icon: '?', reason: 'Missing nakshatra or direction data' };
+  }
   
-  return nakshatraDirections[nakshatra] || null;
+  const favorableDirection = NAKSHATRA_DIRECTIONS[nakshatra];
+  if (!favorableDirection) {
+    return { matches: null, icon: '?', reason: 'Nakshatra not recognized' };
+  }
+  
+  // Exact match for primary direction
+  const isExactMatch = cityDirection.toLowerCase() === favorableDirection.toLowerCase();
+  
+  // Partial match if city direction contains the favorable direction (e.g., Northeast contains North)
+  const isPartialMatch = !isExactMatch && (
+    cityDirection.toLowerCase().includes(favorableDirection.toLowerCase()) ||
+    favorableDirection.toLowerCase().includes(cityDirection.toLowerCase())
+  );
+  
+  return {
+    matches: isExactMatch,
+    partial: isPartialMatch,
+    icon: isExactMatch ? '✅' : '⚠️',
+    nakshatra,
+    favorableDirection,
+    cityDirection,
+    reason: isExactMatch 
+      ? `${cityDirection} matches ${nakshatra}'s favorable direction (${favorableDirection})`
+      : isPartialMatch
+        ? `${cityDirection} partially aligns with ${nakshatra}'s direction (${favorableDirection})`
+        : `${cityDirection} differs from ${nakshatra}'s favorable direction (${favorableDirection})`
+  };
+}
+
+export function getCityNakshatraInfo(nakshatra, birthLat, birthLon, cityLat, cityLon) {
+  const direction = getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon);
+  const match = checkNakshatraCityMatch(nakshatra, direction);
+  
+  return {
+    direction,
+    nakshatraMatch: match.icon,
+    isMatch: match.matches,
+    isPartial: match.partial,
+    favorableDirection: match.favorableDirection,
+    reason: match.reason
+  };
 }
 
 export function getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon) {
