@@ -529,15 +529,19 @@
 
     async function loadMapData() {
       try {
-        const [worldResponse, indiaResponse] = await Promise.all([
-          fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json'),
-          fetch('https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/IND/ADM0/geoBoundaries-IND-ADM0.geojson')
-        ]);
-
+        const worldResponse = await fetch('/public/data/countries-50m.json');
+        if (!worldResponse.ok) {
+          throw new Error(`Failed to load map: ${worldResponse.status}`);
+        }
         const worldTopo = await worldResponse.json();
         worldData = topojson.feature(worldTopo, worldTopo.objects.countries);
         
-        indiaData = await indiaResponse.json();
+        indiaData = {
+          type: 'FeatureCollection',
+          features: worldData.features.filter(f => f.properties.name === 'India')
+        };
+        
+        console.log('Map data loaded successfully. Countries:', worldData.features.length);
       } catch (error) {
         console.error('Error loading map data:', error);
         showFallbackMessage();

@@ -47,7 +47,7 @@ Preferred communication style: Simple, everyday language.
   - `/api/logout` - Clear session and logout
   - `/api/auth/user` - Get current authenticated user
 
-- **Astrocartography Map** (`/astro-map`):
+- **Astrocartography Map - Leaflet** (`/astro-map`):
   - Interactive world map using Leaflet.js with dark CartoDB tiles
   - Displays planetary lines (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto)
   - Four line types per planet: Ascendant (AC), Descendant (DC), Midheaven (MC), Imum Coeli (IC)
@@ -56,6 +56,25 @@ Preferred communication style: Simple, everyday language.
   - Demo mode for unauthenticated users with sample lines
   - Personalized lines for authenticated users with birth data
   - Falls back to demo lines if RapidAPI astrology endpoint fails
+
+- **D3.js Astrocartography Map** (`/d3-map`):
+  - Interactive vector map using D3.js v7 with SVG rendering
+  - **Data Sources**:
+    - Natural Earth 50m TopoJSON for world boundaries (public domain, used by major publications)
+    - Locally served from `/public/data/countries-50m.json` (756KB)
+  - **Features**:
+    - India-focused view with highlighted India boundary
+    - World view toggle for global perspective
+    - 10 planetary lines with color coding (Sun gold, Moon silver, Venus pink, etc.)
+    - 4 line types with distinct dash patterns (AC solid, DC dashed, MC dotted, IC fine)
+    - City markers sized by score, colored by goal relevance (green 85%+, orange 75%+, blue 65%+)
+    - Birth location marked with pulsing red star
+    - Interactive tooltips on hover showing city scores and planetary meanings
+    - Zoom/pan controls with smooth D3 transitions
+    - Legend panel with all planets and line types
+    - Birth data info panel showing user details
+  - **API Integration**: Uses `/api/astro-map-data` endpoint for personalized planetary lines
+  - **Demo Mode**: Falls back to demo data for unauthenticated users
 
 - **Authentication**: Replit Auth integration using OpenID Connect
   - Session management via PostgreSQL-backed connect-pg-simple
