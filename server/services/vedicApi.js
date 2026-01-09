@@ -302,6 +302,60 @@ export function getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon)
   return 'Unknown';
 }
 
+export const LAGNA_FAVORABLE_DIRECTIONS = {
+  'Aries': ['East', 'South', 'Southeast'],
+  'Taurus': ['South', 'West', 'Southwest'],
+  'Gemini': ['West', 'North', 'Northwest'],
+  'Cancer': ['North', 'East', 'Northeast'],
+  'Leo': ['East', 'South', 'Southeast'],
+  'Virgo': ['South', 'West', 'Southwest'],
+  'Libra': ['West', 'North', 'Northwest'],
+  'Scorpio': ['North', 'East', 'Northeast'],
+  'Sagittarius': ['East', 'South', 'Northeast'],
+  'Capricorn': ['South', 'West', 'Southwest'],
+  'Aquarius': ['West', 'North', 'Northwest'],
+  'Pisces': ['North', 'East', 'Northeast']
+};
+
+export function checkVastuDirection(lagna, direction) {
+  if (!lagna || !direction) {
+    return { favorable: null, icon: '?', reason: 'Missing lagna or direction data' };
+  }
+  
+  const favorableDirections = LAGNA_FAVORABLE_DIRECTIONS[lagna];
+  if (!favorableDirections) {
+    return { favorable: null, icon: '?', reason: 'Lagna not recognized' };
+  }
+  
+  // Exact match for direction (case-insensitive)
+  const isFavorable = favorableDirections.some(d => 
+    direction.toLowerCase() === d.toLowerCase()
+  );
+  
+  return {
+    favorable: isFavorable,
+    icon: isFavorable ? '✅' : '⚠️',
+    direction,
+    lagna,
+    favorableDirections,
+    reason: isFavorable 
+      ? `${direction} is favorable for ${lagna} Lagna`
+      : `${direction} is neutral for ${lagna} Lagna (favorable: ${favorableDirections.join(', ')})`
+  };
+}
+
+export function getCityVastuInfo(lagna, birthLat, birthLon, cityLat, cityLon) {
+  const direction = getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon);
+  const vastu = checkVastuDirection(lagna, direction);
+  
+  return {
+    direction,
+    vastu: vastu.icon,
+    vastuFavorable: vastu.favorable,
+    vastuReason: vastu.reason
+  };
+}
+
 export function checkNakshatraDirectionMatch(nakshatra, birthLat, birthLon, cityLat, cityLon) {
   const favorableDirection = getNakshatraDirection(nakshatra);
   const actualDirection = getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon);
