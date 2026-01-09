@@ -454,6 +454,213 @@ export function generateDashaTimelineHTML(timelineData) {
   return html;
 }
 
+export function generateTimingSummary(vedicProfile, topCities, antardashaTimeline) {
+  const currentMaha = vedicProfile?.currentDashaLord;
+  const currentDashaEnd = vedicProfile?.currentDashaEnd;
+  
+  if (!currentMaha || !antardashaTimeline || !Array.isArray(antardashaTimeline)) {
+    return null;
+  }
+  
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  function formatDateStr(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split(/[-\s:]/);
+    if (parts.length >= 3) {
+      return `${months[parseInt(parts[1]) - 1]} ${parts[2]}`;
+    }
+    return dateStr;
+  }
+  
+  function parseDateStr(dateStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split(/[-\s:]/);
+    if (parts.length >= 3) {
+      return new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    return new Date(dateStr);
+  }
+  
+  // Find current antardasha
+  const now = new Date();
+  const currentAntar = antardashaTimeline.find(period => {
+    const start = parseDateStr(period.start);
+    const end = parseDateStr(period.end);
+    return start && end && now >= start && now <= end;
+  });
+  
+  // Get upcoming periods
+  const upcoming = antardashaTimeline
+    .filter(p => {
+      const start = parseDateStr(p.start);
+      return start && start > now;
+    })
+    .slice(0, 3);
+  
+  // Match cities to periods
+  const cityTimingMap = (topCities || []).map(city => {
+    const cityLines = city.lines || [];
+    const cityPlanets = cityLines.map(line => {
+      if (typeof line === 'string') return line.split('-')[0];
+      return line.planet || '';
+    }).filter(Boolean);
+    
+    const bestPeriod = antardashaTimeline.find(period => {
+      const start = parseDateStr(period.start);
+      return start && start > now && cityPlanets.some(p => 
+        p.toLowerCase() === period.planet.toLowerCase()
+      );
+    });
+    
+    return {
+      city: city.name,
+      lines: cityLines.map(l => typeof l === 'string' ? l : `${l.planet}-${l.lineType}`).join(', '),
+      bestPeriod: bestPeriod ? {
+        planet: bestPeriod.planet,
+        dates: `${formatDateStr(bestPeriod.start)} - ${formatDateStr(bestPeriod.end)}`,
+        label: `${currentMaha}-${bestPeriod.planet}`
+      } : null,
+      currentOkay: !bestPeriod
+    };
+  }).filter(c => c.bestPeriod || c.lines);
+  
+  return {
+    mahadasha: {
+      planet: currentMaha,
+      meaning: DASHA_MEANINGS[currentMaha]
+    },
+    current: currentAntar ? {
+      period: `${currentMaha}-${currentAntar.planet}`,
+      dates: `${formatDateStr(currentAntar.start)} - ${formatDateStr(currentAntar.end)}`,
+      planet: currentAntar.planet,
+      meaning: DASHA_MEANINGS[currentAntar.planet]
+    } : null,
+    upcoming: upcoming.map(p => ({
+      period: `${currentMaha}-${p.planet}`,
+      planet: p.planet,
+      dates: `${formatDateStr(p.start)} - ${formatDateStr(p.end)}`,
+      meaning: DASHA_MEANINGS[p.planet]
+    })),
+    cityTimingMap
+  };
+}
+
+export function generateTimingSummaryText(summary) {
+  if (!summary) return 'Timing summary not available';
+  
+  let text = `
+BEST RELOCATION WINDOWS FOR YOU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+
+  if (summary.current) {
+    text += `CURRENT PERIOD: ${summary.current.period} (${summary.current.dates})
+┌────────────────────────────────────────────────┐
+│ Theme: ${summary.current.meaning?.theme || 'N/A'}
+│ Best for: ${summary.current.meaning?.goodFor?.join(', ') || 'N/A'}
+│ Favorable cities: Those with ${summary.current.planet}/${summary.mahadasha.planet} lines
+└────────────────────────────────────────────────┘
+
+`;
+  }
+
+  if (summary.upcoming && summary.upcoming.length > 0) {
+    text += `UPCOMING FAVORABLE PERIODS:
+
+`;
+    summary.upcoming.forEach(p => {
+      text += `⭐ ${p.period} (${p.dates})
+   Theme: ${p.meaning?.theme || 'N/A'}
+   Best for: ${p.meaning?.goodFor?.join(', ') || 'N/A'}
+   Look for cities with: ${p.planet} lines
+   
+`;
+    });
+  }
+
+  if (summary.cityTimingMap && summary.cityTimingMap.length > 0) {
+    text += `YOUR TOP CITIES BY TIMING:
+┌─────────────────────────────────────────────────┐
+│ City          │ Lines          │ Best Period    │
+├─────────────────────────────────────────────────┤
+`;
+    summary.cityTimingMap.forEach(c => {
+      const cityPad = (c.city || '').substring(0, 12).padEnd(12);
+      const linesPad = (c.lines || '').substring(0, 14).padEnd(14);
+      const periodPad = c.bestPeriod ? `${c.bestPeriod.dates} ⭐` : 'Current okay';
+      text += `│ ${cityPad} │ ${linesPad} │ ${periodPad}
+`;
+    });
+    text += `└─────────────────────────────────────────────────┘
+`;
+  }
+
+  return text;
+}
+
+export function generateTimingSummaryHTML(summary) {
+  if (!summary) return '<p>Timing summary not available</p>';
+  
+  let html = `
+    <div class="timing-summary">
+      <h3>BEST RELOCATION WINDOWS FOR YOU</h3>
+  `;
+
+  if (summary.current) {
+    html += `
+      <div class="current-period-box">
+        <h4>CURRENT PERIOD: ${summary.current.period}</h4>
+        <div class="period-dates">${summary.current.dates}</div>
+        <div class="period-details">
+          <div><strong>Theme:</strong> ${summary.current.meaning?.theme || 'N/A'}</div>
+          <div><strong>Best for:</strong> ${summary.current.meaning?.goodFor?.join(', ') || 'N/A'}</div>
+          <div><strong>Favorable cities:</strong> Those with ${summary.current.planet}/${summary.mahadasha.planet} lines</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (summary.upcoming && summary.upcoming.length > 0) {
+    html += `<h4>UPCOMING FAVORABLE PERIODS:</h4>`;
+    summary.upcoming.forEach(p => {
+      html += `
+        <div class="upcoming-period-card">
+          <div class="period-star">⭐ ${p.period} (${p.dates})</div>
+          <div class="period-theme">Theme: ${p.meaning?.theme || 'N/A'}</div>
+          <div class="period-best">Best for: ${p.meaning?.goodFor?.join(', ') || 'N/A'}</div>
+          <div class="period-cities">Look for cities with: ${p.planet} lines</div>
+        </div>
+      `;
+    });
+  }
+
+  if (summary.cityTimingMap && summary.cityTimingMap.length > 0) {
+    html += `
+      <h4>YOUR TOP CITIES BY TIMING:</h4>
+      <table class="city-timing-table">
+        <thead>
+          <tr><th>City</th><th>Lines</th><th>Best Period</th></tr>
+        </thead>
+        <tbody>
+    `;
+    summary.cityTimingMap.forEach(c => {
+      html += `
+        <tr>
+          <td>${c.city}</td>
+          <td>${c.lines}</td>
+          <td>${c.bestPeriod ? `${c.bestPeriod.dates} ⭐` : 'Current okay'}</td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
 export function generateRecommendation(match, cityName) {
   if (match.matchLevel === 'EXCELLENT') {
     return `Excellent time to move! Your current Dasha aligns with ${cityName}'s planetary lines.`;
