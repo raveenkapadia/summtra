@@ -318,10 +318,11 @@ async function startServer() {
     }
   });
 
-  // Debug endpoint to test power zones API (what reports actually use)
+  // Debug endpoint to test new scoreCitiesFromPowerZones function
   app.get("/api/debug-city-scores", async (req, res) => {
     try {
       const astrologyApi = require('./services/astrologyApi');
+      const { INDIAN_CITIES, INTERNATIONAL_CITIES } = require('./services/geocodingService');
       
       // Raveen's birth data from user request
       const birthData = {
@@ -332,48 +333,34 @@ async function startServer() {
         timezone: 'Asia/Kolkata'
       };
       
-      console.log('\n=== DEBUG: Testing Power Zones API (actual report flow) ===');
+      console.log('\n=== DEBUG: Testing scoreCitiesFromPowerZones ===');
       console.log('Birth Data:', birthData);
       
-      // Get India power zones (what reports use)
-      const indiaPowerResult = await astrologyApi.findPowerZones(birthData, { region: 'india', limit: 25 });
-      const intlPowerResult = await astrologyApi.findPowerZones(birthData, { region: 'global', limit: 25 });
+      // Score India cities using new function
+      const indiaScoresResult = await astrologyApi.scoreCitiesFromPowerZones(birthData, INDIAN_CITIES, 'india');
+      const intlScoresResult = await astrologyApi.scoreCitiesFromPowerZones(birthData, INTERNATIONAL_CITIES, 'global');
       
-      const indiaCities = indiaPowerResult.success ? (indiaPowerResult.data || []) : [];
-      const intlCities = intlPowerResult.success ? (intlPowerResult.data || []) : [];
+      const indiaCities = indiaScoresResult.success ? indiaScoresResult.data : [];
+      const intlCities = intlScoresResult.success ? intlScoresResult.data : [];
       
-      // Log the raw response structure
-      console.log('\n[DEBUG] India Power Zones Response:');
-      console.log(`   Success: ${indiaPowerResult.success}`);
-      console.log(`   Cities count: ${indiaCities.length}`);
-      if (indiaCities.length > 0) {
-        console.log(`   First city structure:`, JSON.stringify(indiaCities[0], null, 2).substring(0, 500));
-      }
+      // Extract scores for distribution analysis
+      const allScores = [...indiaCities, ...intlCities].map((c: any) => c.score);
+      const minScore = allScores.length > 0 ? Math.min(...allScores) : null;
+      const maxScore = allScores.length > 0 ? Math.max(...allScores) : null;
+      const avgScore = allScores.length > 0 ? Math.round(allScores.reduce((a: number, b: number) => a + b, 0) / allScores.length) : null;
       
-      console.log('\n[DEBUG] International Power Zones Response:');
-      console.log(`   Success: ${intlPowerResult.success}`);
-      console.log(`   Cities count: ${intlCities.length}`);
-      if (intlCities.length > 0) {
-        console.log(`   First city structure:`, JSON.stringify(intlCities[0], null, 2).substring(0, 500));
-      }
-      
-      // Extract scores from cities
-      const allCities = [...indiaCities, ...intlCities];
-      const scores = allCities.map((c: any) => c.score || c.power || c.total_score || 0);
-      const minScore = scores.length > 0 ? Math.min(...scores) : null;
-      const maxScore = scores.length > 0 ? Math.max(...scores) : null;
-      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null;
-      
-      // Get key cities
-      const sampleCities = allCities.filter((c: any) => 
-        ['Mumbai', 'Delhi', 'Chennai', 'Bangalore', 'New York', 'London', 'Tokyo', 'Singapore'].includes(c.name || c.city)
+      // Get sample cities by name
+      const sampleCities = [...indiaCities, ...intlCities].filter((c: any) => 
+        ['Mumbai', 'Delhi', 'Chennai', 'Bangalore', 'New York', 'London', 'Tokyo', 'Singapore'].includes(c.name)
       );
       
       console.log(`\nScore Distribution: min=${minScore}, max=${maxScore}, avg=${avgScore}`);
       console.log('\nIndia Top 5:');
-      indiaCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name || c.city}: ${c.score || c.power || 'N/A'}`));
+      indiaCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name}: ${c.score}% (${(c.lines || []).join(', ')})`));
       console.log('\nInternational Top 5:');
-      intlCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name || c.city}: ${c.score || c.power || 'N/A'}`));
+      intlCities.slice(0, 5).forEach((c: any) => console.log(`  ${c.name}: ${c.score}% (${(c.lines || []).join(', ')})`));
+      console.log('\nSample Cities:');
+      sampleCities.forEach((c: any) => console.log(`  ${c.name}: ${c.score}% (${(c.lines || []).join(', ')})`));
       
       res.json({
         success: true,
@@ -382,22 +369,24 @@ async function startServer() {
         intlCitiesCount: intlCities.length,
         scoreDistribution: { min: minScore, max: maxScore, avg: avgScore },
         indiaTop5: indiaCities.slice(0, 5).map((c: any) => ({ 
-          name: c.name || c.city, 
-          score: c.score || c.power,
-          lines: c.lines || c.planetary_lines || []
+          name: c.name, 
+          score: c.score,
+          lines: c.lines,
+          method: c.scoringMethod
         })),
         intlTop5: intlCities.slice(0, 5).map((c: any) => ({ 
-          name: c.name || c.city, 
-          score: c.score || c.power,
-          lines: c.lines || c.planetary_lines || []
+          name: c.name, 
+          score: c.score,
+          lines: c.lines,
+          method: c.scoringMethod
         })),
         sampleCities: sampleCities.map((c: any) => ({ 
-          name: c.name || c.city, 
-          score: c.score || c.power,
-          lines: c.lines || c.planetary_lines || []
-        })),
-        rawIndiaSample: indiaCities[0] || null,
-        rawIntlSample: intlCities[0] || null
+          name: c.name, 
+          score: c.score,
+          lines: c.lines,
+          method: c.scoringMethod,
+          contributingZones: c.contributingZones
+        }))
       });
       
     } catch (error: any) {
