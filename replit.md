@@ -89,11 +89,11 @@ Preferred communication style: Simple, everyday language.
 
 Located in `server/services/`, each service handles a specific concern:
 
-1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines
+1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines. Uses `getScoresForAllCities()` with astrodynes endpoint to score ALL 86 cities (31 India + 55 International) instead of limited power zones
 2. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API with goal-specific customization (Education, Career, Love, Relocation, Wealth, Complete)
 3. **pdfGenerator.js** - Uses Puppeteer to convert HTML templates to PDF reports
 4. **emailService.js** - Sends reports and confirmations via Resend email API
-5. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API
+5. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API. Also exports `INDIAN_CITIES` (31), `INTERNATIONAL_CITIES` (55), and `ALL_CITIES` arrays with coordinates
 6. **reportGenerator.js** - Orchestrates the complete report generation workflow
 
 ### Report Generation Workflow
