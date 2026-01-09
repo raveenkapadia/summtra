@@ -321,3 +321,177 @@ export function checkNakshatraDirectionMatch(nakshatra, birthLat, birthLon, city
       : `City is ${actualDirection}, your favorable direction is ${favorableDirection}`
   };
 }
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split(/[-\s:]/);
+  if (parts.length >= 3) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parts[2];
+    return `${months[month]} ${year}`;
+  }
+  return dateStr;
+}
+
+function parseDateString(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split(/[-\s:]/);
+  if (parts.length >= 3) {
+    return new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
+  }
+  return new Date(dateStr);
+}
+
+export function formatDashaTimeline(mahadasha, antardashaList, mahadashaMeaning = null) {
+  if (!antardashaList || !Array.isArray(antardashaList)) {
+    return { periods: [], current: null };
+  }
+  
+  const today = new Date();
+  let currentPeriod = null;
+  
+  const periods = antardashaList.map(period => {
+    const start = parseDateString(period.start);
+    const end = parseDateString(period.end);
+    
+    let status;
+    if (end < today) status = 'past';
+    else if (start <= today && end >= today) status = 'current';
+    else status = 'future';
+    
+    const periodData = {
+      name: `${mahadasha}-${period.planet}`,
+      planet: period.planet,
+      startDate: formatDate(period.start),
+      endDate: formatDate(period.end),
+      dates: `${formatDate(period.start)} - ${formatDate(period.end)}`,
+      status,
+      statusIcon: status === 'past' ? '✓' : status === 'current' ? '⬤' : '○',
+      statusLabel: status === 'past' ? 'Past' : status === 'current' ? 'NOW' : 'Future',
+      isCurrent: status === 'current',
+      meaning: DASHA_MEANINGS[period.planet] || null
+    };
+    
+    if (status === 'current') {
+      currentPeriod = periodData;
+    }
+    
+    return periodData;
+  });
+  
+  return {
+    mahadasha: {
+      planet: mahadasha,
+      meaning: DASHA_MEANINGS[mahadasha] || mahadashaMeaning,
+      startDate: periods.length > 0 ? periods[0].startDate : null,
+      endDate: periods.length > 0 ? periods[periods.length - 1].endDate : null
+    },
+    periods,
+    current: currentPeriod
+  };
+}
+
+export function generateDashaTimelineHTML(timelineData) {
+  if (!timelineData || !timelineData.periods || timelineData.periods.length === 0) {
+    return '<p>Dasha timeline not available</p>';
+  }
+  
+  const { mahadasha, periods, current } = timelineData;
+  
+  let html = `
+    <div class="dasha-timeline">
+      <h3>YOUR DASHA TIMELINE</h3>
+      <div class="mahadasha-header">
+        <strong>MAHADASHA: ${mahadasha.planet}</strong> (${mahadasha.startDate} → ${mahadasha.endDate})
+        ${mahadasha.meaning ? `<br><em>Theme: ${mahadasha.meaning.theme}</em>` : ''}
+      </div>
+      
+      <h4>ANTARDASHA PERIODS (Sub-Periods):</h4>
+      <table class="antardasha-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Dates</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  periods.forEach(period => {
+    const rowClass = period.isCurrent ? 'current-period' : period.status === 'past' ? 'past-period' : 'future-period';
+    html += `
+          <tr class="${rowClass}">
+            <td>${period.name}</td>
+            <td>${period.dates}</td>
+            <td>${period.statusIcon} ${period.statusLabel}</td>
+          </tr>
+    `;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+  `;
+  
+  if (current) {
+    html += `
+      <div class="current-dasha-highlight">
+        <strong>CURRENT: ${current.name}</strong> (until ${current.endDate})
+        ${current.meaning ? `
+          <br>Theme: ${current.meaning.theme}
+          <br>Best for: ${current.meaning.goodFor.join(', ')}
+          <br>Relocation tip: ${current.meaning.relocationTip}
+        ` : ''}
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  
+  return html;
+}
+
+export function generateDashaTimelineText(timelineData) {
+  if (!timelineData || !timelineData.periods || timelineData.periods.length === 0) {
+    return 'Dasha timeline not available';
+  }
+  
+  const { mahadasha, periods, current } = timelineData;
+  
+  let text = `
+YOUR DASHA TIMELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MAHADASHA: ${mahadasha.planet} (${mahadasha.startDate} → ${mahadasha.endDate})
+${mahadasha.meaning ? `Theme: ${mahadasha.meaning.theme}` : ''}
+
+ANTARDASHA PERIODS (Sub-Periods):
+┌──────────────────┬─────────────────┬──────────┐
+│ Period           │ Dates           │ Status   │
+├──────────────────┼─────────────────┼──────────┤
+`;
+  
+  periods.forEach(period => {
+    const paddedName = period.name.padEnd(16);
+    const paddedDates = period.dates.padEnd(15);
+    const statusText = `${period.statusIcon} ${period.statusLabel}`.padEnd(8);
+    text += `│ ${paddedName} │ ${paddedDates} │ ${statusText} │\n`;
+  });
+  
+  text += `└──────────────────┴─────────────────┴──────────┘
+
+`;
+  
+  if (current) {
+    text += `CURRENT: ${current.name} (until ${current.endDate})
+${current.meaning ? `Theme: ${current.meaning.theme}
+Best for: ${current.meaning.goodFor.join(', ')}
+Relocation tip: ${current.meaning.relocationTip}` : ''}
+`;
+  }
+  
+  return text;
+}
