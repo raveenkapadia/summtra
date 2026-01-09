@@ -4,6 +4,72 @@ const ASTROLOGY_API_USER_ID = process.env.ASTROLOGY_API_USER_ID;
 const ASTROLOGY_API_KEY = process.env.ASTROLOGY_API_KEY;
 const BASE_URL = 'https://json.astrologyapi.com/v1';
 
+export const DASHA_MEANINGS = {
+  'Sun': {
+    theme: 'Authority, Recognition, Government',
+    goodFor: ['Leadership roles', 'Government jobs', 'Public recognition'],
+    caution: 'Ego conflicts possible',
+    careerFit: 'Leadership, Politics, Management',
+    relocationTip: 'Good for moves related to career authority'
+  },
+  'Moon': {
+    theme: 'Emotions, Home, Mother, Travel',
+    goodFor: ['Relocation', 'Real estate', 'Public-facing roles'],
+    caution: 'Emotional decisions',
+    careerFit: 'Healthcare, Hospitality, Public relations',
+    relocationTip: 'Excellent period for relocation and settling'
+  },
+  'Mars': {
+    theme: 'Energy, Action, Property, Courage',
+    goodFor: ['Property purchase', 'New ventures', 'Technical fields'],
+    caution: 'Aggression, rushed decisions',
+    careerFit: 'Engineering, Sports, Military, Surgery',
+    relocationTip: 'Good for bold moves, property buying'
+  },
+  'Mercury': {
+    theme: 'Communication, Business, Learning',
+    goodFor: ['Education', 'Business', 'Writing', 'IT'],
+    caution: 'Overthinking, scattered focus',
+    careerFit: 'IT, Business, Writing, Teaching',
+    relocationTip: 'Good for education or business-related moves'
+  },
+  'Jupiter': {
+    theme: 'Wisdom, Expansion, Luck, Teaching',
+    goodFor: ['Higher education', 'Spiritual growth', 'Career expansion'],
+    caution: 'Over-optimism, overcommitment',
+    careerFit: 'Teaching, Law, Finance, Consulting',
+    relocationTip: 'Excellent for career growth moves'
+  },
+  'Venus': {
+    theme: 'Love, Luxury, Creativity, Comfort',
+    goodFor: ['Relationships', 'Arts', 'Comfort', 'Luxury'],
+    caution: 'Overspending, overindulgence',
+    careerFit: 'Arts, Design, Entertainment, Luxury',
+    relocationTip: 'Good for lifestyle and relationship moves'
+  },
+  'Saturn': {
+    theme: 'Discipline, Hard work, Long-term gains',
+    goodFor: ['Career building', 'Structured progress', 'Real estate'],
+    caution: 'Delays, patience required',
+    careerFit: 'Management, Law, Real Estate, Government',
+    relocationTip: 'Good for permanent, long-term moves'
+  },
+  'Rahu': {
+    theme: 'Ambition, Foreign, Unconventional',
+    goodFor: ['Foreign travel', 'Tech careers', 'Breaking patterns'],
+    caution: 'Confusion, shortcuts tempting',
+    careerFit: 'Technology, Foreign companies, Research',
+    relocationTip: 'Excellent for international moves'
+  },
+  'Ketu': {
+    theme: 'Spirituality, Detachment, Past karma',
+    goodFor: ['Spiritual pursuits', 'Research', 'Healing'],
+    caution: 'Isolation, unexpected changes',
+    careerFit: 'Research, Spirituality, Alternative medicine',
+    relocationTip: 'Moves may feel destined or karmic'
+  }
+};
+
 function getAuthHeader() {
   const auth = Buffer.from(`${ASTROLOGY_API_USER_ID}:${ASTROLOGY_API_KEY}`).toString('base64');
   return `Basic ${auth}`;
