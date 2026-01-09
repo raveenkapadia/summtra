@@ -332,6 +332,109 @@ export function getCityNakshatraInfo(nakshatra, birthLat, birthLon, cityLat, cit
   };
 }
 
+export function generateCityVerdict(astroScore, timingMatch, vastuMatch, nakshatraMatch) {
+  let points = 0;
+  
+  // Astrocartography score (max 2 points)
+  if (astroScore >= 90) points += 2;
+  else if (astroScore >= 80) points += 1;
+  
+  // Timing match (max 2 points)
+  if (timingMatch === 'EXCELLENT' || timingMatch === 'GOOD') points += 2;
+  else if (timingMatch === 'FUTURE') points += 1;
+  
+  // Vastu match (max 1 point)
+  if (vastuMatch === true) points += 1;
+  
+  // Nakshatra match (max 1 point)
+  if (nakshatraMatch === true) points += 1;
+  
+  // Generate verdict based on total points (max 6)
+  if (points >= 5) {
+    return {
+      verdict: '⭐⭐⭐ HIGHLY RECOMMENDED',
+      level: 'HIGHLY_RECOMMENDED',
+      points,
+      maxPoints: 6,
+      summary: 'Excellent alignment across astrology, timing, and Vastu'
+    };
+  } else if (points >= 3) {
+    return {
+      verdict: '⭐⭐ GOOD MATCH',
+      level: 'GOOD_MATCH',
+      points,
+      maxPoints: 6,
+      summary: 'Good overall alignment with some favorable factors'
+    };
+  } else if (points >= 1) {
+    return {
+      verdict: '⭐ CONSIDER',
+      level: 'CONSIDER',
+      points,
+      maxPoints: 6,
+      summary: 'Some favorable factors, may need timing adjustment'
+    };
+  } else {
+    return {
+      verdict: '○ NEUTRAL',
+      level: 'NEUTRAL',
+      points,
+      maxPoints: 6,
+      summary: 'Limited alignment, explore other options'
+    };
+  }
+}
+
+export function getCompleteCityAnalysis(city, vedicProfile, birthCoords, antardashaTimeline) {
+  const { birthLat, birthLon } = birthCoords;
+  const { lagna, nakshatra } = vedicProfile;
+  const cityLat = city.lat || city.latitude;
+  const cityLon = city.lon || city.longitude;
+  
+  // Get direction
+  const direction = getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon);
+  
+  // Get Vastu info
+  const vastuInfo = checkVastuDirection(lagna, direction);
+  
+  // Get Nakshatra info
+  const nakshatraInfo = checkNakshatraCityMatch(nakshatra, direction);
+  
+  // Get timing match
+  const dashaInfo = {
+    mahadasha: { planet: vedicProfile.currentDashaLord },
+    current: { planet: vedicProfile.currentAntardasha }
+  };
+  const timingMatch = getDashaCityMatch(city, dashaInfo, antardashaTimeline);
+  
+  // Generate verdict
+  const verdict = generateCityVerdict(
+    city.score || 0,
+    timingMatch.matchLevel,
+    vastuInfo.favorable,
+    nakshatraInfo.matches
+  );
+  
+  return {
+    city: city.name,
+    score: city.score,
+    direction,
+    vastu: vastuInfo.icon,
+    vastuFavorable: vastuInfo.favorable,
+    vastuReason: vastuInfo.reason,
+    nakshatra: nakshatraInfo.icon,
+    nakshatraMatch: nakshatraInfo.matches,
+    nakshatraReason: nakshatraInfo.reason,
+    timing: timingMatch.icon,
+    timingLevel: timingMatch.matchLevel,
+    timingMessage: timingMatch.message,
+    verdict: verdict.verdict,
+    verdictLevel: verdict.level,
+    verdictPoints: verdict.points,
+    verdictSummary: verdict.summary
+  };
+}
+
 export function getDirectionFromBirthPlace(birthLat, birthLon, cityLat, cityLon) {
   const latDiff = cityLat - birthLat;
   const lonDiff = cityLon - birthLon;
