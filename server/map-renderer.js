@@ -116,6 +116,124 @@ const IMPORTANCE_STYLES = {
   }
 };
 
+const REGIONAL_VIEWS = {
+  world: {
+    projection: 'geoNaturalEarth1',
+    scale: 220,
+    center: [0, 20],
+    bounds: null,
+    label: 'World View'
+  },
+  india: {
+    projection: 'geoMercator',
+    scale: 1100,
+    center: [82, 22],
+    bounds: [[68, 6], [98, 36]],
+    label: 'India'
+  },
+  india_north: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [78, 28],
+    bounds: [[74, 24], [88, 32]],
+    label: 'North India'
+  },
+  india_south: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [78, 14],
+    bounds: [[74, 8], [82, 20]],
+    label: 'South India'
+  },
+  india_west: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [73, 20],
+    bounds: [[68, 15], [78, 25]],
+    label: 'West India'
+  },
+  india_east: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [88, 24],
+    bounds: [[84, 20], [92, 28]],
+    label: 'East India'
+  },
+  southeast_asia: {
+    projection: 'geoMercator',
+    scale: 600,
+    center: [110, 10],
+    bounds: [[95, -10], [130, 25]],
+    label: 'Southeast Asia'
+  },
+  middle_east: {
+    projection: 'geoMercator',
+    scale: 800,
+    center: [50, 28],
+    bounds: [[35, 15], [65, 42]],
+    label: 'Middle East'
+  },
+  europe: {
+    projection: 'geoMercator',
+    scale: 700,
+    center: [15, 52],
+    bounds: [[-10, 35], [40, 70]],
+    label: 'Europe'
+  },
+  north_america: {
+    projection: 'geoMercator',
+    scale: 400,
+    center: [-100, 45],
+    bounds: [[-130, 25], [-60, 55]],
+    label: 'North America'
+  },
+  australia: {
+    projection: 'geoMercator',
+    scale: 600,
+    center: [135, -28],
+    bounds: [[110, -45], [180, -10]],
+    label: 'Australia & Oceania'
+  }
+};
+
+function getCityView(city) {
+  return {
+    projection: 'geoMercator',
+    scale: 4000,
+    center: [city.longitude, city.latitude],
+    bounds: [
+      [city.longitude - 5, city.latitude - 3],
+      [city.longitude + 5, city.latitude + 3]
+    ],
+    label: city.name
+  };
+}
+
+function getClusterView(cities) {
+  const lngs = cities.map(c => c.longitude);
+  const lats = cities.map(c => c.latitude);
+  
+  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  
+  const lngSpread = Math.max(...lngs) - Math.min(...lngs);
+  const latSpread = Math.max(...lats) - Math.min(...lats);
+  const maxSpread = Math.max(lngSpread, latSpread);
+  
+  const scale = Math.min(3000, Math.max(800, 15000 / (maxSpread + 5)));
+  
+  return {
+    projection: 'geoMercator',
+    scale: scale,
+    center: [centerLng, centerLat],
+    bounds: [
+      [Math.min(...lngs) - 2, Math.min(...lats) - 2],
+      [Math.max(...lngs) + 2, Math.max(...lats) + 2]
+    ],
+    label: 'Regional View'
+  };
+}
+
 class AstroMapRenderer {
   constructor() {
     this.canvas = createCanvas(MAP_WIDTH, MAP_HEIGHT);
@@ -125,7 +243,40 @@ class AstroMapRenderer {
     this.india = india;
   }
   
+  getProjectionFromConfig(viewConfig) {
+    const { projection, scale, center } = viewConfig;
+    
+    let proj;
+    switch(projection) {
+      case 'geoMercator':
+        proj = d3.geoMercator();
+        break;
+      case 'geoNaturalEarth1':
+        proj = d3.geoNaturalEarth1();
+        break;
+      case 'geoEquirectangular':
+        proj = d3.geoEquirectangular();
+        break;
+      default:
+        proj = d3.geoNaturalEarth1();
+    }
+    
+    return proj
+      .scale(scale)
+      .center(center)
+      .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+  }
+  
   getProjection(viewType, center) {
+    if (typeof viewType === 'object' && viewType.projection) {
+      return this.getProjectionFromConfig(viewType);
+    }
+    
+    const viewConfig = REGIONAL_VIEWS[viewType];
+    if (viewConfig) {
+      return this.getProjectionFromConfig(viewConfig);
+    }
+    
     switch(viewType) {
       case 'world':
         return d3.geoNaturalEarth1()
@@ -161,6 +312,25 @@ class AstroMapRenderer {
           .scale(220)
           .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
     }
+  }
+  
+  drawRegionLabel(label) {
+    if (!label) return;
+    
+    const textWidth = label.length * 10 + 30;
+    
+    this.ctx.fillStyle = 'rgba(45, 27, 78, 0.85)';
+    this.ctx.beginPath();
+    this.ctx.roundRect(20, 20, textWidth, 35, 6);
+    this.ctx.fill();
+    
+    this.ctx.strokeStyle = '#D4AF37';
+    this.ctx.lineWidth = 1;
+    this.ctx.stroke();
+    
+    this.ctx.fillStyle = '#D4AF37';
+    this.ctx.font = 'bold 16px Arial, sans-serif';
+    this.ctx.fillText(label, 35, 43);
   }
   
   drawBaseMap(projection, highlightIndia = false) {
@@ -491,6 +661,7 @@ class AstroMapRenderer {
   async renderMap(options) {
     const {
       viewType = 'world',
+      viewConfig = null,
       center = [0, 0],
       lines = [],
       powerZones = [],
@@ -499,12 +670,25 @@ class AstroMapRenderer {
       highlightIndia = false,
       birthLocation = null,
       showLegend = true,
-      title = ''
+      title = '',
+      regionLabel = null
     } = options;
     
     this.ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
     
-    const projection = this.getProjection(viewType, center);
+    let projection;
+    let label = regionLabel;
+    
+    if (viewConfig) {
+      projection = this.getProjectionFromConfig(viewConfig);
+      label = label || viewConfig.label;
+    } else {
+      projection = this.getProjection(viewType, center);
+      const configFromType = REGIONAL_VIEWS[viewType];
+      if (configFromType) {
+        label = label || configFromType.label;
+      }
+    }
     
     this.drawBaseMap(projection, highlightIndia);
     this.drawPlanetaryLines(lines, projection, lineFilter);
@@ -517,6 +701,10 @@ class AstroMapRenderer {
     
     if (showLegend) {
       this.drawLegend();
+    }
+    
+    if (label) {
+      this.drawRegionLabel(label);
     }
     
     if (title) {
@@ -596,3 +784,6 @@ class AstroMapRenderer {
 module.exports = AstroMapRenderer;
 module.exports.GOAL_LINE_CONFIG = GOAL_LINE_CONFIG;
 module.exports.PLANET_COLORS = PLANET_COLORS;
+module.exports.REGIONAL_VIEWS = REGIONAL_VIEWS;
+module.exports.getCityView = getCityView;
+module.exports.getClusterView = getClusterView;

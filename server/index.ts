@@ -296,6 +296,131 @@ async function startServer() {
     }
   });
 
+  // Regional view test endpoint
+  app.get("/api/test-map/region/:region", async (req, res) => {
+    try {
+      const MapRenderer = require('./map-renderer.js');
+      const { REGIONAL_VIEWS } = require('./map-renderer.js');
+      const renderer = new MapRenderer();
+      
+      const region = req.params.region;
+      const viewConfig = REGIONAL_VIEWS[region];
+      
+      if (!viewConfig) {
+        return res.status(400).json({ 
+          error: 'Invalid region',
+          validRegions: Object.keys(REGIONAL_VIEWS),
+          usage: '/api/test-map/region/india or /api/test-map/region/europe'
+        });
+      }
+
+      const sampleLines = [
+        { planet: 'Sun', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 72 + Math.sin(i * 0.2) * 10 })) },
+        { planet: 'Jupiter', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 60 + Math.sin(i * 0.3) * 15 })) },
+        { planet: 'Venus', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 40 + Math.cos(i * 0.25) * 12 })) },
+        { planet: 'Saturn', line_type: 'IC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -10 + Math.sin(i * 0.15) * 20 })) }
+      ];
+
+      const regionCities: Record<string, any[]> = {
+        india: [
+          { name: 'Mumbai', latitude: 19.076, longitude: 72.8777, score: 92, showLabel: true },
+          { name: 'Delhi', latitude: 28.6139, longitude: 77.209, score: 88, showLabel: true },
+          { name: 'Bangalore', latitude: 12.9716, longitude: 77.5946, score: 85, showLabel: true },
+          { name: 'Chennai', latitude: 13.0827, longitude: 80.2707, score: 82, showLabel: true }
+        ],
+        india_north: [
+          { name: 'Delhi', latitude: 28.6139, longitude: 77.209, score: 88, showLabel: true },
+          { name: 'Jaipur', latitude: 26.9124, longitude: 75.7873, score: 84, showLabel: true },
+          { name: 'Lucknow', latitude: 26.8467, longitude: 80.9462, score: 80, showLabel: true }
+        ],
+        india_south: [
+          { name: 'Bangalore', latitude: 12.9716, longitude: 77.5946, score: 85, showLabel: true },
+          { name: 'Chennai', latitude: 13.0827, longitude: 80.2707, score: 82, showLabel: true },
+          { name: 'Hyderabad', latitude: 17.385, longitude: 78.4867, score: 79, showLabel: true }
+        ],
+        middle_east: [
+          { name: 'Dubai', latitude: 25.2048, longitude: 55.2708, score: 88, showLabel: true },
+          { name: 'Abu Dhabi', latitude: 24.4539, longitude: 54.3773, score: 85, showLabel: true },
+          { name: 'Riyadh', latitude: 24.7136, longitude: 46.6753, score: 78, showLabel: true }
+        ],
+        europe: [
+          { name: 'London', latitude: 51.5074, longitude: -0.1278, score: 86, showLabel: true },
+          { name: 'Paris', latitude: 48.8566, longitude: 2.3522, score: 84, showLabel: true },
+          { name: 'Berlin', latitude: 52.52, longitude: 13.405, score: 80, showLabel: true }
+        ],
+        southeast_asia: [
+          { name: 'Singapore', latitude: 1.3521, longitude: 103.8198, score: 90, showLabel: true },
+          { name: 'Bangkok', latitude: 13.7563, longitude: 100.5018, score: 85, showLabel: true },
+          { name: 'Kuala Lumpur', latitude: 3.139, longitude: 101.6869, score: 82, showLabel: true }
+        ]
+      };
+
+      const cities = regionCities[region] || [];
+      const highlightIndia = region.startsWith('india');
+      
+      const buffer = await renderer.renderMap({
+        viewConfig,
+        lines: sampleLines,
+        cities,
+        birthLocation: { lat: 23.0225, lng: 72.5714 },
+        highlightIndia
+      });
+
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'no-cache');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Regional map rendering error:', error);
+      res.status(500).json({ error: 'Failed to render regional map', details: error.message });
+    }
+  });
+
+  // City close-up test endpoint
+  app.get("/api/test-map/city/:cityName", async (req, res) => {
+    try {
+      const MapRenderer = require('./map-renderer.js');
+      const { getCityView } = require('./map-renderer.js');
+      const { INDIAN_CITIES, INTERNATIONAL_CITIES } = require('./services/geocodingService');
+      const renderer = new MapRenderer();
+      
+      const cityName = req.params.cityName;
+      const allCities = [...INDIAN_CITIES, ...INTERNATIONAL_CITIES];
+      const city = allCities.find((c: any) => 
+        c.name.toLowerCase() === cityName.toLowerCase()
+      );
+      
+      if (!city) {
+        const availableCities = allCities.map((c: any) => c.name).slice(0, 20);
+        return res.status(400).json({ 
+          error: 'City not found',
+          sampleCities: availableCities,
+          usage: '/api/test-map/city/Mumbai or /api/test-map/city/Singapore'
+        });
+      }
+
+      const viewConfig = getCityView(city);
+
+      const sampleLines = [
+        { planet: 'Jupiter', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: city.lng - 5 + Math.sin(i * 0.3) * 8 })) },
+        { planet: 'Venus', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: city.lng + 3 + Math.cos(i * 0.25) * 6 })) }
+      ];
+      
+      const buffer = await renderer.renderMap({
+        viewConfig,
+        lines: sampleLines,
+        cities: [{ ...city, latitude: city.lat, longitude: city.lng, score: 88, showLabel: true }],
+        birthLocation: { lat: 23.0225, lng: 72.5714 }
+      });
+
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'no-cache');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('City map rendering error:', error);
+      res.status(500).json({ error: 'Failed to render city map', details: error.message });
+    }
+  });
+
   // Debug endpoint to test astrocartography API response and line assignment
   app.get("/api/debug-astro-lines", async (req, res) => {
     try {

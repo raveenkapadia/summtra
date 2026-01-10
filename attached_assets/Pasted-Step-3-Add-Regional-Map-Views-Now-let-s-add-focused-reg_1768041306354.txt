@@ -1,0 +1,237 @@
+Step 3: Add Regional Map Views
+Now let's add focused regional views for different scopes (India, International regions, City close-ups).
+Add Regional View Configurations
+Add to server/map-renderer.js:
+javascriptconst REGIONAL_VIEWS = {
+  // Full world view
+  world: {
+    projection: 'geoNaturalEarth1',
+    scale: 220,
+    center: [0, 20],
+    bounds: null
+  },
+  
+  // India focused
+  india: {
+    projection: 'geoMercator',
+    scale: 1100,
+    center: [82, 22],
+    bounds: [[68, 6], [98, 36]],
+    label: 'India'
+  },
+  
+  // North India
+  india_north: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [78, 28],
+    bounds: [[74, 24], [88, 32]],
+    label: 'North India'
+  },
+  
+  // South India
+  india_south: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [78, 14],
+    bounds: [[74, 8], [82, 20]],
+    label: 'South India'
+  },
+  
+  // West India
+  india_west: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [73, 20],
+    bounds: [[68, 15], [78, 25]],
+    label: 'West India'
+  },
+  
+  // East India
+  india_east: {
+    projection: 'geoMercator',
+    scale: 2200,
+    center: [88, 24],
+    bounds: [[84, 20], [92, 28]],
+    label: 'East India'
+  },
+  
+  // Southeast Asia
+  southeast_asia: {
+    projection: 'geoMercator',
+    scale: 600,
+    center: [110, 10],
+    bounds: [[95, -10], [130, 25]],
+    label: 'Southeast Asia'
+  },
+  
+  // Middle East
+  middle_east: {
+    projection: 'geoMercator',
+    scale: 800,
+    center: [50, 28],
+    bounds: [[35, 15], [65, 42]],
+    label: 'Middle East'
+  },
+  
+  // Europe
+  europe: {
+    projection: 'geoMercator',
+    scale: 700,
+    center: [15, 52],
+    bounds: [[-10, 35], [40, 70]],
+    label: 'Europe'
+  },
+  
+  // North America
+  north_america: {
+    projection: 'geoMercator',
+    scale: 400,
+    center: [-100, 45],
+    bounds: [[-130, 25], [-60, 55]],
+    label: 'North America'
+  },
+  
+  // Australia & Oceania
+  australia: {
+    projection: 'geoMercator',
+    scale: 600,
+    center: [135, -28],
+    bounds: [[110, -45], [180, -10]],
+    label: 'Australia & Oceania'
+  }
+};
+
+module.exports = { REGIONAL_VIEWS };
+Add City Close-up View Generator
+javascript// Generate city-focused view configuration
+function getCityView(city) {
+  return {
+    projection: 'geoMercator',
+    scale: 4000,  // Very zoomed in
+    center: [city.longitude, city.latitude],
+    bounds: [
+      [city.longitude - 5, city.latitude - 3],
+      [city.longitude + 5, city.latitude + 3]
+    ],
+    label: city.name
+  };
+}
+
+// Generate view for multiple cities (cluster view)
+function getClusterView(cities) {
+  const lngs = cities.map(c => c.longitude);
+  const lats = cities.map(c => c.latitude);
+  
+  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  
+  const lngSpread = Math.max(...lngs) - Math.min(...lngs);
+  const latSpread = Math.max(...lats) - Math.min(...lats);
+  const maxSpread = Math.max(lngSpread, latSpread);
+  
+  // Calculate scale based on spread
+  const scale = Math.min(3000, Math.max(800, 15000 / (maxSpread + 5)));
+  
+  return {
+    projection: 'geoMercator',
+    scale: scale,
+    center: [centerLng, centerLat],
+    bounds: [
+      [Math.min(...lngs) - 2, Math.min(...lats) - 2],
+      [Math.max(...lngs) + 2, Math.max(...lats) + 2]
+    ],
+    label: 'Regional View'
+  };
+}
+
+module.exports = { REGIONAL_VIEWS, getCityView, getClusterView };
+Update getProjection Method
+javascriptgetProjection(viewConfig) {
+  const { projection, scale, center } = viewConfig;
+  
+  let proj;
+  switch(projection) {
+    case 'geoMercator':
+      proj = d3.geoMercator();
+      break;
+    case 'geoNaturalEarth1':
+      proj = d3.geoNaturalEarth1();
+      break;
+    case 'geoEquirectangular':
+      proj = d3.geoEquirectangular();
+      break;
+    default:
+      proj = d3.geoNaturalEarth1();
+  }
+  
+  return proj
+    .scale(scale)
+    .center(center)
+    .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+}
+Add Region Label to Map
+javascriptdrawRegionLabel(label) {
+  if (!label) return;
+  
+  // Semi-transparent background
+  this.ctx.fillStyle = 'rgba(45, 27, 78, 0.8)';
+  this.ctx.fillRect(20, 20, label.length * 12 + 30, 35);
+  
+  // Border
+  this.ctx.strokeStyle = '#D4AF37';
+  this.ctx.lineWidth = 1;
+  this.ctx.strokeRect(20, 20, label.length * 12 + 30, 35);
+  
+  // Text
+  this.ctx.fillStyle = '#D4AF37';
+  this.ctx.font = 'bold 16px Raleway, sans-serif';
+  this.ctx.fillText(label, 35, 43);
+}
+Add Test Endpoints for Regional Views
+javascript// Regional view test
+app.get('/api/test-map/region/:region', async (req, res) => {
+  const { region } = req.params;
+  const viewConfig = REGIONAL_VIEWS[region];
+  
+  if (!viewConfig) {
+    return res.status(400).json({ error: 'Invalid region' });
+  }
+  
+  const mapBuffer = await renderer.renderMap({
+    viewConfig: viewConfig,
+    goal: 'Career',
+    lines: astroLines,
+    cities: getCitiesForRegion(region),
+    powerZones: getPowerZonesForRegion(region)
+  });
+  
+  res.set('Content-Type', 'image/png');
+  res.send(mapBuffer);
+});
+
+// City close-up test
+app.get('/api/test-map/city/:cityName', async (req, res) => {
+  const { cityName } = req.params;
+  const city = findCityByName(cityName); // Implement this lookup
+  
+  if (!city) {
+    return res.status(400).json({ error: 'City not found' });
+  }
+  
+  const viewConfig = getCityView(city);
+  
+  const mapBuffer = await renderer.renderMap({
+    viewConfig: viewConfig,
+    goal: 'Career',
+    lines: astroLines,
+    cities: [{ ...city, type: 'recommended', showLabel: true }],
+    powerZones: getNearbyPowerZones(city)
+  });
+  
+  res.set('Content-Type', 'image/png');
+  res.send(mapBuffer);
+});
+Available Test Endpoints After Implementation
+EndpointView/api/test-map/region/worldFull world/api/test-map/region/indiaIndia focused/api/test-map/region/india_northNorth India/api/test-map/region/india_southSouth India/api/test-map/region/europeEurope/api/test-map/region/middle_eastMiddle East/api/test-map/region/southeast_asiaSoutheast Asia/api/test-map/city/MumbaiMumbai close-up/api/test-map/city/SingaporeSingapore close-up
+Please implement and test a few regional views to confirm they work!
