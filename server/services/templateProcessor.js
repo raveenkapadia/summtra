@@ -485,12 +485,16 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     const slotNum = i + 1;
     const city = pageCities[i] || {};
     const hasCity = Boolean(city.name);
+    const rank = startRank + i;
+    const score = city.score || 0;
     
     data[`CITY${slotNum}_NAME`] = city.name || '';
     data[`CITY${slotNum}_COUNTRY`] = city.country || '';
-    data[`CITY${slotNum}_SCORE`] = hasCity ? (city.score || '') : '';
+    data[`CITY${slotNum}_SCORE`] = hasCity ? score : '';
     data[`CITY${slotNum}_DIRECTION`] = hasCity ? (city.direction || '') : '';
-    data[`CITY${slotNum}_RANK`] = hasCity ? startRank + i : '';
+    data[`CITY${slotNum}_RANK`] = hasCity ? rank : '';
+    data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
+    data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 85 ? 'score-excellent' : score >= 75 ? 'score-good' : 'score-moderate') : '';
     
     const lines = city.lines || [];
     const formattedLines = lines.map(l => {

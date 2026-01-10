@@ -408,12 +408,47 @@ export class PDFAssembler {
   async addDashaTimelinePage() {
     const template = loadTemplate('dasha-timeline-page.html');
     
+    const mahadasha = this.birthData.currentDashaLord || 'Jupiter';
+    
+    let antardasha = this.birthData.currentAntardasha || '';
+    let antardashaEnd = this.birthData.currentDashaEnd || '';
+    
+    if (this.birthData.antardashaTimeline) {
+      try {
+        const timeline = typeof this.birthData.antardashaTimeline === 'string' 
+          ? JSON.parse(this.birthData.antardashaTimeline) 
+          : this.birthData.antardashaTimeline;
+        
+        if (Array.isArray(timeline)) {
+          const current = timeline.find(d => d.isCurrent);
+          if (current) {
+            antardasha = current.antardasha || antardasha;
+            antardashaEnd = current.endDate || antardashaEnd;
+          }
+        }
+      } catch (e) {
+        console.log('   ⚠️ Could not parse antardasha timeline');
+      }
+    }
+    
+    if (!antardasha) antardasha = 'Saturn';
+    
+    const formatDate = (dateStr) => {
+      if (!dateStr) return 'December 2027';
+      if (dateStr.match(/^\d{4}-\d{2}$/)) {
+        const [year, month] = dateStr.split('-');
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${months[parseInt(month) - 1]} ${year}`;
+      }
+      return dateStr;
+    };
+    
     const dashaData = {
       ...this.baseData,
-      MAHADASHA: this.birthData.currentDashaLord || this.baseData.MAHADASHA || 'Jupiter',
-      ANTARDASHA: this.birthData.currentAntardasha || this.baseData.ANTARDASHA || 'Venus',
-      CURRENT_THEME: this.getDashaTheme(this.birthData.currentDashaLord),
-      ANTARDASHA_END: this.birthData.currentDashaEnd || this.baseData.CURRENT_DASHA_END || 'December 2027',
+      MAHADASHA: mahadasha,
+      ANTARDASHA: antardasha,
+      CURRENT_THEME: this.getDashaTheme(mahadasha),
+      ANTARDASHA_END: formatDate(antardashaEnd),
       MAHADASHA_PERIOD: this.birthData.mahadashaPeriod || '2020 - 2036'
     };
     
