@@ -1,0 +1,270 @@
+Step 1: Set Up Map Rendering System
+We need to render astrocartography maps for the PDF report. The API returns coordinate data, so we must draw maps ourselves.
+Install Dependencies
+bashnpm install d3 topojson-client canvas
+Download Base Map Data
+bash# Natural Earth TopoJSON (if not already present)
+curl -o public/data/countries-110m.json https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json
+Create Map Renderer Module
+Create file: server/map-renderer.js
+javascriptconst d3 = require('d3');
+const { createCanvas } = require('canvas');
+const topojson = require('topojson-client');
+const fs = require('fs');
+
+// Map dimensions for PDF (A4 landscape section)
+const MAP_WIDTH = 1200;
+const MAP_HEIGHT = 700;
+
+// Dark theme colors
+const COLORS = {
+  ocean: '#0D0D1A',
+  land: '#1E1E2E',
+  borders: 'rgba(212, 175, 55, 0.2)',
+  graticule: 'rgba(212, 175, 55, 0.08)'
+};
+
+// Planet line colors
+const PLANET_COLORS = {
+  'Sun': '#FFD700',
+  'Moon': '#C0C0C0',
+  'Mercury': '#4ECDC4',
+  'Venus': '#FF69B4',
+  'Mars': '#DC143C',
+  'Jupiter': '#FFD700',
+  'Saturn': '#708090',
+  'Uranus': '#00BFFF',
+  'Neptune': '#9370DB',
+  'Pluto': '#8B008B',
+  'North Node': '#8B5CF6',
+  'Chiron': '#CD853F'
+};
+
+class AstroMapRenderer {
+  constructor() {
+    this.canvas = createCanvas(MAP_WIDTH, MAP_HEIGHT);
+    this.ctx = this.canvas.getContext('2d');
+    this.loadWorldData();
+  }
+  
+  loadWorldData() {
+    const worldData = JSON.parse(fs.readFileSync('public/data/countries-110m.json'));
+    this.countries = topojson.feature(worldData, worldData.objects.countries);
+  }
+  
+  // Create projection based on view type
+  getProjection(viewType, center) {
+    switch(viewType) {
+      case 'world':
+        return d3.geoNaturalEarth1()
+          .scale(220)
+          .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+      case 'india':
+        return d3.geoMercator()
+          .center([82, 22])
+          .scale(1200)
+          .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+      case 'europe':
+        return d3.geoMercator()
+          .center([15, 52])
+          .scale(800)
+          .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+      case 'city':
+        return d3.geoMercator()
+          .center(center)
+          .scale(3000)
+          .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+      default:
+        return d3.geoNaturalEarth1()
+          .scale(220)
+          .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+    }
+  }
+  
+  // Draw base map
+  drawBaseMap(projection) {
+    const path = d3.geoPath(projection, this.ctx);
+    
+    // Ocean background
+    this.ctx.fillStyle = COLORS.ocean;
+    this.ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    
+    // Draw countries
+    this.ctx.fillStyle = COLORS.land;
+    this.ctx.strokeStyle = COLORS.borders;
+    this.ctx.lineWidth = 0.5;
+    
+    this.ctx.beginPath();
+    path(this.countries);
+    this.ctx.fill();
+    this.ctx.stroke();
+    
+    // Draw graticule (grid lines)
+    const graticule = d3.geoGraticule();
+    this.ctx.strokeStyle = COLORS.graticule;
+    this.ctx.lineWidth = 0.3;
+    this.ctx.beginPath();
+    path(graticule());
+    this.ctx.stroke();
+  }
+  
+  // Draw planetary lines
+  drawPlanetaryLines(lines, projection, filter = null) {
+    lines.forEach(line => {
+      // Apply filter if provided
+      if (filter && !filter(line)) return;
+      
+      const color = line.color || PLANET_COLORS[line.planet] || '#FFFFFF';
+      const points = line.points || line.coordinates;
+      
+      if (!points || points.length < 2) return;
+      
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = line.planet === 'Jupiter' ? 2.5 : 2;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      
+      // Add glow effect for important lines
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 4;
+      
+      this.ctx.beginPath();
+      
+      points.forEach((point, i) => {
+        const projected = projection([point.longitude, point.latitude]);
+        if (projected) {
+          if (i === 0) {
+            this.ctx.moveTo(projected[0], projected[1]);
+          } else {
+            this.ctx.lineTo(projected[0], projected[1]);
+          }
+        }
+      });
+      
+      this.ctx.stroke();
+      this.ctx.shadowBlur = 0;
+    });
+  }
+  
+  // Draw power zones
+  drawPowerZones(powerZones, projection) {
+    powerZones.forEach(zone => {
+      const projected = projection([zone.longitude, zone.latitude]);
+      if (!projected) return;
+      
+      const radius = Math.max(10, zone.strength * 30);
+      const color = zone.is_challenging ? '#DC143C' : '#4ADE80';
+      
+      // Outer glow
+      const gradient = this.ctx.createRadialGradient(
+        projected[0], projected[1], 0,
+        projected[0], projected[1], radius
+      );
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(0.5, color.replace(')', ', 0.4)').replace('rgb', 'rgba'));
+      gradient.addColorStop(1, 'transparent');
+      
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(projected[0], projected[1], radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // Center dot
+      this.ctx.fillStyle = color;
+      this.ctx.beginPath();
+      this.ctx.arc(projected[0], projected[1], 4, 0, Math.PI * 2);
+      this.ctx.fill();
+    });
+  }
+  
+  // Draw city markers
+  drawCities(cities, projection) {
+    cities.forEach(city => {
+      const projected = projection([city.longitude, city.latitude]);
+      if (!projected) return;
+      
+      const radius = city.type === 'recommended' ? 8 : 
+                     city.type === 'good' ? 6 : 
+                     city.type === 'avoid' ? 6 : 4;
+      
+      const color = city.type === 'avoid' ? '#DC143C' : '#D4AF37';
+      
+      // Glow
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 8;
+      
+      // Dot
+      this.ctx.fillStyle = color;
+      this.ctx.beginPath();
+      this.ctx.arc(projected[0], projected[1], radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      this.ctx.shadowBlur = 0;
+      
+      // Label
+      if (city.showLabel) {
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '12px Raleway, sans-serif';
+        this.ctx.fillText(city.name, projected[0] + radius + 5, projected[1] + 4);
+      }
+    });
+  }
+  
+  // Main render function
+  async renderMap(options) {
+    const {
+      viewType = 'world',
+      center = [0, 0],
+      lines = [],
+      powerZones = [],
+      cities = [],
+      lineFilter = null,
+      title = ''
+    } = options;
+    
+    // Clear canvas
+    this.ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    
+    // Get projection
+    const projection = this.getProjection(viewType, center);
+    
+    // Draw layers
+    this.drawBaseMap(projection);
+    this.drawPlanetaryLines(lines, projection, lineFilter);
+    this.drawPowerZones(powerZones, projection);
+    this.drawCities(cities, projection);
+    
+    // Return as buffer
+    return this.canvas.toBuffer('image/png');
+  }
+  
+  // Save to file
+  async saveMap(options, filename) {
+    const buffer = await this.renderMap(options);
+    fs.writeFileSync(filename, buffer);
+    return filename;
+  }
+}
+
+module.exports = AstroMapRenderer;
+Test the Renderer
+Create a test endpoint to verify it works:
+javascript// Add to your routes
+app.get('/api/test-map', async (req, res) => {
+  const MapRenderer = require('./map-renderer');
+  const renderer = new MapRenderer();
+  
+  // Test with sample data
+  const buffer = await renderer.renderMap({
+    viewType: 'world',
+    lines: [], // Will add real data
+    cities: [
+      { name: 'Mumbai', latitude: 19.076, longitude: 72.8777, type: 'recommended', showLabel: true },
+      { name: 'Delhi', latitude: 28.6139, longitude: 77.209, type: 'good', showLabel: true }
+    ]
+  });
+  
+  res.set('Content-Type', 'image/png');
+  res.send(buffer);
+});
+Please set this up and confirm it's working!
