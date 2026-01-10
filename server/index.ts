@@ -2155,9 +2155,10 @@ async function startServer() {
   });
 
   app.use(express.static(path.join(process.cwd())));
+  app.use('/test-pdfs', express.static(path.join(process.cwd(), 'public', 'test-pdfs')));
 
   app.use((req, res, next) => {
-    if (!req.path.startsWith("/api") && req.path !== "/admin") {
+    if (!req.path.startsWith("/api") && req.path !== "/admin" && !req.path.startsWith("/test-pdfs")) {
       res.sendFile(path.join(process.cwd(), "index.html"));
     } else {
       next();
