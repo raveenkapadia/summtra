@@ -298,30 +298,51 @@ function generateFallbackInterpretation(cityData, zodiac, goal = 'complete') {
  * Returns cities with AI-generated interpretations
  */
 async function generateCityInterpretations(cities, userData) {
-  console.log(`🤖 Generating AI interpretations for ${cities.length} cities in PARALLEL...`);
+  console.log(`🤖 Generating AI interpretations for ${cities.length} cities in BATCHES...`);
   
   const zodiac = getZodiacSign(userData.birthDate);
   const goal = userData.reportGoal || 'complete';
   console.log(`   🎯 Goal: ${goal.toUpperCase()}`);
   
-  // Process all cities in parallel for speed
-  const results = await Promise.allSettled(
-    cities.map(async (city) => {
-      try {
-        const interpretation = await generateQuickCityInterpretation(city, userData);
-        return {
-          ...city,
-          aiInterpretation: interpretation
-        };
-      } catch (error) {
-        console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
-        return {
-          ...city,
-          aiInterpretation: generateFallbackInterpretation(city, zodiac, goal)
-        };
-      }
-    })
-  );
+  // Process cities in batches to avoid rate limits
+  const BATCH_SIZE = 5; // Process 5 cities at a time
+  const BATCH_DELAY = 1000; // 1 second between batches
+  
+  const allResults = [];
+  
+  for (let i = 0; i < cities.length; i += BATCH_SIZE) {
+    const batch = cities.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(cities.length / BATCH_SIZE);
+    
+    // Process batch in parallel
+    const batchResults = await Promise.allSettled(
+      batch.map(async (city) => {
+        try {
+          const interpretation = await generateQuickCityInterpretation(city, userData);
+          return {
+            ...city,
+            aiInterpretation: interpretation
+          };
+        } catch (error) {
+          console.error(`   ❌ ${city.name || city.city}: Failed to generate interpretation`);
+          return {
+            ...city,
+            aiInterpretation: generateFallbackInterpretation(city, zodiac, goal)
+          };
+        }
+      })
+    );
+    
+    allResults.push(...batchResults);
+    
+    // Add delay between batches to avoid rate limits (except for last batch)
+    if (i + BATCH_SIZE < cities.length) {
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+    }
+  }
+  
+  const results = allResults;
   
   // Extract successful results
   const interpretedCities = results.map((result, index) => {

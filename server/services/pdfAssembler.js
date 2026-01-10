@@ -191,6 +191,21 @@ export class PDFAssembler {
         PLANETS_TOTAL_PAGES: totalPages
       };
       
+      // Add numbered planet placeholders for each planet on this page
+      pagePlanets.forEach((planet, idx) => {
+        const num = idx + 1;
+        pageData[`PLANET${num}_NAME`] = planet.name;
+        pageData[`PLANET${num}_SYMBOL`] = planet.symbol;
+        pageData[`PLANET${num}_CLASS`] = `planet-${planet.name.toLowerCase()}`;
+        pageData[`PLANET${num}_HEADLINE`] = `${planet.name} lines influence your ${planet.keywords[0]?.toLowerCase() || 'life'}`;
+        pageData[`PLANET${num}_KEY1`] = planet.keywords[0] || '';
+        pageData[`PLANET${num}_KEY2`] = planet.keywords[1] || '';
+        pageData[`PLANET${num}_KEY3`] = planet.keywords[2] || '';
+        pageData[`PLANET${num}_KEY4`] = planet.keywords[3] || '';
+        pageData[`PLANET${num}_DESC`] = `When ${planet.name} lines pass through a location, they enhance ${planet.keywords.join(', ').toLowerCase()}.`;
+        pageData[`PLANET${num}_LINE_CLASS`] = `line-${planet.name.toLowerCase()}`;
+      });
+      
       this.pages.push({ html: processTemplate(template, pageData), type: 'planets' });
     }
     
@@ -588,15 +603,21 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     console.log('   🤖 Generating AI interpretations with Claude...');
     try {
       const userData = {
-        name: testBirthData.name,
+        name: testBirthData.name || 'User',
         birthDate: testBirthData.birthDate,
+        birthPlace: testBirthData.birthPlace || 'India',
+        rashi: testBirthData.rashi || null,
         reportGoal: goal.toLowerCase()
       };
+      
+      console.log(`   📋 Claude userData: name=${userData.name}, birthDate=${userData.birthDate}, place=${userData.birthPlace}`);
       
       const citiesWithLines = testCities.map(city => ({
         ...city,
         lines: (city.lines || []).map(l => typeof l === 'string' ? l : `${l.planet}-${l.line_type}`)
       }));
+      
+      console.log(`   📋 Sample city lines: ${citiesWithLines[0]?.name} has lines: [${citiesWithLines[0]?.lines?.join(', ') || 'none'}]`);
       
       testCities = await claudeService.generateCityInterpretations(citiesWithLines, userData);
       console.log('   ✅ AI interpretations generated successfully');
