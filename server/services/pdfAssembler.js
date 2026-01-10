@@ -280,7 +280,7 @@ export class PDFAssembler {
     });
     
     const bestCount = this.scope === 'Both' ? 18 : 12;
-    const avoidCount = this.scope === 'Both' ? 10 : 6;
+    const avoidCount = this.scope === 'Both' ? 10 : 5;
     
     if (type === 'best') {
       return sorted.slice(0, bestCount);
@@ -351,7 +351,7 @@ export class PDFAssembler {
     const template = loadTemplate('city-avoid-page.html');
     const cities = this.getCitiesForGoal(goal, 'avoid');
     
-    const citiesPerPage = 2;
+    const citiesPerPage = 1;
     const totalPages = Math.ceil(cities.length / citiesPerPage);
     
     for (let i = 0; i < totalPages; i++) {
@@ -390,9 +390,13 @@ export class PDFAssembler {
   }
   
   async addGlossaryPages() {
-    const template = loadTemplate('glossary-page.html');
-    const html = processTemplate(template, this.baseData);
-    this.pages.push({ html, type: 'glossary' });
+    const template1 = loadTemplate('glossary-page.html');
+    const html1 = processTemplate(template1, this.baseData);
+    this.pages.push({ html: html1, type: 'glossary' });
+    
+    const template2 = loadTemplate('glossary-page-2.html');
+    const html2 = processTemplate(template2, this.baseData);
+    this.pages.push({ html: html2, type: 'glossary' });
   }
   
   updatePageNumbers() {
