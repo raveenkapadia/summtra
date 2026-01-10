@@ -1,5 +1,7 @@
 { pkgs }: {
   deps = [
+    pkgs.util-linux
+    pkgs.libuuid
     pkgs.pkg-config
     pkgs.librsvg
     pkgs.giflib
