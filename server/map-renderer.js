@@ -52,11 +52,68 @@ const PLANET_COLORS = {
   'Ketu': '#CD853F'
 };
 
-const LINE_STYLES = {
+const LINE_TYPE_STYLES = {
   'AC': { dash: [], width: 2.5 },
   'DC': { dash: [8, 4], width: 2 },
   'MC': { dash: [3, 3], width: 2 },
   'IC': { dash: [1, 3], width: 1.5 }
+};
+
+const GOAL_LINE_CONFIG = {
+  Career: {
+    primary: ['Jupiter', 'Saturn', 'Sun', 'Mercury'],
+    secondary: ['Mars', 'Pluto', 'North Node', 'NorthNode'],
+    lineTypes: ['MC', 'AC'],
+    description: 'Career success, professional growth, recognition'
+  },
+  Wealth: {
+    primary: ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+    secondary: ['Pluto', 'North Node', 'NorthNode', 'Saturn'],
+    lineTypes: ['MC', 'AC'],
+    description: 'Financial abundance, prosperity, material success'
+  },
+  Love: {
+    primary: ['Venus', 'Moon', 'Jupiter'],
+    secondary: ['Mars', 'Neptune', 'Sun'],
+    lineTypes: ['DC', 'AC'],
+    description: 'Romantic relationships, partnerships, emotional connection'
+  },
+  Education: {
+    primary: ['Mercury', 'Jupiter', 'Sun'],
+    secondary: ['Saturn', 'Uranus', 'North Node', 'NorthNode'],
+    lineTypes: ['MC', 'AC'],
+    description: 'Learning, academic success, intellectual growth'
+  },
+  Settlement: {
+    primary: ['Moon', 'Venus', 'Jupiter', 'Saturn'],
+    secondary: ['Sun', 'Mercury'],
+    lineTypes: ['IC', 'AC'],
+    description: 'Long-term residence, home, family, stability'
+  },
+  Complete: {
+    primary: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'],
+    secondary: ['Uranus', 'Neptune', 'Pluto', 'North Node', 'NorthNode', 'Chiron'],
+    lineTypes: ['AC', 'DC', 'MC', 'IC'],
+    description: 'Complete astrological analysis'
+  }
+};
+
+const IMPORTANCE_STYLES = {
+  primary: {
+    lineWidth: 2.5,
+    opacity: 1,
+    glow: true
+  },
+  secondary: {
+    lineWidth: 1.5,
+    opacity: 0.6,
+    glow: false
+  },
+  other: {
+    lineWidth: 1,
+    opacity: 0.25,
+    glow: false
+  }
 };
 
 class AstroMapRenderer {
@@ -160,6 +217,44 @@ class AstroMapRenderer {
     return { lat, lng };
   }
   
+  normalizeGoal(goal) {
+    if (!goal) return null;
+    const normalized = goal.charAt(0).toUpperCase() + goal.slice(1).toLowerCase();
+    return GOAL_LINE_CONFIG[normalized] ? normalized : null;
+  }
+  
+  filterLinesByGoal(lines, goal) {
+    const normalizedGoal = this.normalizeGoal(goal);
+    const config = normalizedGoal ? GOAL_LINE_CONFIG[normalizedGoal] : null;
+    if (!config) return lines;
+    
+    return lines.map(line => {
+      const planet = line.planet || '';
+      const lineType = line.line_type || line.type || line.angle || 'AC';
+      
+      const isPrimary = config.primary.includes(planet);
+      const isSecondary = config.secondary.includes(planet);
+      const isRelevantLineType = config.lineTypes.includes(lineType);
+      
+      let importance;
+      if (isPrimary && isRelevantLineType) {
+        importance = 'primary';
+      } else if (isSecondary && isRelevantLineType) {
+        importance = 'secondary';
+      } else if (isPrimary || isSecondary) {
+        importance = 'secondary';
+      } else {
+        importance = 'other';
+      }
+      
+      return {
+        ...line,
+        importance,
+        importanceStyle: IMPORTANCE_STYLES[importance]
+      };
+    });
+  }
+  
   drawPlanetaryLines(lines, projection, filter = null) {
     if (!lines || !Array.isArray(lines)) return;
     
@@ -169,18 +264,34 @@ class AstroMapRenderer {
       const color = line.color || PLANET_COLORS[line.planet] || '#FFFFFF';
       const points = line.points || line.coordinates;
       const lineType = line.line_type || line.type || line.angle || 'AC';
-      const style = LINE_STYLES[lineType] || LINE_STYLES['AC'];
+      const typeStyle = LINE_TYPE_STYLES[lineType] || LINE_TYPE_STYLES['AC'];
+      
+      const hasImportanceStyle = !!line.importanceStyle;
+      const impStyle = line.importanceStyle || null;
       
       if (!points || points.length < 2) return;
       
       this.ctx.strokeStyle = color;
-      this.ctx.lineWidth = style.width;
+      
+      if (hasImportanceStyle && impStyle) {
+        this.ctx.lineWidth = impStyle.lineWidth;
+        this.ctx.globalAlpha = impStyle.opacity;
+        if (impStyle.glow) {
+          this.ctx.shadowColor = color;
+          this.ctx.shadowBlur = 6;
+        } else {
+          this.ctx.shadowBlur = 0;
+        }
+      } else {
+        this.ctx.lineWidth = typeStyle.width;
+        this.ctx.globalAlpha = 1;
+        this.ctx.shadowColor = color;
+        this.ctx.shadowBlur = 4;
+      }
+      
       this.ctx.lineCap = 'round';
       this.ctx.lineJoin = 'round';
-      this.ctx.setLineDash(style.dash);
-      
-      this.ctx.shadowColor = color;
-      this.ctx.shadowBlur = 4;
+      this.ctx.setLineDash(typeStyle.dash);
       
       this.ctx.beginPath();
       
@@ -205,6 +316,7 @@ class AstroMapRenderer {
       });
       
       this.ctx.stroke();
+      this.ctx.globalAlpha = 1;
       this.ctx.shadowBlur = 0;
       this.ctx.setLineDash([]);
     });
@@ -455,6 +567,32 @@ class AstroMapRenderer {
       title: `Your Astrocartography Map - ${region.charAt(0).toUpperCase() + region.slice(1)}`
     });
   }
+  
+  async renderGoalFilteredMap(options) {
+    const { goal, lines, ...restOptions } = options;
+    
+    const normalizedGoal = this.normalizeGoal(goal);
+    const filteredLines = this.filterLinesByGoal(lines || [], goal);
+    
+    const sortedLines = [...filteredLines].sort((a, b) => {
+      const order = { other: 0, secondary: 1, primary: 2 };
+      const aOrder = a.importance ? (order[a.importance] ?? 0) : 0;
+      const bOrder = b.importance ? (order[b.importance] ?? 0) : 0;
+      return aOrder - bOrder;
+    });
+    
+    const config = normalizedGoal ? GOAL_LINE_CONFIG[normalizedGoal] : null;
+    const goalTitle = config ? config.description : (goal || 'All Planets');
+    const displayGoal = normalizedGoal || goal || 'Complete';
+    
+    return this.renderMap({
+      ...restOptions,
+      lines: sortedLines,
+      title: options.title || `${displayGoal} - ${goalTitle}`
+    });
+  }
 }
 
 module.exports = AstroMapRenderer;
+module.exports.GOAL_LINE_CONFIG = GOAL_LINE_CONFIG;
+module.exports.PLANET_COLORS = PLANET_COLORS;

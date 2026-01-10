@@ -115,6 +115,13 @@ Located in `server/services/`, each service handles a specific concern:
 5. **emailService.js** - Sends reports and confirmations via Resend email API
 6. **geocodingService.js** - Converts city names to coordinates using Google Geocoding API. Also exports `INDIAN_CITIES` (31), `INTERNATIONAL_CITIES` (55), and `ALL_CITIES` arrays with coordinates
 7. **reportGenerator.js** - Orchestrates the complete report generation workflow
+8. **map-renderer.js** - Server-side astrocartography map PNG rendering using Node Canvas + D3.js
+   - Uses Natural Earth 110m TopoJSON data (`/public/data/countries-110m.json`)
+   - Module-level caching for world data to avoid repeated disk reads
+   - Supports multiple view types: world, india, asia, europe, middle-east, city-level zoom
+   - Goal-based line filtering with GOAL_LINE_CONFIG for Career, Wealth, Love, Education, Settlement, Complete
+   - Primary/secondary/other importance levels with distinct opacity/glow/line-width
+   - Test endpoints: `/api/test-map` (default), `/api/test-map/:goal` (goal-filtered)
 
 ### Report Generation Workflow
 

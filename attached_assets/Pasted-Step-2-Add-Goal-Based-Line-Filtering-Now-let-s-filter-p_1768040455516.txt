@@ -1,0 +1,172 @@
+Step 2: Add Goal-Based Line Filtering
+Now let's filter planetary lines based on user's selected goal. Different goals need different planetary influences.
+Create Goal Filter Configuration
+Add to server/map-renderer.js or create server/goal-line-config.js:
+javascriptconst GOAL_LINE_CONFIG = {
+  Career: {
+    primary: ['Jupiter', 'Saturn', 'Sun', 'Mercury'],
+    secondary: ['Mars', 'Pluto', 'North Node'],
+    lineTypes: ['MC', 'AC'],  // Career focuses on MC (public) and AC (self)
+    description: 'Career success, professional growth, recognition'
+  },
+  Wealth: {
+    primary: ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+    secondary: ['Pluto', 'North Node', 'Saturn'],
+    lineTypes: ['MC', 'AC'],
+    description: 'Financial abundance, prosperity, material success'
+  },
+  Love: {
+    primary: ['Venus', 'Moon', 'Jupiter'],
+    secondary: ['Mars', 'Neptune', 'Sun'],
+    lineTypes: ['DC', 'AC'],  // Love focuses on DC (relationships) and AC (self)
+    description: 'Romantic relationships, partnerships, emotional connection'
+  },
+  Education: {
+    primary: ['Mercury', 'Jupiter', 'Sun'],
+    secondary: ['Saturn', 'Uranus', 'North Node'],
+    lineTypes: ['MC', 'AC'],
+    description: 'Learning, academic success, intellectual growth'
+  },
+  Settlement: {
+    primary: ['Moon', 'Venus', 'Jupiter', 'Saturn'],
+    secondary: ['Sun', 'Mercury'],
+    lineTypes: ['IC', 'AC'],  // Settlement focuses on IC (home) and AC (self)
+    description: 'Long-term residence, home, family, stability'
+  }
+};
+
+// Line style based on importance
+const LINE_STYLES = {
+  primary: {
+    lineWidth: 2.5,
+    opacity: 1,
+    glow: true
+  },
+  secondary: {
+    lineWidth: 1.5,
+    opacity: 0.6,
+    glow: false
+  },
+  other: {
+    lineWidth: 1,
+    opacity: 0.25,
+    glow: false
+  }
+};
+
+module.exports = { GOAL_LINE_CONFIG, LINE_STYLES };
+Add Filter Function to Map Renderer
+Add this method to AstroMapRenderer class:
+javascript// Filter and style lines based on goal
+filterLinesByGoal(lines, goal) {
+  const config = GOAL_LINE_CONFIG[goal];
+  if (!config) return lines; // No filtering if goal not found
+  
+  return lines.map(line => {
+    const isPrimary = config.primary.includes(line.planet);
+    const isSecondary = config.secondary.includes(line.planet);
+    const isRelevantLineType = config.lineTypes.includes(line.line_type);
+    
+    let importance;
+    if (isPrimary && isRelevantLineType) {
+      importance = 'primary';
+    } else if (isSecondary && isRelevantLineType) {
+      importance = 'secondary';
+    } else if (isPrimary || isSecondary) {
+      importance = 'secondary';
+    } else {
+      importance = 'other';
+    }
+    
+    return {
+      ...line,
+      importance,
+      style: LINE_STYLES[importance]
+    };
+  });
+}
+
+// Render map with goal filtering
+async renderGoalFilteredMap(options) {
+  const { goal, lines, ...restOptions } = options;
+  
+  // Filter and style lines
+  const filteredLines = this.filterLinesByGoal(lines, goal);
+  
+  // Sort so primary lines render on top
+  const sortedLines = filteredLines.sort((a, b) => {
+    const order = { other: 0, secondary: 1, primary: 2 };
+    return order[a.importance] - order[b.importance];
+  });
+  
+  return this.renderMap({
+    ...restOptions,
+    lines: sortedLines,
+    title: `${goal} - Planetary Influences`
+  });
+}
+Update drawPlanetaryLines to Use Styles
+Modify the drawPlanetaryLines method:
+javascriptdrawPlanetaryLines(lines, projection) {
+  lines.forEach(line => {
+    const color = line.color || PLANET_COLORS[line.planet] || '#FFFFFF';
+    const points = line.points || line.coordinates;
+    const style = line.style || LINE_STYLES.primary;
+    
+    if (!points || points.length < 2) return;
+    
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = style.lineWidth;
+    this.ctx.globalAlpha = style.opacity;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+    
+    // Add glow for primary lines
+    if (style.glow) {
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 6;
+    } else {
+      this.ctx.shadowBlur = 0;
+    }
+    
+    this.ctx.beginPath();
+    
+    points.forEach((point, i) => {
+      const lng = point.longitude ?? point[1];
+      const lat = point.latitude ?? point[0];
+      const projected = projection([lng, lat]);
+      
+      if (projected) {
+        if (i === 0) {
+          this.ctx.moveTo(projected[0], projected[1]);
+        } else {
+          this.ctx.lineTo(projected[0], projected[1]);
+        }
+      }
+    });
+    
+    this.ctx.stroke();
+    this.ctx.globalAlpha = 1;
+    this.ctx.shadowBlur = 0;
+  });
+}
+Test Goal Filtering
+Update the test endpoint to test goal filtering:
+javascriptapp.get('/api/test-map/:goal', async (req, res) => {
+  const { goal } = req.params; // Career, Wealth, Love, Education, Settlement
+  
+  // Get real line data from astrocartography API
+  // For now, use mock data or real API call
+  
+  const mapBuffer = await renderer.renderGoalFilteredMap({
+    viewType: 'world',
+    goal: goal,
+    lines: astroLines, // From API
+    cities: topCities,
+    powerZones: powerZones
+  });
+  
+  res.set('Content-Type', 'image/png');
+  res.send(mapBuffer);
+});
+Please implement this and test with /api/test-map/Career and /api/test-map/Wealth to see the difference.

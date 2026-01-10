@@ -230,6 +230,72 @@ async function startServer() {
     }
   });
 
+  // Goal-filtered map test endpoint
+  app.get("/api/test-map/:goal", async (req, res) => {
+    try {
+      const MapRenderer = require('./map-renderer.js');
+      const { GOAL_LINE_CONFIG } = require('./map-renderer.js');
+      const renderer = new MapRenderer();
+      
+      const goal = req.params.goal;
+      const validGoals = Object.keys(GOAL_LINE_CONFIG);
+      
+      if (!validGoals.includes(goal)) {
+        return res.status(400).json({ 
+          error: 'Invalid goal',
+          validGoals,
+          usage: '/api/test-map/Career or /api/test-map/Wealth'
+        });
+      }
+
+      // Extended sample lines for all planets
+      const sampleLines = [
+        { planet: 'Sun', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 72 + Math.sin(i * 0.2) * 10 })) },
+        { planet: 'Sun', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 82 + Math.sin(i * 0.2) * 10 })) },
+        { planet: 'Moon', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -30 + Math.cos(i * 0.18) * 15 })) },
+        { planet: 'Moon', line_type: 'IC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -40 + Math.cos(i * 0.18) * 15 })) },
+        { planet: 'Mercury', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 90 + Math.sin(i * 0.22) * 8 })) },
+        { planet: 'Mercury', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 100 + Math.sin(i * 0.22) * 8 })) },
+        { planet: 'Venus', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 40 + Math.cos(i * 0.25) * 12 })) },
+        { planet: 'Venus', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 50 + Math.cos(i * 0.25) * 12 })) },
+        { planet: 'Mars', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -60 + Math.sin(i * 0.28) * 10 })) },
+        { planet: 'Jupiter', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 60 + Math.sin(i * 0.3) * 15 })) },
+        { planet: 'Jupiter', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 70 + Math.sin(i * 0.3) * 15 })) },
+        { planet: 'Saturn', line_type: 'IC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -10 + Math.sin(i * 0.15) * 20 })) },
+        { planet: 'Saturn', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 0 + Math.sin(i * 0.15) * 20 })) },
+        { planet: 'Uranus', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 120 + Math.cos(i * 0.12) * 18 })) },
+        { planet: 'Neptune', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -80 + Math.sin(i * 0.14) * 15 })) },
+        { planet: 'Pluto', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -100 + Math.cos(i * 0.1) * 12 })) }
+      ];
+
+      const sampleCities = [
+        { name: 'Mumbai', latitude: 19.076, longitude: 72.8777, score: 92, showLabel: true },
+        { name: 'Delhi', latitude: 28.6139, longitude: 77.209, score: 88, showLabel: true },
+        { name: 'Bangalore', latitude: 12.9716, longitude: 77.5946, score: 85, showLabel: true },
+        { name: 'Singapore', latitude: 1.3521, longitude: 103.8198, score: 83, showLabel: true },
+        { name: 'Dubai', latitude: 25.2048, longitude: 55.2708, score: 79, showLabel: true }
+      ];
+
+      const viewType = (req.query.view as string) || 'world';
+      
+      const buffer = await renderer.renderGoalFilteredMap({
+        viewType,
+        goal,
+        lines: sampleLines,
+        cities: sampleCities,
+        birthLocation: { lat: 23.0225, lng: 72.5714 },
+        highlightIndia: true
+      });
+
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'no-cache');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Goal map rendering error:', error);
+      res.status(500).json({ error: 'Failed to render goal-filtered map', details: error.message });
+    }
+  });
+
   // Debug endpoint to test astrocartography API response and line assignment
   app.get("/api/debug-astro-lines", async (req, res) => {
     try {
