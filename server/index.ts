@@ -478,19 +478,60 @@ async function startServer() {
         birthLocation
       });
 
-      const mapList = Object.entries(result.maps)
-        .filter(([key]) => key !== 'cityMaps')
-        .map(([key, value]: [string, any]) => ({
-          name: key,
-          filename: value.filename,
-          size: value.base64 ? Math.round(value.base64.length * 0.75 / 1024) + 'KB' : 'N/A'
-        }));
+      const extractMapInfo = (mapObj: any) => {
+        if (!mapObj) return null;
+        return {
+          filename: mapObj.filename,
+          size: mapObj.base64 ? Math.round(mapObj.base64.length * 0.75 / 1024) + 'KB' : 'N/A'
+        };
+      };
 
-      const cityMapList = Object.entries(result.maps.cityMaps || {}).map(([key, value]: [string, any]) => ({
-        name: `city_${key}`,
-        cityName: value.cityName,
-        filename: value.filename,
-        size: value.base64 ? Math.round(value.base64.length * 0.75 / 1024) + 'KB' : 'N/A'
+      const overviewMaps = Object.entries(result.maps.overview || {}).map(([key, value]) => ({
+        category: 'overview',
+        name: key,
+        ...extractMapInfo(value)
+      }));
+
+      const regionalMaps: any[] = [];
+      for (const [goalKey, regions] of Object.entries(result.maps.regional || {})) {
+        for (const [regionKey, mapData] of Object.entries(regions as object)) {
+          regionalMaps.push({
+            category: 'regional',
+            goal: goalKey,
+            region: regionKey,
+            ...extractMapInfo(mapData)
+          });
+        }
+      }
+
+      const cityMaps: any[] = [];
+      for (const [goalKey, cities] of Object.entries(result.maps.cities || {})) {
+        for (const [cityKey, mapData] of Object.entries(cities as object)) {
+          cityMaps.push({
+            category: 'best_city',
+            goal: goalKey,
+            city: cityKey,
+            ...extractMapInfo(mapData)
+          });
+        }
+      }
+
+      const avoidMaps: any[] = [];
+      for (const [goalKey, cities] of Object.entries(result.maps.avoidCities || {})) {
+        for (const [cityKey, mapData] of Object.entries(cities as object)) {
+          avoidMaps.push({
+            category: 'avoid_city',
+            goal: goalKey,
+            city: cityKey,
+            ...extractMapInfo(mapData)
+          });
+        }
+      }
+
+      const powerZoneMaps = Object.entries(result.maps.powerZones || {}).map(([key, value]) => ({
+        category: 'powerZones',
+        goal: key,
+        ...extractMapInfo(value)
       }));
 
       generator.cleanupTempFiles(result.reportId);
@@ -500,9 +541,23 @@ async function startServer() {
         reportId: result.reportId,
         goal,
         scope,
-        mapsGenerated: mapList.length + cityMapList.length,
-        maps: mapList,
-        cityMaps: cityMapList
+        totalMapsGenerated: result.mapCount,
+        summary: {
+          overview: overviewMaps.length,
+          regional: regionalMaps.length,
+          bestCities: cityMaps.length,
+          avoidCities: avoidMaps.length,
+          powerZones: powerZoneMaps.length,
+          legend: result.maps.legend ? 1 : 0
+        },
+        maps: {
+          overview: overviewMaps,
+          regional: regionalMaps,
+          bestCities: cityMaps,
+          avoidCities: avoidMaps,
+          powerZones: powerZoneMaps,
+          legend: result.maps.legend ? extractMapInfo(result.maps.legend) : null
+        }
       });
     } catch (error: any) {
       console.error('Report maps generation error:', error);

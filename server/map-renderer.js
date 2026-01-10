@@ -193,6 +193,34 @@ const REGIONAL_VIEWS = {
     center: [135, -28],
     bounds: [[110, -45], [180, -10]],
     label: 'Australia & Oceania'
+  },
+  india_central: {
+    projection: 'geoMercator',
+    scale: 2000,
+    center: [79, 22],
+    bounds: [[76, 18], [84, 26]],
+    label: 'Central India'
+  },
+  east_asia: {
+    projection: 'geoMercator',
+    scale: 500,
+    center: [120, 35],
+    bounds: [[100, 20], [145, 50]],
+    label: 'East Asia'
+  },
+  south_america: {
+    projection: 'geoMercator',
+    scale: 350,
+    center: [-60, -15],
+    bounds: [[-85, -55], [-30, 15]],
+    label: 'South America'
+  },
+  africa: {
+    projection: 'geoMercator',
+    scale: 350,
+    center: [20, 5],
+    bounds: [[-20, -35], [55, 40]],
+    label: 'Africa'
   }
 };
 
