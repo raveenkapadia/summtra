@@ -343,6 +343,9 @@ export function prepareReportData(birthData, astroData, options = {}) {
 export function prepareCityPageData(city, rank, goal, baseData) {
   const scoreClass = city.score >= 85 ? 'Excellent' : city.score >= 75 ? 'Good' : city.score >= 65 ? 'Moderate' : 'Challenging';
   
+  const interpretation = city.aiInterpretation || city.analysis || city.interpretation || 
+    `This location offers ${scoreClass.toLowerCase()} potential for ${goal.toLowerCase()} based on your planetary alignments.`;
+  
   return {
     ...baseData,
     CITY_NAME: city.name || '',
@@ -356,8 +359,9 @@ export function prepareCityPageData(city, rank, goal, baseData) {
     CITY_NAKSHATRA_MATCH: city.nakshatraMatch ? 'Yes' : 'No',
     CITY_VERDICT: city.verdict || scoreClass,
     CITY_SCORE_CLASS: scoreClass.toLowerCase(),
-    CITY_ANALYSIS: city.analysis || city.interpretation || '',
-    CITY_ACTIVE_LINES: (city.lines || []).map(l => `${l.planet} ${l.line_type}`).join(', '),
+    CITY_ANALYSIS: interpretation,
+    CITY_INTERPRETATION: interpretation,
+    CITY_ACTIVE_LINES: (city.lines || []).map(l => typeof l === 'string' ? l : `${l.planet} ${l.line_type}`).join(', '),
     CITY_PLANETARY_INFLUENCES: generateCityPlanetaryInfluences(city.lines || []),
     GOAL: goal,
     GOAL_ICON: GOAL_ICONS[goal] || '✨',
@@ -371,12 +375,21 @@ function generateCityPlanetaryInfluences(lines) {
   }
   
   return lines.map(line => {
-    const planet = PLANET_DATA.find(p => p.name === line.planet) || { symbol: '?', color: '#888' };
+    let planetName, lineType;
+    if (typeof line === 'string') {
+      const parts = line.split('-');
+      planetName = parts[0];
+      lineType = parts[1] || '';
+    } else {
+      planetName = line.planet;
+      lineType = line.line_type;
+    }
+    const planet = PLANET_DATA.find(p => p.name === planetName) || { symbol: '?', color: '#888' };
     return `
       <div class="influence-item" style="border-left-color: ${planet.color}">
         <span class="planet-symbol">${planet.symbol}</span>
-        <span class="planet-name">${line.planet}</span>
-        <span class="line-type">${line.line_type}</span>
+        <span class="planet-name">${planetName}</span>
+        <span class="line-type">${lineType}</span>
       </div>
     `;
   }).join('');

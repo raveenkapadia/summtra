@@ -631,12 +631,14 @@ async function startServer() {
         longitude: req.query.lng as string || '72.8777'
       } : null;
       
-      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}`);
+      const useAI = req.query.ai === 'true' || req.query.ai === '1';
+      
+      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}${useAI ? ' (with AI)' : ''}`);
       if (customBirthData) {
         console.log(`   📍 Custom birth data: ${customBirthData.birthDate} ${customBirthData.birthTime}, ${customBirthData.birthPlace}`);
       }
       
-      const result = await generateTestPDF(reportType, scope, goal, customBirthData);
+      const result = await generateTestPDF(reportType, scope, goal, customBirthData, { useAI });
       
       res.json({
         success: true,

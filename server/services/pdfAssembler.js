@@ -14,6 +14,7 @@ import {
 } from './templateProcessor.js';
 
 const AstroMapRenderer = require('../map-renderer.js');
+const claudeService = require('./claudeService.js');
 
 const GOALS_ORDER = ['Career', 'Wealth', 'Love', 'Education', 'Settlement'];
 
@@ -466,7 +467,9 @@ export class PDFAssembler {
   }
 }
 
-export async function generateTestPDF(reportType, scope, goal, customBirthData = null) {
+export async function generateTestPDF(reportType, scope, goal, customBirthData = null, options = {}) {
+  const useAI = options.useAI || false;
+  
   const defaultBirthData = {
     name: 'Arjun Sharma',
     birthDate: '15/08/1990',
@@ -501,6 +504,29 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     longitude: customBirthData.longitude
   } : defaultBirthData;
   
+  let testCities = generateTestCities(scope);
+  
+  if (useAI && process.env.ANTHROPIC_API_KEY) {
+    console.log('   🤖 Generating AI interpretations with Claude...');
+    try {
+      const userData = {
+        name: testBirthData.name,
+        birthDate: testBirthData.birthDate,
+        reportGoal: goal.toLowerCase()
+      };
+      
+      const citiesWithLines = testCities.map(city => ({
+        ...city,
+        lines: (city.lines || []).map(l => `${l.planet}-${l.line_type}`)
+      }));
+      
+      testCities = await claudeService.generateCityInterpretations(citiesWithLines, userData);
+      console.log('   ✅ AI interpretations generated successfully');
+    } catch (error) {
+      console.error('   ⚠️ AI generation failed, using fallback:', error.message);
+    }
+  }
+  
   const testAstroData = {
     planetaryLines: [
       { planet: 'Jupiter', line_type: 'MC', color: '#FFD700', points: [[72, 19], [75, 25], [78, 30]] },
@@ -513,7 +539,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
       { latitude: 19.076, longitude: 72.877, strength: 0.9, is_challenging: false },
       { latitude: 28.613, longitude: 77.209, strength: 0.8, is_challenging: false }
     ],
-    topCities: generateTestCities(scope)
+    topCities: testCities
   };
   
   const assembler = new PDFAssembler(testBirthData, testAstroData, {
