@@ -1,0 +1,504 @@
+Step 5: Integrate Map Rendering into PDF Report Generator
+Now let's connect our map renderer to the PDF report generation system. We need to generate map images and embed them in the HTML templates that Puppeteer converts to PDF.
+Update Report Generator
+Update server/reportGenerator.js to include map generation:
+javascriptconst AstroMapRenderer = require('./map-renderer');
+const LegendRenderer = require('./legend-renderer');
+const fs = require('fs');
+const path = require('path');
+
+class ReportGenerator {
+  constructor() {
+    this.mapRenderer = new AstroMapRenderer();
+    this.legendRenderer = new LegendRenderer();
+    this.tempDir = path.join(__dirname, '../temp/maps');
+    
+    // Ensure temp directory exists
+    if (!fs.existsSync(this.tempDir)) {
+      fs.mkdirSync(this.tempDir, { recursive: true });
+    }
+  }
+  
+  // Generate all maps needed for report
+  async generateReportMaps(userData, astroData, options) {
+    const { goal, scope, birthLocation } = options;
+    const reportId = `report_${Date.now()}`;
+    const maps = {};
+    
+    // 1. World Overview Map (All Lines)
+    maps.worldOverview = await this.generateMap(reportId, 'world_overview', {
+      viewType: 'world',
+      goal: 'Complete',  // Show all lines
+      lines: astroData.lines,
+      cities: astroData.topCities,
+      powerZones: astroData.powerZones,
+      birthLocation: birthLocation
+    });
+    
+    // 2. World Map - Goal Filtered
+    maps.worldGoalFiltered = await this.generateMap(reportId, 'world_goal', {
+      viewType: 'world',
+      goal: goal,
+      lines: astroData.lines,
+      cities: astroData.topCities.filter(c => c.goalMatch === goal),
+      powerZones: astroData.powerZones.filter(z => z.category === goal.toLowerCase()),
+      birthLocation: birthLocation
+    });
+    
+    // 3. Power Zones Map
+    maps.powerZones = await this.generateMap(reportId, 'power_zones', {
+      viewType: 'world',
+      goal: goal,
+      lines: astroData.lines,
+      cities: [],
+      powerZones: astroData.powerZones,
+      birthLocation: birthLocation,
+      highlightPowerZones: true
+    });
+    
+    // 4. Regional Maps based on scope
+    if (scope === 'india' || scope === 'both') {
+      maps.india = await this.generateMap(reportId, 'india', {
+        viewType: 'india',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.country === 'India'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      // Sub-regions
+      maps.indiaNorth = await this.generateMap(reportId, 'india_north', {
+        viewType: 'india_north',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'North India'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      maps.indiaSouth = await this.generateMap(reportId, 'india_south', {
+        viewType: 'india_south',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'South India'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      maps.indiaWest = await this.generateMap(reportId, 'india_west', {
+        viewType: 'india_west',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'West India'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      maps.indiaEast = await this.generateMap(reportId, 'india_east', {
+        viewType: 'india_east',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'East India'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+    }
+    
+    if (scope === 'international' || scope === 'both') {
+      maps.europe = await this.generateMap(reportId, 'europe', {
+        viewType: 'europe',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'Europe'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      maps.middleEast = await this.generateMap(reportId, 'middle_east', {
+        viewType: 'middle_east',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'Middle East'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+      
+      maps.southeastAsia = await this.generateMap(reportId, 'southeast_asia', {
+        viewType: 'southeast_asia',
+        goal: goal,
+        lines: astroData.lines,
+        cities: astroData.topCities.filter(c => c.region === 'Southeast Asia'),
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+    }
+    
+    // 5. City Close-up Maps (for top recommended cities)
+    maps.cityMaps = {};
+    const topCities = astroData.topCities.slice(0, 9); // Top 6-9 cities
+    
+    for (const city of topCities) {
+      const cityKey = city.name.toLowerCase().replace(/\s+/g, '_');
+      maps.cityMaps[cityKey] = await this.generateCityMap(reportId, city, {
+        goal: goal,
+        lines: astroData.lines,
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation
+      });
+    }
+    
+    // 6. Cities to Avoid Maps
+    maps.avoidCityMaps = {};
+    const avoidCities = astroData.avoidCities || [];
+    
+    for (const city of avoidCities.slice(0, 5)) {
+      const cityKey = city.name.toLowerCase().replace(/\s+/g, '_');
+      maps.avoidCityMaps[cityKey] = await this.generateCityMap(reportId, city, {
+        goal: goal,
+        lines: astroData.lines,
+        powerZones: astroData.powerZones,
+        birthLocation: birthLocation,
+        isAvoidCity: true
+      });
+    }
+    
+    // 7. Legend Page
+    maps.legend = await this.generateLegend(reportId);
+    
+    return { reportId, maps };
+  }
+  
+  // Generate single map and save to temp file
+  async generateMap(reportId, mapName, options) {
+    const filename = `${reportId}_${mapName}.png`;
+    const filepath = path.join(this.tempDir, filename);
+    
+    const buffer = await this.mapRenderer.renderGoalFilteredMap(options);
+    fs.writeFileSync(filepath, buffer);
+    
+    return {
+      filename,
+      filepath,
+      base64: buffer.toString('base64'),
+      dataUrl: `data:image/png;base64,${buffer.toString('base64')}`
+    };
+  }
+  
+  // Generate city close-up map
+  async generateCityMap(reportId, city, options) {
+    const { getCityView } = require('./map-renderer');
+    const viewConfig = getCityView(city);
+    
+    const filename = `${reportId}_city_${city.name.toLowerCase().replace(/\s+/g, '_')}.png`;
+    const filepath = path.join(this.tempDir, filename);
+    
+    const buffer = await this.mapRenderer.renderGoalFilteredMap({
+      ...options,
+      viewConfig: viewConfig,
+      cities: [{
+        ...city,
+        type: options.isAvoidCity ? 'avoid' : 'recommended',
+        showLabel: true
+      }]
+    });
+    
+    fs.writeFileSync(filepath, buffer);
+    
+    return {
+      filename,
+      filepath,
+      base64: buffer.toString('base64'),
+      dataUrl: `data:image/png;base64,${buffer.toString('base64')}`,
+      cityName: city.name
+    };
+  }
+  
+  // Generate legend page
+  async generateLegend(reportId) {
+    const filename = `${reportId}_legend.png`;
+    const filepath = path.join(this.tempDir, filename);
+    
+    const buffer = this.legendRenderer.render();
+    fs.writeFileSync(filepath, buffer);
+    
+    return {
+      filename,
+      filepath,
+      base64: buffer.toString('base64'),
+      dataUrl: `data:image/png;base64,${buffer.toString('base64')}`
+    };
+  }
+  
+  // Clean up temp files after PDF generation
+  cleanupTempFiles(reportId) {
+    const files = fs.readdirSync(this.tempDir);
+    files.forEach(file => {
+      if (file.startsWith(reportId)) {
+        fs.unlinkSync(path.join(this.tempDir, file));
+      }
+    });
+  }
+}
+
+module.exports = ReportGenerator;
+Create Map Page HTML Template
+Create file: server/templates/map-page-template.html
+html<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+        }
+        
+        .map-page {
+            width: 297mm;
+            height: 210mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+            page-break-after: always;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        .map-container {
+            padding: 15px 30px;
+        }
+        
+        .map-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .map-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .map-subtitle {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .goal-badge {
+            padding: 5px 15px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--deep-purple);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 15px;
+        }
+        
+        .map-frame {
+            border: 2px solid var(--deep-purple);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(45, 27, 78, 0.15);
+        }
+        
+        .map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .map-caption {
+            background: var(--deep-purple);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .caption-text {
+            font-size: 9px;
+            color: var(--cream);
+        }
+        
+        .caption-note {
+            font-size: 9px;
+            color: var(--gold);
+        }
+        
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 30px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 8px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 8px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="map-page">
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Summitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">{{MAP_SECTION}}</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <div class="map-container">
+            <div class="map-title-bar">
+                <div>
+                    <h2 class="map-title">{{MAP_TITLE}}</h2>
+                    <p class="map-subtitle">{{MAP_SUBTITLE}}</p>
+                </div>
+                <div class="goal-badge">{{GOAL}} Focus</div>
+            </div>
+            
+            <div class="map-frame">
+                <img class="map-image" src="{{MAP_IMAGE_DATA_URL}}" alt="{{MAP_TITLE}}">
+                <div class="map-caption">
+                    <span class="caption-text">{{CAPTION_TEXT}}</span>
+                    <span class="caption-note">{{CAPTION_NOTE}}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-footer">
+            <div class="footer-left">© Summitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>
+Test Report Map Generation
+Add test endpoint:
+javascriptapp.get('/api/test-report-maps', async (req, res) => {
+  const ReportGenerator = require('./reportGenerator');
+  const generator = new ReportGenerator();
+  
+  // Mock data for testing
+  const userData = {
+    name: 'Test User',
+    birthDate: '1982-11-15',
+    birthTime: '08:20',
+    birthPlace: 'Ahmedabad'
+  };
+  
+  const astroData = {
+    lines: [], // Would come from API
+    topCities: [
+      { name: 'Mumbai', latitude: 19.076, longitude: 72.8777, score: 92, country: 'India', region: 'West India' },
+      { name: 'Bangalore', latitude: 12.9716, longitude: 77.5946, score: 89, country: 'India', region: 'South India' },
+      { name: 'Singapore', latitude: 1.3521, longitude: 103.8198, score: 87, country: 'Singapore', region: 'Southeast Asia' }
+    ],
+    avoidCities: [
+      { name: 'Chennai', latitude: 13.0827, longitude: 80.2707, score: 45, country: 'India', region: 'South India' }
+    ],
+    powerZones: []
+  };
+  
+  const options = {
+    goal: 'Career',
+    scope: 'both',
+    birthLocation: { latitude: 23.0225, longitude: 72.5714 }
+  };
+  
+  try {
+    const { reportId, maps } = await generator.generateReportMaps(userData, astroData, options);
+    
+    res.json({
+      success: true,
+      reportId,
+      mapsGenerated: Object.keys(maps).length,
+      mapList: Object.keys(maps)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+Please implement and test with /api/test-report-maps to verify maps generate correctly for the report.

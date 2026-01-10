@@ -438,6 +438,78 @@ async function startServer() {
     }
   });
 
+  // Test full map generation for a report
+  app.get("/api/test-report-maps", async (req, res) => {
+    try {
+      const MapGenerator = require('./services/mapGenerator');
+      const generator = new MapGenerator();
+
+      const goal = (req.query.goal as string) || 'Career';
+      const scope = (req.query.scope as string) || 'both';
+
+      const sampleAstroData = {
+        lines: [
+          { planet: 'Sun', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 72 + Math.sin(i * 0.2) * 10 })) },
+          { planet: 'Jupiter', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 60 + Math.sin(i * 0.3) * 15 })) },
+          { planet: 'Venus', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 40 + Math.cos(i * 0.25) * 12 })) },
+          { planet: 'Saturn', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 0 + Math.sin(i * 0.15) * 20 })) },
+          { planet: 'Mercury', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 90 + Math.sin(i * 0.22) * 8 })) }
+        ],
+        topCities: [
+          { name: 'Mumbai', lat: 19.076, lng: 72.8777, latitude: 19.076, longitude: 72.8777, score: 92, country: 'India' },
+          { name: 'Delhi', lat: 28.6139, lng: 77.209, latitude: 28.6139, longitude: 77.209, score: 88, country: 'India' },
+          { name: 'Bangalore', lat: 12.9716, lng: 77.5946, latitude: 12.9716, longitude: 77.5946, score: 85, country: 'India' },
+          { name: 'Singapore', lat: 1.3521, lng: 103.8198, latitude: 1.3521, longitude: 103.8198, score: 90, country: 'Singapore' },
+          { name: 'Dubai', lat: 25.2048, lng: 55.2708, latitude: 25.2048, longitude: 55.2708, score: 88, country: 'UAE' },
+          { name: 'London', lat: 51.5074, lng: -0.1278, latitude: 51.5074, longitude: -0.1278, score: 84, country: 'UK' }
+        ],
+        powerZones: [
+          { latitude: 19.5, longitude: 73, strength: 0.9 },
+          { latitude: 28.5, longitude: 77, strength: 0.85 }
+        ]
+      };
+
+      const userData = { name: 'Test User' };
+      const birthLocation = { lat: 23.0225, lng: 72.5714 };
+
+      const result = await generator.generateReportMaps(userData, sampleAstroData, {
+        goal,
+        scope,
+        birthLocation
+      });
+
+      const mapList = Object.entries(result.maps)
+        .filter(([key]) => key !== 'cityMaps')
+        .map(([key, value]: [string, any]) => ({
+          name: key,
+          filename: value.filename,
+          size: value.base64 ? Math.round(value.base64.length * 0.75 / 1024) + 'KB' : 'N/A'
+        }));
+
+      const cityMapList = Object.entries(result.maps.cityMaps || {}).map(([key, value]: [string, any]) => ({
+        name: `city_${key}`,
+        cityName: value.cityName,
+        filename: value.filename,
+        size: value.base64 ? Math.round(value.base64.length * 0.75 / 1024) + 'KB' : 'N/A'
+      }));
+
+      generator.cleanupTempFiles(result.reportId);
+
+      res.json({
+        success: true,
+        reportId: result.reportId,
+        goal,
+        scope,
+        mapsGenerated: mapList.length + cityMapList.length,
+        maps: mapList,
+        cityMaps: cityMapList
+      });
+    } catch (error: any) {
+      console.error('Report maps generation error:', error);
+      res.status(500).json({ error: 'Failed to generate report maps', details: error.message });
+    }
+  });
+
   // Debug endpoint to test astrocartography API response and line assignment
   app.get("/api/debug-astro-lines", async (req, res) => {
     try {
