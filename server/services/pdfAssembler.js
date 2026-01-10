@@ -466,8 +466,8 @@ export class PDFAssembler {
   }
 }
 
-export async function generateTestPDF(reportType, scope, goal) {
-  const testBirthData = {
+export async function generateTestPDF(reportType, scope, goal, customBirthData = null) {
+  const defaultBirthData = {
     name: 'Arjun Sharma',
     birthDate: '15/08/1990',
     birthTime: '10:30 AM',
@@ -490,6 +490,16 @@ export async function generateTestPDF(reportType, scope, goal) {
       { mahadasha: 'Jupiter', antardasha: 'Ketu', startDate: '2028-09', endDate: '2029-08', theme: 'Spiritual growth' }
     ])
   };
+  
+  const testBirthData = customBirthData ? {
+    ...defaultBirthData,
+    name: customBirthData.name || 'User',
+    birthDate: customBirthData.birthDate,
+    birthTime: customBirthData.birthTime,
+    birthPlace: customBirthData.birthPlace,
+    latitude: customBirthData.latitude,
+    longitude: customBirthData.longitude
+  } : defaultBirthData;
   
   const testAstroData = {
     planetaryLines: [

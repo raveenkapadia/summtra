@@ -621,9 +621,22 @@ async function startServer() {
         });
       }
       
-      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}`);
+      // Check for custom birth data in query params
+      const customBirthData = req.query.date ? {
+        name: (req.query.name as string) || 'User',
+        birthDate: req.query.date as string,
+        birthTime: req.query.time as string || '12:00 PM',
+        birthPlace: req.query.place as string || 'Mumbai, India',
+        latitude: req.query.lat as string || '19.076',
+        longitude: req.query.lng as string || '72.8777'
+      } : null;
       
-      const result = await generateTestPDF(reportType, scope, goal);
+      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}`);
+      if (customBirthData) {
+        console.log(`   📍 Custom birth data: ${customBirthData.birthDate} ${customBirthData.birthTime}, ${customBirthData.birthPlace}`);
+      }
+      
+      const result = await generateTestPDF(reportType, scope, goal, customBirthData);
       
       res.json({
         success: true,
