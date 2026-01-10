@@ -421,6 +421,23 @@ async function startServer() {
     }
   });
 
+  // Legend page test endpoint
+  app.get("/api/test-legend", async (req, res) => {
+    try {
+      const LegendRenderer = require('./legend-renderer.js');
+      const renderer = new LegendRenderer();
+      
+      const buffer = renderer.render();
+      
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'no-cache');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Legend rendering error:', error);
+      res.status(500).json({ error: 'Failed to render legend', details: error.message });
+    }
+  });
+
   // Debug endpoint to test astrocartography API response and line assignment
   app.get("/api/debug-astro-lines", async (req, res) => {
     try {
