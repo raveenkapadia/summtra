@@ -7,6 +7,25 @@ const path = require('path');
 const MAP_WIDTH = 1200;
 const MAP_HEIGHT = 700;
 
+let cachedCountries = null;
+let cachedIndia = null;
+
+function loadCachedWorldData() {
+  if (cachedCountries) return { countries: cachedCountries, india: cachedIndia };
+  
+  const worldPath = path.join(process.cwd(), 'public/data/countries-110m.json');
+  const worldData = JSON.parse(fs.readFileSync(worldPath, 'utf-8'));
+  cachedCountries = topojson.feature(worldData, worldData.objects.countries);
+  
+  const indiaId = 356;
+  cachedIndia = {
+    type: 'FeatureCollection',
+    features: cachedCountries.features.filter(f => f.id === indiaId || f.id === '356')
+  };
+  
+  return { countries: cachedCountries, india: cachedIndia };
+}
+
 const COLORS = {
   ocean: '#0D0D1A',
   land: '#1E1E2E',
@@ -44,22 +63,9 @@ class AstroMapRenderer {
   constructor() {
     this.canvas = createCanvas(MAP_WIDTH, MAP_HEIGHT);
     this.ctx = this.canvas.getContext('2d');
-    this.countries = null;
-    this.india = null;
-  }
-  
-  loadWorldData() {
-    if (this.countries) return;
-    
-    const worldPath = path.join(process.cwd(), 'public/data/countries-110m.json');
-    const worldData = JSON.parse(fs.readFileSync(worldPath, 'utf-8'));
-    this.countries = topojson.feature(worldData, worldData.objects.countries);
-    
-    const indiaId = 356;
-    this.india = {
-      type: 'FeatureCollection',
-      features: this.countries.features.filter(f => f.id === indiaId || f.id === '356')
-    };
+    const { countries, india } = loadCachedWorldData();
+    this.countries = countries;
+    this.india = india;
   }
   
   getProjection(viewType, center) {
@@ -101,8 +107,6 @@ class AstroMapRenderer {
   }
   
   drawBaseMap(projection, highlightIndia = false) {
-    this.loadWorldData();
-    
     const pathGenerator = d3.geoPath(projection).context(this.ctx);
     
     this.ctx.fillStyle = COLORS.ocean;
@@ -140,6 +144,22 @@ class AstroMapRenderer {
     this.ctx.stroke();
   }
   
+  extractLatLng(point) {
+    let lat, lng;
+    
+    if (Array.isArray(point)) {
+      [lat, lng] = point;
+    } else if (typeof point === 'object') {
+      lng = point.longitude !== undefined ? point.longitude : 
+            point.lng !== undefined ? point.lng : 
+            point.lon !== undefined ? point.lon : undefined;
+      lat = point.latitude !== undefined ? point.latitude : 
+            point.lat !== undefined ? point.lat : undefined;
+    }
+    
+    return { lat, lng };
+  }
+  
   drawPlanetaryLines(lines, projection, filter = null) {
     if (!lines || !Array.isArray(lines)) return;
     
@@ -166,8 +186,7 @@ class AstroMapRenderer {
       
       let started = false;
       points.forEach((point) => {
-        const lng = point.longitude !== undefined ? point.longitude : point.lng;
-        const lat = point.latitude !== undefined ? point.latitude : point.lat;
+        const { lat, lng } = this.extractLatLng(point);
         
         if (lng === undefined || lat === undefined) return;
         
