@@ -118,10 +118,21 @@ Located in `server/services/`, each service handles a specific concern:
 8. **map-renderer.js** - Server-side astrocartography map PNG rendering using Node Canvas + D3.js
    - Uses Natural Earth 110m TopoJSON data (`/public/data/countries-110m.json`)
    - Module-level caching for world data to avoid repeated disk reads
-   - Supports multiple view types: world, india, asia, europe, middle-east, city-level zoom
+   - Supports 15 view types: world, india, india_north/south/east/west/central, europe, middle_east, southeast_asia, east_asia, north_america, south_america, australia, africa
    - Goal-based line filtering with GOAL_LINE_CONFIG for Career, Wealth, Love, Education, Settlement, Complete
    - Primary/secondary/other importance levels with distinct opacity/glow/line-width
    - Test endpoints: `/api/test-map` (default), `/api/test-map/:goal` (goal-filtered)
+9. **pdfAssembler.js** - Orchestrates multi-page PDF assembly with page ordering
+   - Single Goal reports: ~40-50 pages (cover, intro, maps, planetary lines, rankings, city details, vedic, dasha, glossary)
+   - Complete reports: ~180-200 pages (all 5 goals with dedicated sections per goal)
+   - Uses templateProcessor.js to replace {{PLACEHOLDERS}} with HTML content
+   - Integrates AstroMapRenderer for embedded map images as base64
+   - Page types: cover, intro, howtoread, legend, map, planets, divider, ranking, city-best, city-map, city-avoid, vedic, dasha, glossary
+   - Test endpoint: `/api/test-pdf/:reportType/:scope/:goal` (Single/Complete, India/Both, goal name)
+10. **templateProcessor.js** - HTML template variable replacement
+    - Replaces {{PLACEHOLDER}} variables with prepared HTML content
+    - Generates HTML for planetary lines, power zones, top cities, rankings
+    - Handles goal-specific content customization
 
 ### Report Generation Workflow
 
