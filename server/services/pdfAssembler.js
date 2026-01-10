@@ -560,10 +560,10 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
                      scope === 'International' ? INTERNATIONAL_CITIES : 
                      [...INDIAN_CITIES, ...INTERNATIONAL_CITIES];
       
-      const scoresResult = await astrologyApi.getScoresForAllCities(apiBirthData, cities);
+      const scoresResult = await astrologyApi.scoreCitiesFromPowerZones(apiBirthData, cities);
       if (scoresResult.success && scoresResult.data) {
-        scoredCities = astrologyApi.assignLinesToCities(scoresResult.data, linesResult.data);
-        console.log(`   ✅ Scored ${scoredCities.length} cities with real API data`);
+        scoredCities = scoresResult.data;
+        console.log(`   ✅ Scored ${scoredCities.length} cities using astrocartography lines`);
       }
     } catch (error) {
       console.error('   ⚠️ API fetch failed, using fallback data:', error.message);
