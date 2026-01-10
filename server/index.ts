@@ -583,6 +583,75 @@ async function startServer() {
     }
   });
 
+  // Test PDF generation endpoint
+  app.get("/api/test-pdf/:reportType/:scope/:goal", async (req, res) => {
+    try {
+      const { generateTestPDF } = require('./services/pdfAssembler.js');
+      
+      const reportType = req.params.reportType || 'Single';
+      const scope = req.params.scope || 'India';
+      const goal = req.params.goal || 'Career';
+      
+      // Validate parameters
+      const validReportTypes = ['Single', 'Complete'];
+      const validScopes = ['India', 'International', 'Both'];
+      const validGoals = ['Career', 'Wealth', 'Love', 'Education', 'Settlement', 'Complete'];
+      
+      if (!validReportTypes.includes(reportType)) {
+        return res.status(400).json({
+          error: 'Invalid reportType',
+          valid: validReportTypes,
+          usage: '/api/test-pdf/Single/India/Career'
+        });
+      }
+      
+      if (!validScopes.includes(scope)) {
+        return res.status(400).json({
+          error: 'Invalid scope',
+          valid: validScopes,
+          usage: '/api/test-pdf/Single/India/Career'
+        });
+      }
+      
+      if (!validGoals.includes(goal)) {
+        return res.status(400).json({
+          error: 'Invalid goal',
+          valid: validGoals,
+          usage: '/api/test-pdf/Single/India/Career'
+        });
+      }
+      
+      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}`);
+      
+      const result = await generateTestPDF(reportType, scope, goal);
+      
+      res.json({
+        success: true,
+        message: `PDF generated successfully with ${result.pageCount} pages`,
+        reportType,
+        scope,
+        goal,
+        pageCount: result.pageCount,
+        filename: result.filename,
+        downloadUrl: result.url,
+        expectedPages: {
+          'Single/India': '~50 pages',
+          'Single/International': '~55 pages',
+          'Single/Both': '~80 pages',
+          'Complete/India': '~120 pages',
+          'Complete/Both': '~205 pages'
+        }
+      });
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate PDF', 
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
+
   // Debug endpoint to test astrocartography API response and line assignment
   app.get("/api/debug-astro-lines", async (req, res) => {
     try {
