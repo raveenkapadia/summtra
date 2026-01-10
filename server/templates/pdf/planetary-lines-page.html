@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Planetary Lines</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --midnight-blue: #1A1A4E;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* Content */
+        .content {
+            padding: 30px 40px;
+        }
+        
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--royal-purple);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 20px;
+        }
+        
+        /* Planet Card */
+        .planet-card {
+            background: var(--soft-white);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 20px;
+        }
+        
+        .planet-symbol-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .planet-symbol {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: white;
+            margin-bottom: 8px;
+        }
+        
+        .planet-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: center;
+        }
+        
+        .planet-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .planet-headline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .planet-keywords {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .keyword-tag {
+            padding: 3px 10px;
+            background: var(--cream);
+            border-radius: 12px;
+            font-size: 10px;
+            color: var(--text-dark);
+        }
+        
+        .planet-description {
+            font-size: 11px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .line-types {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        
+        .line-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .line-indicator {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        
+        /* Planet Colors */
+        .sun-bg { background: linear-gradient(135deg, #FF8C00, #FFB347); }
+        .moon-bg { background: linear-gradient(135deg, #A0A0A0, #D0D0D0); }
+        .mercury-bg { background: linear-gradient(135deg, #4ECDC4, #7FDBDA); }
+        .venus-bg { background: linear-gradient(135deg, #FF69B4, #FFB6C1); }
+        .mars-bg { background: linear-gradient(135deg, #DC143C, #FF6B6B); }
+        .jupiter-bg { background: linear-gradient(135deg, #DAA520, #FFD700); }
+        .saturn-bg { background: linear-gradient(135deg, #4A5568, #708090); }
+        .rahu-bg { background: linear-gradient(135deg, #6B46C1, #8B5CF6); }
+        .ketu-bg { background: linear-gradient(135deg, #CD853F, #DEB887); }
+        
+        .sun-line { background: #FF8C00; }
+        .moon-line { background: #C0C0C0; }
+        .mercury-line { background: #4ECDC4; }
+        .venus-line { background: #FF69B4; }
+        .mars-line { background: #DC143C; }
+        .jupiter-line { background: #FFD700; }
+        .saturn-line { background: #708090; }
+        .rahu-line { background: #8B5CF6; }
+        .ketu-line { background: #CD853F; }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">Planetary Lines</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="section-label">Understanding Your Lines</div>
+            <h1 class="section-title">{{PLANET_GROUP_TITLE}}</h1>
+            
+            <!-- Planet Card 1 -->
+            <div class="planet-card">
+                <div class="planet-symbol-area">
+                    <div class="planet-symbol {{PLANET1_CLASS}}">{{PLANET1_SYMBOL}}</div>
+                    <div class="planet-name">{{PLANET1_NAME}}</div>
+                </div>
+                <div class="planet-content">
+                    <div class="planet-headline">{{PLANET1_HEADLINE}}</div>
+                    <div class="planet-keywords">
+                        <span class="keyword-tag">{{PLANET1_KEY1}}</span>
+                        <span class="keyword-tag">{{PLANET1_KEY2}}</span>
+                        <span class="keyword-tag">{{PLANET1_KEY3}}</span>
+                        <span class="keyword-tag">{{PLANET1_KEY4}}</span>
+                    </div>
+                    <div class="planet-description">{{PLANET1_DESC}}</div>
+                    <div class="line-types">
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET1_LINE_CLASS}}"></div>
+                            <span>MC: Career & Public</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET1_LINE_CLASS}}"></div>
+                            <span>IC: Home & Foundation</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET1_LINE_CLASS}}"></div>
+                            <span>AC: Self & Identity</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET1_LINE_CLASS}}"></div>
+                            <span>DC: Relationships</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Planet Card 2 -->
+            <div class="planet-card">
+                <div class="planet-symbol-area">
+                    <div class="planet-symbol {{PLANET2_CLASS}}">{{PLANET2_SYMBOL}}</div>
+                    <div class="planet-name">{{PLANET2_NAME}}</div>
+                </div>
+                <div class="planet-content">
+                    <div class="planet-headline">{{PLANET2_HEADLINE}}</div>
+                    <div class="planet-keywords">
+                        <span class="keyword-tag">{{PLANET2_KEY1}}</span>
+                        <span class="keyword-tag">{{PLANET2_KEY2}}</span>
+                        <span class="keyword-tag">{{PLANET2_KEY3}}</span>
+                        <span class="keyword-tag">{{PLANET2_KEY4}}</span>
+                    </div>
+                    <div class="planet-description">{{PLANET2_DESC}}</div>
+                    <div class="line-types">
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET2_LINE_CLASS}}"></div>
+                            <span>MC: Career & Public</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET2_LINE_CLASS}}"></div>
+                            <span>IC: Home & Foundation</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET2_LINE_CLASS}}"></div>
+                            <span>AC: Self & Identity</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET2_LINE_CLASS}}"></div>
+                            <span>DC: Relationships</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Planet Card 3 -->
+            <div class="planet-card">
+                <div class="planet-symbol-area">
+                    <div class="planet-symbol {{PLANET3_CLASS}}">{{PLANET3_SYMBOL}}</div>
+                    <div class="planet-name">{{PLANET3_NAME}}</div>
+                </div>
+                <div class="planet-content">
+                    <div class="planet-headline">{{PLANET3_HEADLINE}}</div>
+                    <div class="planet-keywords">
+                        <span class="keyword-tag">{{PLANET3_KEY1}}</span>
+                        <span class="keyword-tag">{{PLANET3_KEY2}}</span>
+                        <span class="keyword-tag">{{PLANET3_KEY3}}</span>
+                        <span class="keyword-tag">{{PLANET3_KEY4}}</span>
+                    </div>
+                    <div class="planet-description">{{PLANET3_DESC}}</div>
+                    <div class="line-types">
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET3_LINE_CLASS}}"></div>
+                            <span>MC: Career & Public</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET3_LINE_CLASS}}"></div>
+                            <span>IC: Home & Foundation</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET3_LINE_CLASS}}"></div>
+                            <span>AC: Self & Identity</span>
+                        </div>
+                        <div class="line-type">
+                            <div class="line-indicator {{PLANET3_LINE_CLASS}}"></div>
+                            <span>DC: Relationships</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>

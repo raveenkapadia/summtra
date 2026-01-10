@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Read This Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --midnight-blue: #1A1A4E;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+            --success: #059669;
+            --warning: #D97706;
+            --danger: #DC2626;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* Content */
+        .content {
+            padding: 35px 40px;
+        }
+        
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--royal-purple);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 20px;
+        }
+        
+        /* Guide Items */
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .guide-item {
+            background: var(--soft-white);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .guide-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .guide-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--deep-purple);
+        }
+        
+        .guide-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .guide-text {
+            font-size: 11px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        /* Legend Section */
+        .legend-section {
+            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .legend-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 15px;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+        
+        .legend-label {
+            font-size: 11px;
+            color: var(--text-dark);
+        }
+        
+        /* Score Explanation */
+        .score-section {
+            background: var(--soft-white);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        .score-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 15px;
+        }
+        
+        .score-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .score-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .score-range {
+            width: 80px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .score-visual {
+            flex: 1;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+        
+        .score-visual.excellent {
+            background: linear-gradient(90deg, #059669 0%, #10B981 100%);
+        }
+        
+        .score-visual.good {
+            background: linear-gradient(90deg, #0891B2 0%, #06B6D4 100%);
+        }
+        
+        .score-visual.moderate {
+            background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%);
+        }
+        
+        .score-visual.challenging {
+            background: linear-gradient(90deg, #DC2626 0%, #EF4444 100%);
+        }
+        
+        .score-text {
+            font-size: 11px;
+            color: white;
+            font-weight: 500;
+        }
+        
+        /* Tips Box */
+        .tips-box {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            border-radius: 8px;
+            padding: 20px 25px;
+        }
+        
+        .tips-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tips-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--cream);
+            line-height: 1.5;
+        }
+        
+        .tip-icon {
+            color: var(--gold);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        /* Colors */
+        .sun-color { background: #FF8C00; }
+        .moon-color { background: #C0C0C0; }
+        .jupiter-color { background: #FFD700; }
+        .venus-color { background: #FF69B4; }
+        .saturn-color { background: #708090; }
+        .mercury-color { background: #4ECDC4; }
+        .mars-color { background: #DC143C; }
+        
+        .recommended-color { background: #D4AF37; }
+        .good-color { background: #4ADE80; }
+        .avoid-color { background: #EF4444; }
+        .birthplace-color { background: #EF4444; border: 2px solid #FFF; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">Guide</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="section-label">User Guide</div>
+            <h1 class="section-title">How to Read This Report</h1>
+            
+            <!-- Guide Items -->
+            <div class="guide-grid">
+                <div class="guide-item">
+                    <div class="guide-header">
+                        <span class="guide-number">1</span>
+                        <span class="guide-title">Planetary Lines</span>
+                    </div>
+                    <div class="guide-text">
+                        Colored lines on maps represent planetary energies. Thicker, glowing lines are most relevant to your selected goal. Each planet has a unique influence on different aspects of life.
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-header">
+                        <span class="guide-number">2</span>
+                        <span class="guide-title">City Markers</span>
+                    </div>
+                    <div class="guide-text">
+                        Gold dots indicate recommended cities, sized by their score. Red dots mark cities to avoid. Your birthplace is shown with a special star marker for reference.
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-header">
+                        <span class="guide-number">3</span>
+                        <span class="guide-title">Power Zones</span>
+                    </div>
+                    <div class="guide-text">
+                        Glowing circular areas show where beneficial planetary lines cross. These zones amplify positive energies. Green = beneficial, Yellow = mixed, Red = challenging.
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-header">
+                        <span class="guide-number">4</span>
+                        <span class="guide-title">Match Scores</span>
+                    </div>
+                    <div class="guide-text">
+                        Each city receives a percentage score (0-100%) based on planetary line proximity, Vedic compatibility, Vastu alignment, and current Dasha timing.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legend Section -->
+            <div class="legend-section">
+                <div class="legend-title">Map Legend</div>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color sun-color"></div>
+                        <span class="legend-label">Sun - Identity</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color moon-color"></div>
+                        <span class="legend-label">Moon - Emotions</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color jupiter-color"></div>
+                        <span class="legend-label">Jupiter - Growth</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color venus-color"></div>
+                        <span class="legend-label">Venus - Love</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color saturn-color"></div>
+                        <span class="legend-label">Saturn - Discipline</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color mercury-color"></div>
+                        <span class="legend-label">Mercury - Communication</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot recommended-color"></div>
+                        <span class="legend-label">Recommended City</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot avoid-color"></div>
+                        <span class="legend-label">City to Avoid</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot birthplace-color"></div>
+                        <span class="legend-label">Your Birthplace</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Score Explanation -->
+            <div class="score-section">
+                <div class="score-title">Understanding Match Scores</div>
+                <div class="score-bars">
+                    <div class="score-bar">
+                        <span class="score-range">85-100%</span>
+                        <div class="score-visual excellent">
+                            <span class="score-text">Excellent Match — Highly Recommended</span>
+                        </div>
+                    </div>
+                    <div class="score-bar">
+                        <span class="score-range">70-84%</span>
+                        <div class="score-visual good">
+                            <span class="score-text">Good Match — Favorable Conditions</span>
+                        </div>
+                    </div>
+                    <div class="score-bar">
+                        <span class="score-range">50-69%</span>
+                        <div class="score-visual moderate">
+                            <span class="score-text">Moderate — Mixed Influences</span>
+                        </div>
+                    </div>
+                    <div class="score-bar">
+                        <span class="score-range">Below 50%</span>
+                        <div class="score-visual challenging">
+                            <span class="score-text">Challenging — Approach with Caution</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="tips-box">
+                <div class="tips-title">
+                    <span>💡</span> Pro Tips for Using This Report
+                </div>
+                <div class="tips-list">
+                    <div class="tip-item">
+                        <span class="tip-icon">✦</span>
+                        <span>Focus on cities with 80%+ scores for major life decisions</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">✦</span>
+                        <span>Check Dasha timing before finalizing relocation dates</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">✦</span>
+                        <span>Consider visiting a city before permanent relocation</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">✦</span>
+                        <span>Multiple favorable factors increase success probability</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Legend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* Content */
+        .content {
+            padding: 30px 40px;
+        }
+        
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--royal-purple);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        /* Two Column Layout */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        /* Legend Section */
+        .legend-section {
+            background: var(--soft-white);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .legend-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(45, 27, 78, 0.1);
+        }
+        
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .planet-color {
+            width: 35px;
+            height: 4px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .planet-symbol {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            flex: 1;
+        }
+        
+        .legend-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .legend-meaning {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        /* Line Types */
+        .line-type-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+        
+        .line-sample {
+            width: 40px;
+            height: 3px;
+            flex-shrink: 0;
+        }
+        
+        .line-solid { background: var(--gold); }
+        .line-dashed { 
+            background: repeating-linear-gradient(90deg, var(--gold) 0px, var(--gold) 6px, transparent 6px, transparent 10px);
+        }
+        .line-dotted { 
+            background: repeating-linear-gradient(90deg, var(--gold) 0px, var(--gold) 3px, transparent 3px, transparent 6px);
+        }
+        
+        .line-code {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            width: 30px;
+        }
+        
+        .line-info {
+            flex: 1;
+        }
+        
+        .line-name {
+            font-size: 11px;
+            color: var(--text-dark);
+        }
+        
+        .line-desc {
+            font-size: 9px;
+            color: #888;
+        }
+        
+        /* Markers Section */
+        .marker-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .marker-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .marker-gold { background: var(--gold); }
+        .marker-green { background: #4ADE80; }
+        .marker-red { background: #EF4444; }
+        .marker-star { 
+            background: #EF4444;
+            position: relative;
+        }
+        .marker-star::after {
+            content: '★';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: white;
+        }
+        
+        .marker-zone {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(74, 222, 128, 0.8) 0%, rgba(74, 222, 128, 0.2) 70%, transparent 100%);
+        }
+        
+        /* Score Guide */
+        .score-section {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .score-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .score-scale {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .score-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        
+        .score-item.excellent { background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); }
+        .score-item.good { background: rgba(8, 145, 178, 0.1); border: 1px solid rgba(8, 145, 178, 0.3); }
+        .score-item.moderate { background: rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); }
+        .score-item.challenging { background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); }
+        
+        .score-range {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .score-item.excellent .score-range { color: #059669; }
+        .score-item.good .score-range { color: #0891B2; }
+        .score-item.moderate .score-range { color: #D97706; }
+        .score-item.challenging .score-range { color: #DC2626; }
+        
+        .score-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Planet Colors */
+        .sun-color { background: #FF8C00; }
+        .moon-color { background: #C0C0C0; }
+        .mercury-color { background: #4ECDC4; }
+        .venus-color { background: #FF69B4; }
+        .mars-color { background: #DC143C; }
+        .jupiter-color { background: #FFD700; }
+        .saturn-color { background: #708090; }
+        .uranus-color { background: #00BFFF; }
+        .neptune-color { background: #9370DB; }
+        .pluto-color { background: #8B008B; }
+        .rahu-color { background: #8B5CF6; }
+        .ketu-color { background: #CD853F; }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">Reference Guide</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="section-label">Quick Reference</div>
+            <h1 class="section-title">Map Legend</h1>
+            
+            <div class="legend-grid">
+                <!-- Planets -->
+                <div class="legend-section">
+                    <div class="legend-section-title">Planetary Lines</div>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="planet-color sun-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">☉ Sun</div>
+                                <div class="legend-meaning">Identity, Recognition, Vitality</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color moon-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">☽ Moon</div>
+                                <div class="legend-meaning">Emotions, Home, Comfort</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color mercury-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">☿ Mercury</div>
+                                <div class="legend-meaning">Communication, Business</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color venus-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">♀ Venus</div>
+                                <div class="legend-meaning">Love, Wealth, Beauty</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color mars-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">♂ Mars</div>
+                                <div class="legend-meaning">Energy, Action, Drive</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color jupiter-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">♃ Jupiter</div>
+                                <div class="legend-meaning">Growth, Luck, Expansion</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color saturn-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">♄ Saturn</div>
+                                <div class="legend-meaning">Discipline, Structure</div>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="planet-color rahu-color"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">☊ Rahu</div>
+                                <div class="legend-meaning">Ambition, Foreign, Destiny</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Line Types & Markers -->
+                <div class="legend-section">
+                    <div class="legend-section-title">Line Types</div>
+                    <div class="legend-items">
+                        <div class="line-type-item">
+                            <div class="line-sample line-solid"></div>
+                            <div class="line-code">AC</div>
+                            <div class="line-info">
+                                <div class="line-name">Ascendant</div>
+                                <div class="line-desc">Self, Identity, Approach</div>
+                            </div>
+                        </div>
+                        <div class="line-type-item">
+                            <div class="line-sample line-dashed"></div>
+                            <div class="line-code">DC</div>
+                            <div class="line-info">
+                                <div class="line-name">Descendant</div>
+                                <div class="line-desc">Relationships, Partners</div>
+                            </div>
+                        </div>
+                        <div class="line-type-item">
+                            <div class="line-sample line-dotted"></div>
+                            <div class="line-code">MC</div>
+                            <div class="line-info">
+                                <div class="line-name">Midheaven</div>
+                                <div class="line-desc">Career, Public Image</div>
+                            </div>
+                        </div>
+                        <div class="line-type-item">
+                            <div class="line-sample line-dotted"></div>
+                            <div class="line-code">IC</div>
+                            <div class="line-info">
+                                <div class="line-name">Imum Coeli</div>
+                                <div class="line-desc">Home, Foundation</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="legend-section-title" style="margin-top: 20px;">Map Markers</div>
+                    <div class="legend-items">
+                        <div class="marker-item">
+                            <div class="marker-dot marker-gold"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">Recommended City</div>
+                            </div>
+                        </div>
+                        <div class="marker-item">
+                            <div class="marker-dot marker-red"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">City to Avoid</div>
+                            </div>
+                        </div>
+                        <div class="marker-item">
+                            <div class="marker-dot marker-star"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">Your Birthplace</div>
+                            </div>
+                        </div>
+                        <div class="marker-item">
+                            <div class="marker-zone"></div>
+                            <div class="legend-text">
+                                <div class="legend-name">Power Zone</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Score Guide -->
+                <div class="score-section">
+                    <div class="score-section-title">Score Interpretation</div>
+                    <div class="score-scale">
+                        <div class="score-item excellent">
+                            <div class="score-range">85-100%</div>
+                            <div class="score-label">Excellent Match</div>
+                        </div>
+                        <div class="score-item good">
+                            <div class="score-range">70-84%</div>
+                            <div class="score-label">Good Match</div>
+                        </div>
+                        <div class="score-item moderate">
+                            <div class="score-range">50-69%</div>
+                            <div class="score-label">Moderate</div>
+                        </div>
+                        <div class="score-item challenging">
+                            <div class="score-range">Below 50%</div>
+                            <div class="score-label">Challenging</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>

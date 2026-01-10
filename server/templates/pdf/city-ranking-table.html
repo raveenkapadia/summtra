@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Rankings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+            --success: #059669;
+            --warning: #D97706;
+            --danger: #DC2626;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .goal-badge {
+            padding: 5px 14px;
+            background: var(--gold);
+            color: var(--deep-purple);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 12px;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* Content */
+        .content {
+            padding: 25px 40px;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 5px;
+        }
+        
+        .section-subtitle {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* Rankings Table */
+        .rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .rankings-table thead {
+            background: var(--deep-purple);
+        }
+        
+        .rankings-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .rankings-table th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+        
+        .rankings-table th:last-child {
+            border-radius: 0 6px 0 0;
+            text-align: center;
+        }
+        
+        .rankings-table tbody tr {
+            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .rankings-table tbody tr:nth-child(even) {
+            background: rgba(45, 27, 78, 0.02);
+        }
+        
+        .rankings-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .rankings-table td {
+            padding: 12px 15px;
+            font-size: 11px;
+            vertical-align: middle;
+        }
+        
+        .rank-cell {
+            width: 50px;
+        }
+        
+        .rank-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .rank-badge.top3 {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--deep-purple);
+        }
+        
+        .rank-badge.regular {
+            background: var(--cream);
+            color: var(--text-dark);
+            border: 1px solid rgba(45, 27, 78, 0.15);
+        }
+        
+        .city-cell {
+            font-weight: 500;
+        }
+        
+        .city-name {
+            color: var(--deep-purple);
+            font-size: 12px;
+        }
+        
+        .city-country {
+            font-size: 10px;
+            color: #888;
+        }
+        
+        .lines-cell {
+            max-width: 180px;
+        }
+        
+        .line-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .line-tag {
+            padding: 2px 6px;
+            background: rgba(45, 27, 78, 0.08);
+            border-radius: 3px;
+            font-size: 9px;
+            color: var(--royal-purple);
+        }
+        
+        .direction-cell {
+            font-size: 10px;
+        }
+        
+        .direction-good {
+            color: var(--success);
+        }
+        
+        .direction-neutral {
+            color: var(--warning);
+        }
+        
+        .score-cell {
+            text-align: center;
+            width: 80px;
+        }
+        
+        .score-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .score-excellent {
+            color: var(--success);
+        }
+        
+        .score-good {
+            color: #0891B2;
+        }
+        
+        .score-moderate {
+            color: var(--warning);
+        }
+        
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--deep-purple);
+        }
+        
+        .summary-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .summary-divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(45, 27, 78, 0.15);
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">City Rankings</div>
+            </div>
+            <div class="header-right">
+                <div class="goal-badge">{{GOAL}} • {{SCOPE}}</div>
+                <div class="page-number">Page {{PAGE_NUM}}</div>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <h2 class="section-title">{{TABLE_TITLE}}</h2>
+            <p class="section-subtitle">Cities ranked by overall compatibility score for {{GOAL}}</p>
+            
+            <!-- Rankings Table -->
+            <table class="rankings-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>City</th>
+                        <th>Planetary Lines</th>
+                        <th>Direction</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge top3">1</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY1_NAME}}</div>
+                            <div class="city-country">{{CITY1_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY1_LINE1}}</span>
+                                <span class="line-tag">{{CITY1_LINE2}}</span>
+                                <span class="line-tag">{{CITY1_LINE3}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-good">{{CITY1_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-excellent">{{CITY1_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge top3">2</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY2_NAME}}</div>
+                            <div class="city-country">{{CITY2_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY2_LINE1}}</span>
+                                <span class="line-tag">{{CITY2_LINE2}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-good">{{CITY2_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-excellent">{{CITY2_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge top3">3</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY3_NAME}}</div>
+                            <div class="city-country">{{CITY3_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY3_LINE1}}</span>
+                                <span class="line-tag">{{CITY3_LINE2}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-good">{{CITY3_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-excellent">{{CITY3_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">4</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY4_NAME}}</div>
+                            <div class="city-country">{{CITY4_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY4_LINE1}}</span>
+                                <span class="line-tag">{{CITY4_LINE2}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-good">{{CITY4_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-good">{{CITY4_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">5</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY5_NAME}}</div>
+                            <div class="city-country">{{CITY5_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY5_LINE1}}</span>
+                                <span class="line-tag">{{CITY5_LINE2}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-neutral">{{CITY5_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-good">{{CITY5_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">6</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY6_NAME}}</div>
+                            <div class="city-country">{{CITY6_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY6_LINE1}}</span>
+                                <span class="line-tag">{{CITY6_LINE2}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-good">{{CITY6_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-good">{{CITY6_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">7</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY7_NAME}}</div>
+                            <div class="city-country">{{CITY7_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY7_LINE1}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-neutral">{{CITY7_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-moderate">{{CITY7_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">8</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY8_NAME}}</div>
+                            <div class="city-country">{{CITY8_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY8_LINE1}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-neutral">{{CITY8_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-moderate">{{CITY8_SCORE}}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="rank-cell"><span class="rank-badge regular">9</span></td>
+                        <td class="city-cell">
+                            <div class="city-name">{{CITY9_NAME}}</div>
+                            <div class="city-country">{{CITY9_COUNTRY}}</div>
+                        </td>
+                        <td class="lines-cell">
+                            <div class="line-tags">
+                                <span class="line-tag">{{CITY9_LINE1}}</span>
+                            </div>
+                        </td>
+                        <td class="direction-cell direction-neutral">{{CITY9_DIRECTION}}</td>
+                        <td class="score-cell"><span class="score-value score-moderate">{{CITY9_SCORE}}%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Summary -->
+            <div class="summary-box">
+                <div class="summary-item">
+                    <div class="summary-value">{{TOTAL_CITIES}}</div>
+                    <div class="summary-label">Cities Analyzed</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{AVG_SCORE}}%</div>
+                    <div class="summary-label">Average Score</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{TOP_SCORE}}%</div>
+                    <div class="summary-label">Highest Score</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-value">{{POWER_ZONES}}</div>
+                    <div class="summary-label">Power Zones</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • {{GOAL}} Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>

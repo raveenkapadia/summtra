@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --midnight-blue: #1A1A4E;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+            --success: #059669;
+            --warning: #D97706;
+            --danger: #DC2626;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .header-right {
+            text-align: right;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* City Hero Section */
+        .city-hero {
+            position: relative;
+            height: 160px;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, var(--deep-purple) 100%);
+            overflow: hidden;
+        }
+        
+        .city-hero-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 20% 50%, var(--gold) 1px, transparent 1px),
+                radial-gradient(circle at 80% 30%, var(--gold) 1px, transparent 1px),
+                radial-gradient(circle at 60% 70%, var(--gold) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+        
+        .city-hero-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .city-info {
+            flex: 1;
+        }
+        
+        .city-rank {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .city-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            font-weight: 600;
+            color: var(--soft-white);
+            margin-bottom: 5px;
+        }
+        
+        .city-country {
+            font-size: 14px;
+            color: var(--gold-light);
+            letter-spacing: 1px;
+        }
+        
+        .score-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .score-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--deep-purple);
+            line-height: 1;
+        }
+        
+        .score-label {
+            font-size: 9px;
+            color: var(--deep-purple);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px;
+        }
+        
+        /* Content Area */
+        .content-area {
+            padding: 25px 40px;
+        }
+        
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        
+        /* Info Card */
+        .info-card {
+            background: var(--soft-white);
+            border-radius: 6px;
+            padding: 20px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--royal-purple) 0%, var(--deep-purple) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--gold);
+        }
+        
+        .card-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        /* Planetary Lines List */
+        .lines-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .line-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--cream);
+            border-radius: 4px;
+        }
+        
+        .line-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .line-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .line-meaning {
+            font-size: 10px;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        /* Status Indicators */
+        .status-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+        
+        .status-success { background: var(--success); }
+        .status-warning { background: var(--warning); }
+        .status-neutral { background: #9CA3AF; }
+        
+        /* Verdict Section */
+        .verdict-section {
+            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .verdict-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .verdict-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .verdict-badge {
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--deep-purple);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 20px;
+        }
+        
+        .verdict-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+        
+        /* Timing Section */
+        .timing-section {
+            background: var(--soft-white);
+            border-radius: 6px;
+            padding: 20px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .timing-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .timing-icon {
+            font-size: 20px;
+        }
+        
+        .timing-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .timing-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .timing-box {
+            padding: 12px;
+            background: var(--cream);
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .timing-label {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .timing-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        
+        .timing-note {
+            grid-column: span 2;
+            padding: 12px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        
+        .timing-note strong {
+            color: var(--royal-purple);
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        /* Planet Colors */
+        .jupiter-dot { background: #FFD700; }
+        .venus-dot { background: #FF69B4; }
+        .mercury-dot { background: #4ECDC4; }
+        .saturn-dot { background: #4A5568; }
+        .sun-dot { background: #FF6B35; }
+        .moon-dot { background: #C0C0C0; }
+        .mars-dot { background: #DC143C; }
+        .rahu-dot { background: #8B5CF6; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">City Analysis • {{GOAL}}</div>
+            </div>
+            <div class="header-right">
+                <div class="page-number">Page {{PAGE_NUM}}</div>
+            </div>
+        </div>
+        
+        <!-- City Hero -->
+        <div class="city-hero">
+            <div class="city-hero-pattern"></div>
+            <div class="city-hero-content">
+                <div class="city-info">
+                    <div class="city-rank">#{{RANK}} Recommended City</div>
+                    <h1 class="city-name">{{CITY_NAME}}</h1>
+                    <div class="city-country">{{COUNTRY}}</div>
+                </div>
+                <div class="score-circle">
+                    <div class="score-value">{{SCORE}}%</div>
+                    <div class="score-label">Match Score</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content-area">
+            <!-- Two Columns -->
+            <div class="two-columns">
+                <!-- Planetary Lines Card -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <div class="card-icon">☍</div>
+                        <div class="card-title">Planetary Lines Present</div>
+                    </div>
+                    <div class="lines-list">
+                        <div class="line-item">
+                            <div class="line-dot jupiter-dot"></div>
+                            <span class="line-name">Jupiter-MC</span>
+                            <span class="line-meaning">Career Growth</span>
+                        </div>
+                        <div class="line-item">
+                            <div class="line-dot mercury-dot"></div>
+                            <span class="line-name">Mercury-AC</span>
+                            <span class="line-meaning">Communication</span>
+                        </div>
+                        <div class="line-item">
+                            <div class="line-dot saturn-dot"></div>
+                            <span class="line-name">Saturn-DC</span>
+                            <span class="line-meaning">Discipline</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Compatibility Card -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <div class="card-icon">◈</div>
+                        <div class="card-title">Compatibility Analysis</div>
+                    </div>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">Direction from Birthplace</span>
+                            <span class="status-value">
+                                <span class="status-icon status-success">✓</span>
+                                {{DIRECTION}}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Vastu Compatibility</span>
+                            <span class="status-value">
+                                <span class="status-icon status-success">✓</span>
+                                Favorable
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Nakshatra Direction</span>
+                            <span class="status-value">
+                                <span class="status-icon status-success">✓</span>
+                                Aligned
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Dasha Timing</span>
+                            <span class="status-value">
+                                <span class="status-icon status-warning">!</span>
+                                Future Favorable
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Verdict Section -->
+            <div class="verdict-section">
+                <div class="verdict-header">
+                    <div class="verdict-title">✦ Our Verdict</div>
+                    <div class="verdict-badge">⭐⭐⭐ Highly Recommended</div>
+                </div>
+                <p class="verdict-text">
+                    {{CITY_NAME}} emerges as an exceptional choice for your {{GOAL}} goals. The presence of <strong>Jupiter-MC</strong> line here indicates significant potential for career expansion, financial growth, and professional recognition. Combined with the <strong>Mercury-AC</strong> influence, this location strongly supports business communication, networking, and intellectual pursuits.
+                    <br><br>
+                    The city's eastward direction from your birthplace aligns favorably with your Nakshatra (Vishakha), and Vastu principles support this direction for your Scorpio Lagna. All systems indicate positive energy flow for your intended purpose.
+                </p>
+            </div>
+            
+            <!-- Timing Section -->
+            <div class="timing-section">
+                <div class="timing-header">
+                    <span class="timing-icon">⏰</span>
+                    <div class="timing-title">Optimal Timing for Relocation</div>
+                </div>
+                <div class="timing-content">
+                    <div class="timing-box">
+                        <div class="timing-label">Current Dasha</div>
+                        <div class="timing-value">Mercury-Rahu</div>
+                    </div>
+                    <div class="timing-box">
+                        <div class="timing-label">Current Period Ends</div>
+                        <div class="timing-value">June 2026</div>
+                    </div>
+                    <div class="timing-box">
+                        <div class="timing-label">Best Period to Move</div>
+                        <div class="timing-value">Jun 2026 - Sep 2028</div>
+                    </div>
+                    <div class="timing-box">
+                        <div class="timing-label">Upcoming Dasha</div>
+                        <div class="timing-value">Mercury-Jupiter ⭐</div>
+                    </div>
+                    <div class="timing-note">
+                        <strong>💡 Timing Insight:</strong> While you can move now during Mercury-Rahu period, this city's Jupiter-MC line will become significantly more powerful after June 2026 when your Mercury-Jupiter Antardasha begins. Consider planning your move for this optimal window.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>

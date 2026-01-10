@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        /* Content */
+        .content {
+            padding: 30px 40px;
+        }
+        
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--royal-purple);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 25px;
+        }
+        
+        /* Glossary Grid */
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .glossary-item {
+            background: var(--soft-white);
+            border-radius: 6px;
+            padding: 15px;
+            border: 1px solid rgba(45, 27, 78, 0.08);
+            border-left: 3px solid var(--gold);
+        }
+        
+        .glossary-term {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 5px;
+        }
+        
+        .glossary-term .hindi {
+            font-size: 12px;
+            color: var(--royal-purple);
+            font-weight: 400;
+            margin-left: 8px;
+        }
+        
+        .glossary-definition {
+            font-size: 11px;
+            line-height: 1.5;
+            color: #555;
+        }
+        
+        /* Category Headers */
+        .category-header {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            border-radius: 6px;
+            padding: 12px 20px;
+            margin-top: 10px;
+        }
+        
+        .category-header:first-child {
+            margin-top: 0;
+        }
+        
+        .category-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">Reference</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="section-label">Terms & Definitions</div>
+            <h1 class="section-title">Glossary</h1>
+            
+            <div class="glossary-grid">
+                <!-- Astrocartography Terms -->
+                <div class="category-header">
+                    <div class="category-title">Astrocartography Terms</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Astrocartography</div>
+                    <div class="glossary-definition">A technique that maps your birth chart onto the Earth, showing where planetary energies are strongest for you.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Planetary Line</div>
+                    <div class="glossary-definition">A line on the map where a specific planet was at a particular angle (rising, setting, culminating) at your birth moment.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Ascendant (AC)</div>
+                    <div class="glossary-definition">The eastern horizon point. AC lines show where a planet affects your personality, physical self, and first impressions.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Descendant (DC)</div>
+                    <div class="glossary-definition">The western horizon point. DC lines influence relationships, partnerships, and how you connect with others.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Midheaven (MC)</div>
+                    <div class="glossary-definition">The highest point in the sky. MC lines affect career, public reputation, and life direction.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Imum Coeli (IC)</div>
+                    <div class="glossary-definition">The lowest point in the sky. IC lines influence home, family, roots, and emotional foundation.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Power Zone</div>
+                    <div class="glossary-definition">An area where two or more planetary lines cross or run close together, amplifying their combined energies.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Paran Line</div>
+                    <div class="glossary-definition">A horizontal latitude line where two planets share the same angular relationship to the horizon.</div>
+                </div>
+                
+                <!-- Vedic Terms -->
+                <div class="category-header">
+                    <div class="category-title">Vedic Astrology Terms</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Rashi <span class="hindi">(राशि)</span></div>
+                    <div class="glossary-definition">Your Moon sign in Vedic astrology, representing your emotional nature and inner self.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Nakshatra <span class="hindi">(नक्षत्र)</span></div>
+                    <div class="glossary-definition">One of 27 lunar mansions. Your birth star reveals deeper personality traits and favorable directions.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Lagna <span class="hindi">(लग्न)</span></div>
+                    <div class="glossary-definition">Your Vedic ascendant or rising sign, determining your physical constitution and life approach.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Dasha <span class="hindi">(दशा)</span></div>
+                    <div class="glossary-definition">Planetary period system showing which planet's energy dominates during specific life phases.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Mahadasha</div>
+                    <div class="glossary-definition">Major planetary period lasting several years, setting the overall theme for that life phase.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Antardasha</div>
+                    <div class="glossary-definition">Sub-period within a Mahadasha, refining the planetary influence for shorter durations.</div>
+                </div>
+                
+                <!-- Vastu Terms -->
+                <div class="category-header">
+                    <div class="category-title">Vastu & Direction Terms</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Vastu <span class="hindi">(वास्तु)</span></div>
+                    <div class="glossary-definition">Ancient Indian science of directional harmony, indicating favorable directions based on your Lagna.</div>
+                </div>
+                
+                <div class="glossary-item">
+                    <div class="glossary-term">Favorable Direction</div>
+                    <div class="glossary-definition">A compass direction that supports your goals based on Vastu and Nakshatra calculations.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>
