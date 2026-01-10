@@ -223,6 +223,63 @@ export function generateVedicProfile(birthData) {
   };
 }
 
+function generatePlanetaryLinesHTML(lines) {
+  if (!lines || lines.length === 0) {
+    return '<p>No planetary lines data available.</p>';
+  }
+  
+  const grouped = {};
+  lines.forEach(line => {
+    const planet = line.planet || 'Unknown';
+    if (!grouped[planet]) grouped[planet] = [];
+    grouped[planet].push(line.line_type || line.type || 'AC');
+  });
+  
+  return Object.entries(grouped).map(([planet, types]) => {
+    const planetData = PLANET_DATA.find(p => p.name === planet) || { symbol: '?', color: '#888' };
+    return `
+      <div class="planet-line-item" style="border-left: 3px solid ${planetData.color}; padding-left: 10px; margin: 5px 0;">
+        <span style="color: ${planetData.color}">${planetData.symbol}</span>
+        <strong>${planet}</strong>: ${[...new Set(types)].join(', ')}
+      </div>
+    `;
+  }).join('');
+}
+
+function generatePowerZonesHTML(zones) {
+  if (!zones || zones.length === 0) {
+    return '<p>No power zones identified.</p>';
+  }
+  
+  return zones.slice(0, 10).map(zone => {
+    const color = zone.is_challenging ? '#DC143C' : '#4ADE80';
+    const label = zone.is_challenging ? 'Challenging' : 'Favorable';
+    return `
+      <div class="power-zone-item" style="border-left: 3px solid ${color}; padding-left: 10px; margin: 5px 0;">
+        <strong>${label}</strong> at ${zone.latitude?.toFixed(2)}°, ${zone.longitude?.toFixed(2)}°
+        ${zone.category ? `<span class="zone-category">(${zone.category})</span>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function generateTopCitiesHTML(cities) {
+  if (!cities || cities.length === 0) {
+    return '<p>No city recommendations available.</p>';
+  }
+  
+  return cities.slice(0, 10).map((city, index) => {
+    const scoreClass = city.score >= 85 ? 'excellent' : city.score >= 75 ? 'good' : city.score >= 65 ? 'moderate' : 'low';
+    return `
+      <div class="top-city-item ${scoreClass}" style="margin: 5px 0; padding: 5px;">
+        <span class="rank">#${index + 1}</span>
+        <strong>${city.name}</strong>, ${city.country || ''}
+        <span class="score">${city.score}/100</span>
+      </div>
+    `;
+  }).join('');
+}
+
 export function prepareReportData(birthData, astroData, options = {}) {
   const now = new Date();
   const goals = options.goals || [options.goal || 'Complete'];
@@ -271,9 +328,12 @@ export function prepareReportData(birthData, astroData, options = {}) {
     ANTARDASHA: '',
     DASHA_TIMELINE: generateDashaTimeline(birthData.antardashaTimeline),
     
-    PLANETARY_LINES: JSON.stringify(astroData?.planetaryLines || []),
-    POWER_ZONES: JSON.stringify(astroData?.powerZones || []),
-    TOP_CITIES: JSON.stringify(astroData?.topCities || []),
+    PLANETARY_LINES: generatePlanetaryLinesHTML(astroData?.planetaryLines || []),
+    POWER_ZONES: generatePowerZonesHTML(astroData?.powerZones || []),
+    TOP_CITIES: generateTopCitiesHTML(astroData?.topCities || []),
+    PLANETARY_LINES_COUNT: (astroData?.planetaryLines || []).length,
+    POWER_ZONES_COUNT: (astroData?.powerZones || []).length,
+    TOP_CITIES_COUNT: (astroData?.topCities || []).length,
     
     PAGE_NUM: '{{PAGE_NUM}}',
     TOTAL_PAGES: '{{TOTAL_PAGES}}'

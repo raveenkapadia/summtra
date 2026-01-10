@@ -12,7 +12,8 @@ import {
   generateAvoidCityCard,
   PLANET_DATA
 } from './templateProcessor.js';
-import { MapGenerator } from './mapGenerator.js';
+
+const AstroMapRenderer = require('../map-renderer.js');
 
 const GOALS_ORDER = ['Career', 'Wealth', 'Love', 'Education', 'Settlement'];
 
@@ -37,7 +38,7 @@ export class PDFAssembler {
     
     this.pages = [];
     this.pageNumber = 0;
-    this.mapGenerator = new MapGenerator();
+    this.mapRenderer = new AstroMapRenderer();
   }
   
   async assemble() {
@@ -97,19 +98,27 @@ export class PDFAssembler {
   async addMapPages() {
     const template = loadTemplate('map-page.html');
     
-    const worldMap = await this.mapGenerator.generateMap({
-      viewType: 'world',
-      cities: this.astroData?.topCities || [],
-      lines: this.astroData?.planetaryLines || [],
-      goal: this.goal === 'Complete' ? null : this.goal,
-      birthLocation: {
-        latitude: parseFloat(this.birthData.latitude) || 0,
-        longitude: parseFloat(this.birthData.longitude) || 0
-      }
-    });
+    const lines = this.astroData?.planetaryLines || [];
+    const cities = this.astroData?.topCities || [];
+    const birthLocation = {
+      latitude: parseFloat(this.birthData.latitude) || 0,
+      longitude: parseFloat(this.birthData.longitude) || 0
+    };
     
-    const worldData = prepareMapPageData(worldMap, 'world', 'World Overview', this.baseData);
-    this.pages.push({ html: processTemplate(template, worldData), type: 'map' });
+    try {
+      const worldBuffer = await this.mapRenderer.renderMap({
+        viewType: 'world',
+        lines,
+        cities,
+        birthLocation,
+        goal: this.goal === 'Complete' ? null : this.goal
+      });
+      const worldMap = `data:image/png;base64,${worldBuffer.toString('base64')}`;
+      const worldData = prepareMapPageData(worldMap, 'world', 'World Overview', this.baseData);
+      this.pages.push({ html: processTemplate(template, worldData), type: 'map' });
+    } catch (err) {
+      console.warn(`   ⚠️ Skipping world map: ${err.message}`);
+    }
     
     let regionalViews = [];
     if (this.scope === 'India') {
@@ -122,17 +131,14 @@ export class PDFAssembler {
     
     for (const view of regionalViews) {
       try {
-        const mapImage = await this.mapGenerator.generateMap({
+        const mapBuffer = await this.mapRenderer.renderMap({
           viewType: view,
-          cities: this.astroData?.topCities || [],
-          lines: this.astroData?.planetaryLines || [],
-          goal: this.goal === 'Complete' ? null : this.goal,
-          birthLocation: {
-            latitude: parseFloat(this.birthData.latitude) || 0,
-            longitude: parseFloat(this.birthData.longitude) || 0
-          }
+          lines,
+          cities,
+          birthLocation,
+          goal: this.goal === 'Complete' ? null : this.goal
         });
-        
+        const mapImage = `data:image/png;base64,${mapBuffer.toString('base64')}`;
         const viewLabel = this.getViewLabel(view);
         const mapData = prepareMapPageData(mapImage, view, viewLabel, this.baseData);
         this.pages.push({ html: processTemplate(template, mapData), type: 'map' });
@@ -267,26 +273,78 @@ export class PDFAssembler {
       filteredCities = allCities.filter(c => c.country !== 'India');
     }
     
-    const sorted = [...filteredCities].sort((a, b) => (b.score || 0) - (a.score || 0));
+    const sorted = [...filteredCities].sort((a, b) => {
+      const scoreA = a.goalScores?.[goal] || a.score || 0;
+      const scoreB = b.goalScores?.[goal] || b.score || 0;
+      return scoreB - scoreA;
+    });
+    
+    const bestCount = this.scope === 'Both' ? 18 : 12;
+    const avoidCount = this.scope === 'Both' ? 10 : 6;
     
     if (type === 'best') {
-      return sorted.slice(0, this.scope === 'Both' ? 18 : 9);
+      return sorted.slice(0, bestCount);
     } else {
-      return sorted.slice(-5).reverse();
+      return sorted.slice(-avoidCount).reverse();
     }
   }
   
   async addBestCityPages(goal) {
     const template = loadTemplate('city-page.html');
+    const mapTemplate = loadTemplate('map-page.html');
     const cities = this.getCitiesForGoal(goal, 'best');
+    
+    const lines = this.astroData?.planetaryLines || [];
+    const birthLocation = {
+      latitude: parseFloat(this.birthData.latitude) || 0,
+      longitude: parseFloat(this.birthData.longitude) || 0
+    };
     
     for (let i = 0; i < cities.length; i++) {
       const city = cities[i];
       const cityData = prepareCityPageData(city, i + 1, goal, this.baseData);
       this.pages.push({ html: processTemplate(template, cityData), type: 'city-best' });
+      
+      if (i < 6) {
+        try {
+          const cityRegion = this.getCityRegionView(city);
+          const mapBuffer = await this.mapRenderer.renderMap({
+            viewType: cityRegion,
+            lines,
+            cities: [{ ...city, showLabel: true, isHighlighted: true }],
+            birthLocation,
+            goal,
+            highlightCity: city.name
+          });
+          const mapImage = `data:image/png;base64,${mapBuffer.toString('base64')}`;
+          const mapData = prepareMapPageData(mapImage, cityRegion, `${city.name} Region`, this.baseData);
+          this.pages.push({ html: processTemplate(mapTemplate, mapData), type: 'city-map' });
+        } catch (err) {
+          console.warn(`   ⚠️ Skipping city map for ${city.name}: ${err.message}`);
+        }
+      }
     }
     
-    console.log(`   🌟 Added ${cities.length} best city pages for ${goal}`);
+    console.log(`   🌟 Added ${cities.length} best city pages for ${goal} (with ${Math.min(6, cities.length)} maps)`);
+  }
+  
+  getCityRegionView(city) {
+    const regionMap = {
+      'North India': 'india_north',
+      'South India': 'india_south',
+      'West India': 'india_west',
+      'East India': 'india_east',
+      'Central India': 'india_central',
+      'Europe': 'europe',
+      'Middle East': 'middle_east',
+      'Southeast Asia': 'southeast_asia',
+      'East Asia': 'east_asia',
+      'North America': 'north_america',
+      'South America': 'south_america',
+      'Australia & Oceania': 'australia',
+      'Africa': 'africa'
+    };
+    return regionMap[city.region] || (city.country === 'India' ? 'india' : 'world');
   }
   
   async addAvoidCityPages(goal) {
@@ -352,7 +410,8 @@ export class PDFAssembler {
     
     const browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
     });
     
     try {

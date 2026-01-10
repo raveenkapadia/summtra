@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.chromium
     pkgs.util-linux
     pkgs.libuuid
     pkgs.pkg-config
