@@ -15,6 +15,8 @@ import {
 
 const AstroMapRenderer = require('../map-renderer.js');
 const claudeService = require('./claudeService.js');
+const astrologyApi = require('./astrologyApi.js');
+const { INDIAN_CITIES, INTERNATIONAL_CITIES } = require('./geocodingService.js');
 
 const GOALS_ORDER = ['Career', 'Wealth', 'Love', 'Education', 'Settlement'];
 
@@ -467,8 +469,38 @@ export class PDFAssembler {
   }
 }
 
+function convertBirthDataForAPI(birthData) {
+  const [day, month, year] = birthData.birthDate.split('/').map(Number);
+  
+  let hour = 12, minute = 0;
+  const timeMatch = birthData.birthTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1]);
+    minute = parseInt(timeMatch[2]);
+    const period = timeMatch[3]?.toUpperCase();
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+  }
+  
+  return {
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    latitude: parseFloat(birthData.latitude),
+    longitude: parseFloat(birthData.longitude),
+    timezone: 'Asia/Kolkata'
+  };
+}
+
+const PLANET_COLORS = {
+  'Sun': '#FF8C00', 'Moon': '#C0C0C0', 'Mercury': '#4ECDC4', 'Venus': '#FF69B4',
+  'Mars': '#FF4444', 'Jupiter': '#FFD700', 'Saturn': '#8B7355', 'Uranus': '#00CED1',
+  'Neptune': '#9370DB', 'Pluto': '#8B0000', 'NorthNode': '#98FB98', 'SouthNode': '#DDA0DD',
+  'Chiron': '#FFA07A', 'Vertex': '#87CEEB', 'PartOfFortune': '#F0E68C'
+};
+
 export async function generateTestPDF(reportType, scope, goal, customBirthData = null, options = {}) {
   const useAI = options.useAI || false;
+  const useRealAPI = options.useRealAPI !== false;
   
   const defaultBirthData = {
     name: 'Arjun Sharma',
@@ -504,7 +536,53 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     longitude: customBirthData.longitude
   } : defaultBirthData;
   
-  let testCities = generateTestCities(scope);
+  let planetaryLines = [];
+  let scoredCities = [];
+  
+  if (useRealAPI && process.env.RAPIDAPI_KEY) {
+    console.log('   📡 Fetching REAL astrology data from API...');
+    try {
+      const apiBirthData = convertBirthDataForAPI(testBirthData);
+      
+      const linesResult = await astrologyApi.getAstrocartographyLines(apiBirthData);
+      if (linesResult.success && linesResult.data) {
+        const rawLines = linesResult.data.lines || linesResult.data || [];
+        planetaryLines = Array.isArray(rawLines) ? rawLines.map(line => ({
+          planet: line.planet || line.name,
+          line_type: line.line_type || line.type || line.angle || 'AC',
+          color: PLANET_COLORS[line.planet || line.name] || '#FFFFFF',
+          points: line.points || line.coordinates || []
+        })) : [];
+        console.log(`   ✅ Fetched ${planetaryLines.length} planetary lines from API`);
+      }
+      
+      const cities = scope === 'India' ? INDIAN_CITIES : 
+                     scope === 'International' ? INTERNATIONAL_CITIES : 
+                     [...INDIAN_CITIES, ...INTERNATIONAL_CITIES];
+      
+      const scoresResult = await astrologyApi.getScoresForAllCities(apiBirthData, cities);
+      if (scoresResult.success && scoresResult.data) {
+        scoredCities = astrologyApi.assignLinesToCities(scoresResult.data, linesResult.data);
+        console.log(`   ✅ Scored ${scoredCities.length} cities with real API data`);
+      }
+    } catch (error) {
+      console.error('   ⚠️ API fetch failed, using fallback data:', error.message);
+    }
+  }
+  
+  let testCities = scoredCities.length > 0 ? scoredCities.map(city => ({
+    name: city.name,
+    country: city.country || 'India',
+    region: getRegionForCity(city),
+    latitude: city.lat || city.latitude,
+    longitude: city.lng || city.longitude,
+    score: city.score || 70,
+    direction: getDirectionFromCoords(parseFloat(testBirthData.latitude), parseFloat(testBirthData.longitude), city.lat || city.latitude, city.lng || city.longitude),
+    nakshatraMatch: city.score >= 80,
+    verdict: city.score >= 85 ? 'Highly Favorable' : city.score >= 75 ? 'Favorable' : city.score >= 65 ? 'Moderate' : 'Challenging',
+    lines: (city.lines || []).map(l => typeof l === 'string' ? { planet: l.split('-')[0], line_type: l.split('-')[1] || 'AC' } : l),
+    avoidReasons: city.score < 60 ? ['Low compatibility score', 'Challenging planetary influences'] : undefined
+  })).sort((a, b) => b.score - a.score) : generateTestCities(scope);
   
   if (useAI && process.env.ANTHROPIC_API_KEY) {
     console.log('   🤖 Generating AI interpretations with Claude...');
@@ -517,7 +595,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
       
       const citiesWithLines = testCities.map(city => ({
         ...city,
-        lines: (city.lines || []).map(l => `${l.planet}-${l.line_type}`)
+        lines: (city.lines || []).map(l => typeof l === 'string' ? l : `${l.planet}-${l.line_type}`)
       }));
       
       testCities = await claudeService.generateCityInterpretations(citiesWithLines, userData);
@@ -528,7 +606,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
   }
   
   const testAstroData = {
-    planetaryLines: [
+    planetaryLines: planetaryLines.length > 0 ? planetaryLines : [
       { planet: 'Jupiter', line_type: 'MC', color: '#FFD700', points: [[72, 19], [75, 25], [78, 30]] },
       { planet: 'Venus', line_type: 'AC', color: '#FF69B4', points: [[70, 15], [75, 20], [80, 25]] },
       { planet: 'Sun', line_type: 'MC', color: '#FF8C00', points: [[68, 10], [72, 18], [76, 26]] },
@@ -536,8 +614,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
       { planet: 'Mercury', line_type: 'AC', color: '#4ECDC4', points: [[70, 8], [75, 16], [80, 24]] }
     ],
     powerZones: [
-      { latitude: 19.076, longitude: 72.877, strength: 0.9, is_challenging: false },
-      { latitude: 28.613, longitude: 77.209, strength: 0.8, is_challenging: false }
+      { latitude: parseFloat(testBirthData.latitude), longitude: parseFloat(testBirthData.longitude), strength: 0.9, is_challenging: false }
     ],
     topCities: testCities
   };
@@ -566,6 +643,42 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     pageCount: assembler.pages.length,
     url: `/test-pdfs/${filename}`
   };
+}
+
+function getRegionForCity(city) {
+  const lat = city.lat || city.latitude;
+  const lng = city.lng || city.longitude;
+  const country = city.country || '';
+  
+  if (country === 'India') {
+    if (lat > 25) return lng < 78 ? 'india_north' : 'india_east';
+    if (lat < 15) return 'india_south';
+    if (lng < 75) return 'india_west';
+    if (lng > 85) return 'india_east';
+    return 'india_central';
+  }
+  
+  if (lng >= -30 && lng <= 50 && lat >= 35 && lat <= 70) return 'europe';
+  if (lng >= 30 && lng <= 60 && lat >= 10 && lat <= 45) return 'middle_east';
+  if (lng >= 90 && lng <= 145 && lat >= -10 && lat <= 25) return 'southeast_asia';
+  if (lng >= 100 && lng <= 150 && lat >= 20 && lat <= 50) return 'east_asia';
+  if (lng >= 110 && lng <= 180 && lat >= -50 && lat <= -10) return 'australia';
+  if (lng >= -130 && lng <= -60 && lat >= 15 && lat <= 70) return 'north_america';
+  if (lng >= -80 && lng <= -35 && lat >= -55 && lat <= 15) return 'south_america';
+  if (lng >= -20 && lng <= 55 && lat >= -35 && lat <= 40) return 'africa';
+  
+  return 'world';
+}
+
+function getDirectionFromCoords(birthLat, birthLng, cityLat, cityLng) {
+  const latDiff = cityLat - birthLat;
+  const lngDiff = cityLng - birthLng;
+  
+  if (Math.abs(latDiff) > Math.abs(lngDiff)) {
+    return latDiff > 0 ? 'North' : 'South';
+  } else {
+    return lngDiff > 0 ? 'East' : 'West';
+  }
 }
 
 function generateTestCities(scope) {
