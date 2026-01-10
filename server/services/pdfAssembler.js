@@ -10,6 +10,10 @@ import {
   generateCityRows,
   generatePlanetCards,
   generateAvoidCityCard,
+  generateRankingTableData,
+  generateDividerPlanetData,
+  generateVedicTraitsData,
+  prepareAvoidCityData,
   PLANET_DATA
 } from './templateProcessor.js';
 
@@ -221,14 +225,24 @@ export class PDFAssembler {
   
   async addGoalDividerPage(goal) {
     const template = loadTemplate('goal-divider-page.html');
-    const goalData = {
+    
+    const cities = this.getCitiesForGoal(goal, 'best');
+    const avoidCities = this.getCitiesForGoal(goal, 'avoid');
+    
+    const baseWithCounts = {
       ...this.baseData,
-      SECTION_GOAL: goal,
-      GOAL: goal,
-      GOAL_ICON: this.getGoalIcon(goal),
-      GOAL_COLOR: this.getGoalColor(goal),
-      GOAL_DESCRIPTION: this.getGoalDescription(goal)
+      BEST_CITIES_COUNT: cities.length,
+      AVOID_CITIES_COUNT: avoidCities.length,
+      POWER_ZONES_COUNT: cities.filter(c => c.lines && c.lines.length > 0).length
     };
+    
+    const goalData = generateDividerPlanetData(goal, baseWithCounts);
+    goalData.SECTION_GOAL = goal;
+    goalData.GOAL = goal;
+    goalData.GOAL_ICON = this.getGoalIcon(goal);
+    goalData.GOAL_COLOR = this.getGoalColor(goal);
+    goalData.GOAL_DESCRIPTION = this.getGoalDescription(goal);
+    
     this.pages.push({ html: processTemplate(template, goalData), type: 'divider' });
   }
   
@@ -256,24 +270,22 @@ export class PDFAssembler {
   
   async addCityRankingPages(goal) {
     const template = loadTemplate('city-ranking-table.html');
-    const cities = this.getCitiesForGoal(goal, 'best');
+    const allBestCities = this.getCitiesForGoal(goal, 'best');
     
-    const citiesPerPage = 15;
-    const totalPages = Math.ceil(cities.length / citiesPerPage);
+    const citiesPerPage = 9;
+    const totalPages = Math.ceil(allBestCities.length / citiesPerPage);
     
     for (let i = 0; i < totalPages; i++) {
       const startIdx = i * citiesPerPage;
-      const pageCities = cities.slice(startIdx, startIdx + citiesPerPage);
+      const pageCities = allBestCities.slice(startIdx, startIdx + citiesPerPage);
       
-      const pageData = {
-        ...this.baseData,
-        GOAL: goal,
-        GOAL_ICON: this.getGoalIcon(goal),
-        CITY_ROWS: generateCityRows(pageCities, startIdx + 1),
-        RANKING_PAGE: i + 1,
-        RANKING_TOTAL_PAGES: totalPages,
-        TOTAL_CITIES: cities.length
-      };
+      const pageData = generateRankingTableData(pageCities, this.baseData, allBestCities.length);
+      pageData.GOAL = goal;
+      pageData.GOAL_ICON = this.getGoalIcon(goal);
+      pageData.SCOPE = this.scope;
+      pageData.CITY_ROWS = generateCityRows(pageCities, startIdx + 1);
+      pageData.RANKING_PAGE = i + 1;
+      pageData.RANKING_TOTAL_PAGES = totalPages;
       
       this.pages.push({ html: processTemplate(template, pageData), type: 'ranking' });
     }
@@ -367,37 +379,28 @@ export class PDFAssembler {
   
   async addAvoidCityPages(goal) {
     const template = loadTemplate('city-avoid-page.html');
-    const cities = this.getCitiesForGoal(goal, 'avoid');
+    const avoidCities = this.getCitiesForGoal(goal, 'avoid');
+    const bestCities = this.getCitiesForGoal(goal, 'best');
     
-    const citiesPerPage = 1;
-    const totalPages = Math.ceil(cities.length / citiesPerPage);
-    
-    for (let i = 0; i < totalPages; i++) {
-      const startIdx = i * citiesPerPage;
-      const pageCities = cities.slice(startIdx, startIdx + citiesPerPage);
+    for (let i = 0; i < avoidCities.length; i++) {
+      const city = avoidCities[i];
       
-      const avoidCards = pageCities.map((city, idx) => 
-        generateAvoidCityCard(city, startIdx + idx + 1)
-      ).join('');
-      
-      const pageData = {
-        ...this.baseData,
-        GOAL: goal,
-        GOAL_ICON: this.getGoalIcon(goal),
-        AVOID_CITY_CARDS: avoidCards,
-        AVOID_PAGE: i + 1,
-        AVOID_TOTAL_PAGES: totalPages
-      };
+      const pageData = prepareAvoidCityData(city, goal, bestCities, this.baseData);
+      pageData.GOAL_ICON = this.getGoalIcon(goal);
+      pageData.AVOID_CITY_CARDS = generateAvoidCityCard(city, i + 1);
+      pageData.AVOID_PAGE = i + 1;
+      pageData.AVOID_TOTAL_PAGES = avoidCities.length;
       
       this.pages.push({ html: processTemplate(template, pageData), type: 'city-avoid' });
     }
     
-    console.log(`   ⚠️ Added ${totalPages} avoid city pages for ${goal}`);
+    console.log(`   ⚠️ Added ${avoidCities.length} avoid city pages for ${goal}`);
   }
   
   async addVedicProfilePage() {
     const template = loadTemplate('vedic-profile-page.html');
-    const html = processTemplate(template, this.baseData);
+    const vedicData = generateVedicTraitsData(this.birthData, this.baseData);
+    const html = processTemplate(template, vedicData);
     this.pages.push({ html, type: 'vedic' });
   }
   

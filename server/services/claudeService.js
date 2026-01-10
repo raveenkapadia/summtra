@@ -76,11 +76,41 @@ const ZODIAC_SIGNS = [
 ];
 
 function getZodiacSign(birthDate) {
-  const date = new Date(birthDate);
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                       'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  let day, month, year;
+  
+  if (typeof birthDate === 'string') {
+    if (birthDate.includes('/')) {
+      const parts = birthDate.split('/');
+      if (parts[0].length === 4) {
+        [year, month, day] = parts.map(Number);
+      } else {
+        [day, month, year] = parts.map(Number);
+      }
+    } else if (birthDate.includes('-')) {
+      const parts = birthDate.split('-');
+      if (parts[0].length === 4) {
+        [year, month, day] = parts.map(Number);
+      } else {
+        [day, month, year] = parts.map(Number);
+      }
+    } else {
+      const date = new Date(birthDate);
+      if (!isNaN(date.getTime())) {
+        month = date.getMonth() + 1;
+        day = date.getDate();
+      }
+    }
+  } else if (birthDate instanceof Date) {
+    month = birthDate.getMonth() + 1;
+    day = birthDate.getDate();
+  }
+  
+  if (!month || !day || isNaN(month) || isNaN(day)) {
+    return { name: 'Unknown', symbol: '?', element: 'Unknown', monthName: 'Unknown' };
+  }
   
   for (const sign of ZODIAC_SIGNS) {
     const [startMonth, startDay] = sign.start;
@@ -88,13 +118,13 @@ function getZodiacSign(birthDate) {
     
     if (startMonth === 12 && endMonth === 1) {
       if ((month === 12 && day >= startDay) || (month === 1 && day <= endDay)) {
-        return { ...sign, monthName: monthNames[month - 1] };
+        return { ...sign, monthName: monthNames[month - 1] || 'Unknown' };
       }
     } else if ((month === startMonth && day >= startDay) || (month === endMonth && day <= endDay)) {
-      return { ...sign, monthName: monthNames[month - 1] };
+      return { ...sign, monthName: monthNames[month - 1] || 'Unknown' };
     }
   }
-  return { name: 'Unknown', symbol: '?', element: 'Unknown', monthName: monthNames[month - 1] };
+  return { name: 'Unknown', symbol: '?', element: 'Unknown', monthName: monthNames[month - 1] || 'Unknown' };
 }
 
 // ============================================

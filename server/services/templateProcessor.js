@@ -441,11 +441,265 @@ export function prepareMapPageData(mapImage, viewName, viewLabel, baseData) {
   };
 }
 
+export function generateRankingTableData(cities, baseData, totalCitiesCount = null) {
+  const data = { ...baseData };
+  
+  const directions = ['North', 'South', 'East', 'West', 'Northeast', 'Northwest', 'Southeast', 'Southwest'];
+  
+  for (let i = 0; i < 15; i++) {
+    const num = i + 1;
+    const city = cities[i] || {};
+    
+    data[`CITY${num}_NAME`] = city.name || '';
+    data[`CITY${num}_COUNTRY`] = city.country || '';
+    data[`CITY${num}_SCORE`] = city.score || '';
+    data[`CITY${num}_DIRECTION`] = city.direction || directions[i % directions.length];
+    
+    const lines = city.lines || [];
+    const formattedLines = lines.map(l => {
+      if (typeof l === 'string') {
+        const [planet, type] = l.split('-');
+        return formatPlanetLine(planet, type);
+      } else if (l && l.planet) {
+        return formatPlanetLine(l.planet, l.line_type || l.type);
+      }
+      return '';
+    });
+    
+    data[`CITY${num}_LINE1`] = formattedLines[0] || '';
+    data[`CITY${num}_LINE2`] = formattedLines[1] || '';
+    data[`CITY${num}_LINE3`] = formattedLines[2] || '';
+  }
+  
+  const allCitiesCount = totalCitiesCount || cities.length;
+  const scores = cities.map(c => c.score || 0);
+  data.TOTAL_CITIES = allCitiesCount;
+  data.AVG_SCORE = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+  data.TOP_SCORE = scores.length > 0 ? Math.max(...scores) : 0;
+  data.POWER_ZONES = cities.filter(c => c.lines && c.lines.length > 0).length;
+  data.TABLE_TITLE = `Top ${allCitiesCount} Cities`;
+  
+  return data;
+}
+
+function formatPlanetLine(planet, type) {
+  if (!planet) return '';
+  const planetObj = PLANET_DATA.find(p => p.name === planet);
+  const symbol = planetObj ? planetObj.symbol : '';
+  const lineLabel = LINE_TYPES.find(l => l.type === type);
+  const lineName = lineLabel ? lineLabel.name : type || '';
+  return `${symbol} ${planet} ${lineName}`.trim();
+}
+
+const GOAL_KEY_PLANETS = {
+  Career: ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+  Wealth: ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+  Love: ['Venus', 'Moon', 'Mars', 'Jupiter'],
+  Education: ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+  Settlement: ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+  Complete: ['Sun', 'Moon', 'Jupiter', 'Venus']
+};
+
+export function generateDividerPlanetData(goal, baseData) {
+  const data = { ...baseData };
+  const keyPlanets = GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
+  
+  for (let i = 0; i < 4; i++) {
+    const num = i + 1;
+    const planetName = keyPlanets[i];
+    const planet = PLANET_DATA.find(p => p.name === planetName) || { name: planetName, symbol: '?', color: '#888' };
+    
+    data[`PLANET${num}_NAME`] = planet.name;
+    data[`PLANET${num}_SYMBOL`] = planet.symbol;
+    data[`PLANET${num}_COLOR`] = planet.color;
+  }
+  
+  const bestCities = baseData.BEST_CITIES_COUNT || 12;
+  const avoidCities = baseData.AVOID_CITIES_COUNT || 5;
+  const powerZones = baseData.POWER_ZONES_COUNT || 4;
+  
+  data.BEST_CITIES_COUNT = bestCities;
+  data.AVOID_CITIES_COUNT = avoidCities;
+  data.POWER_ZONES_COUNT = powerZones;
+  
+  return data;
+}
+
+const RASHI_TRAITS = {
+  Aries: ['Courageous', 'Dynamic', 'Independent', 'Pioneering', 'Competitive', 'Bold', 'Energetic', 'Assertive'],
+  Taurus: ['Patient', 'Reliable', 'Practical', 'Devoted', 'Stable', 'Sensual', 'Determined', 'Grounded'],
+  Gemini: ['Adaptable', 'Curious', 'Communicative', 'Witty', 'Versatile', 'Quick-minded', 'Social', 'Intellectual'],
+  Cancer: ['Intuitive', 'Protective', 'Nurturing', 'Emotional', 'Loyal', 'Caring', 'Empathetic', 'Traditional'],
+  Leo: ['Confident', 'Creative', 'Generous', 'Warmhearted', 'Charismatic', 'Ambitious', 'Dramatic', 'Loyal'],
+  Virgo: ['Analytical', 'Practical', 'Diligent', 'Modest', 'Reliable', 'Precise', 'Helpful', 'Organized'],
+  Libra: ['Diplomatic', 'Harmonious', 'Fair-minded', 'Social', 'Gracious', 'Romantic', 'Cooperative', 'Idealistic'],
+  Scorpio: ['Resourceful', 'Powerful', 'Passionate', 'Determined', 'Brave', 'Intense', 'Perceptive', 'Strategic'],
+  Sagittarius: ['Optimistic', 'Adventurous', 'Independent', 'Philosophical', 'Honest', 'Enthusiastic', 'Generous', 'Open-minded'],
+  Capricorn: ['Responsible', 'Disciplined', 'Ambitious', 'Patient', 'Practical', 'Cautious', 'Persistent', 'Traditional'],
+  Aquarius: ['Progressive', 'Original', 'Independent', 'Humanitarian', 'Inventive', 'Idealistic', 'Intellectual', 'Friendly'],
+  Pisces: ['Intuitive', 'Compassionate', 'Artistic', 'Gentle', 'Wise', 'Musical', 'Imaginative', 'Spiritual']
+};
+
+const NAKSHATRA_TRAITS = {
+  Ashwini: ['Swift', 'Healing', 'Energetic', 'Pioneering'],
+  Bharani: ['Creative', 'Patient', 'Nurturing', 'Transformative'],
+  Krittika: ['Sharp', 'Purifying', 'Determined', 'Authoritative'],
+  Rohini: ['Creative', 'Artistic', 'Charming', 'Grounded'],
+  Mrigashira: ['Curious', 'Seeking', 'Gentle', 'Restless'],
+  Ardra: ['Transformative', 'Intense', 'Intellectual', 'Passionate'],
+  Punarvasu: ['Renewing', 'Wise', 'Harmonious', 'Prosperous'],
+  Pushya: ['Nourishing', 'Protective', 'Auspicious', 'Spiritual'],
+  Ashlesha: ['Mystical', 'Perceptive', 'Hypnotic', 'Intense'],
+  Magha: ['Royal', 'Ancestral', 'Authoritative', 'Traditional'],
+  PurvaPhalguni: ['Creative', 'Romantic', 'Luxurious', 'Artistic'],
+  UttaraPhalguni: ['Generous', 'Helpful', 'Patronizing', 'Friendly'],
+  Hasta: ['Skillful', 'Crafty', 'Clever', 'Resourceful'],
+  Chitra: ['Brilliant', 'Artistic', 'Beautiful', 'Creative'],
+  Swati: ['Independent', 'Diplomatic', 'Flexible', 'Scattered'],
+  Vishakha: ['Determined', 'Goal-oriented', 'Ambitious', 'Transformative'],
+  Anuradha: ['Devoted', 'Friendly', 'Successful', 'Secretive'],
+  Jyeshtha: ['Protective', 'Elder', 'Authoritative', 'Resourceful'],
+  Moola: ['Investigative', 'Root-seeking', 'Destructive', 'Transformative'],
+  PurvaAshadha: ['Invincible', 'Proud', 'Independent', 'Philosophical'],
+  UttaraAshadha: ['Universal', 'Victorious', 'Penetrating', 'Righteous'],
+  Shravana: ['Listening', 'Learning', 'Connected', 'Traditional'],
+  Dhanishta: ['Wealthy', 'Musical', 'Ambitious', 'Versatile'],
+  Shatabhisha: ['Healing', 'Secretive', 'Independent', 'Mysterious'],
+  PurvaBhadrapada: ['Intense', 'Transformative', 'Fiery', 'Passionate'],
+  UttaraBhadrapada: ['Deep', 'Wise', 'Controlling', 'Spiritual'],
+  Revati: ['Nurturing', 'Protective', 'Wealthy', 'Safe']
+};
+
+export function generateVedicTraitsData(birthData, baseData) {
+  const data = { ...baseData };
+  
+  const rashi = birthData.rashi || 'Aries';
+  const nakshatra = birthData.nakshatra || 'Ashwini';
+  
+  const rashiTraits = RASHI_TRAITS[rashi] || RASHI_TRAITS.Aries;
+  const nakshatraName = nakshatra.replace(/\s/g, '');
+  const nakshatraTraits = NAKSHATRA_TRAITS[nakshatraName] || ['Intuitive', 'Spiritual', 'Wise', 'Balanced'];
+  
+  const allTraits = [...rashiTraits.slice(0, 4), ...nakshatraTraits.slice(0, 4)];
+  
+  for (let i = 0; i < 8; i++) {
+    data[`TRAIT_${i + 1}`] = allTraits[i] || 'Balanced';
+  }
+  
+  data.RASHI = birthData.rashi || '';
+  data.RASHI_HINDI = getRashiHindi(rashi);
+  data.RASHI_LORD = birthData.rashiLord || getRashiLord(rashi);
+  data.RASHI_MEANING = getRashiMeaning(rashi);
+  
+  data.NAKSHATRA = birthData.nakshatra || '';
+  data.NAKSHATRA_LORD = birthData.nakshatraLord || '';
+  data.NAKSHATRA_MEANING = getNakshatraMeaning(nakshatra);
+  data.NAKSHATRA_DEITY = birthData.nakshatraDeity || getNakshatraDeity(nakshatra);
+  data.NAKSHATRA_DIRECTION = birthData.nakshatraDirection || 'East';
+  data.NAKSHATRA_ELEMENT = birthData.nakshatraElement || 'Fire';
+  data.NAKSHATRA_QUALITY = birthData.nakshatraQuality || 'Movable';
+  data.NAKSHATRA_SYMBOL = birthData.nakshatraSymbol || '✦';
+  data.PADA = birthData.nakshatraPada || birthData.pada || '1';
+  
+  data.LAGNA = birthData.lagna || '';
+  data.LAGNA_HINDI = getRashiHindi(birthData.lagna || '');
+  data.LAGNA_LORD = birthData.lagnaLord || getRashiLord(birthData.lagna || '');
+  data.LAGNA_MEANING = getLagnaMeaning(birthData.lagna || '');
+  
+  return data;
+}
+
+function getRashiHindi(rashi) {
+  const hindiNames = {
+    Aries: 'मेष', Taurus: 'वृषभ', Gemini: 'मिथुन', Cancer: 'कर्क',
+    Leo: 'सिंह', Virgo: 'कन्या', Libra: 'तुला', Scorpio: 'वृश्चिक',
+    Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन'
+  };
+  return hindiNames[rashi] || '';
+}
+
+function getRashiLord(rashi) {
+  const lords = {
+    Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury', Cancer: 'Moon',
+    Leo: 'Sun', Virgo: 'Mercury', Libra: 'Venus', Scorpio: 'Mars',
+    Sagittarius: 'Jupiter', Capricorn: 'Saturn', Aquarius: 'Saturn', Pisces: 'Jupiter'
+  };
+  return lords[rashi] || '';
+}
+
+function getRashiMeaning(rashi) {
+  const meanings = {
+    Aries: 'Your Moon in Aries gives you a bold, pioneering spirit with strong instincts and emotional courage.',
+    Taurus: 'Your Moon in Taurus provides emotional stability, love of comfort, and a grounded approach to life.',
+    Gemini: 'Your Moon in Gemini makes you intellectually curious, communicative, and emotionally adaptable.',
+    Cancer: 'Your Moon in Cancer heightens intuition, nurturing abilities, and deep emotional connections.',
+    Leo: 'Your Moon in Leo brings warmth, creativity, and a generous heart seeking recognition.',
+    Virgo: 'Your Moon in Virgo gives analytical thinking, attention to detail, and desire to serve.',
+    Libra: 'Your Moon in Libra creates harmony-seeking nature, diplomatic skills, and relationship focus.',
+    Scorpio: 'Your Moon in Scorpio intensifies emotions, gives penetrating insight, and transformative power.',
+    Sagittarius: 'Your Moon in Sagittarius brings optimism, philosophical nature, and love of freedom.',
+    Capricorn: 'Your Moon in Capricorn provides discipline, ambition, and practical emotional expression.',
+    Aquarius: 'Your Moon in Aquarius makes you independent, humanitarian, and emotionally progressive.',
+    Pisces: 'Your Moon in Pisces heightens intuition, compassion, and artistic sensitivity.'
+  };
+  return meanings[rashi] || 'Your moon sign influences your emotional nature and inner self.';
+}
+
+function getNakshatraMeaning(nakshatra) {
+  return `Your birth star ${nakshatra} shapes your personality, destiny patterns, and the way you connect with different places on Earth.`;
+}
+
+function getNakshatraDeity(nakshatra) {
+  const deities = {
+    Ashwini: 'Ashwini Kumaras', Bharani: 'Yama', Krittika: 'Agni', Rohini: 'Brahma',
+    Mrigashira: 'Soma', Ardra: 'Rudra', Punarvasu: 'Aditi', Pushya: 'Brihaspati'
+  };
+  return deities[nakshatra] || 'Cosmic Forces';
+}
+
+function getLagnaMeaning(lagna) {
+  const meanings = {
+    Aries: 'Aries rising gives you a dynamic, assertive personality with natural leadership abilities.',
+    Taurus: 'Taurus rising provides a stable, reliable demeanor with appreciation for beauty and comfort.',
+    Gemini: 'Gemini rising makes you adaptable, curious, and skilled in communication.',
+    Cancer: 'Cancer rising gives a nurturing appearance and strong connection to home and family.',
+    Leo: 'Leo rising brings charisma, confidence, and a natural presence that draws attention.',
+    Virgo: 'Virgo rising provides a modest, helpful demeanor with attention to detail.',
+    Libra: 'Libra rising creates a charming, diplomatic appearance with focus on relationships.',
+    Scorpio: 'Scorpio rising gives an intense, magnetic presence with perceptive abilities.',
+    Sagittarius: 'Sagittarius rising brings an optimistic, adventurous demeanor.',
+    Capricorn: 'Capricorn rising provides a serious, responsible appearance with ambition.',
+    Aquarius: 'Aquarius rising makes you appear unique, progressive, and humanitarian.',
+    Pisces: 'Pisces rising gives a gentle, dreamy appearance with artistic sensitivity.'
+  };
+  return meanings[lagna] || 'Your ascendant shapes how others perceive you and your approach to life.';
+}
+
+export function prepareAvoidCityData(city, goal, bestCities, baseData) {
+  const data = { ...baseData };
+  
+  data.CITY_NAME = city.name || '';
+  data.COUNTRY = city.country || '';
+  data.SCORE = city.score || 0;
+  data.GOAL = goal;
+  
+  const directions = ['North', 'South', 'East', 'West', 'Northeast', 'Northwest'];
+  data.DIRECTION = city.direction || directions[Math.floor(Math.random() * directions.length)];
+  
+  const altCity = bestCities.find(c => c.country === city.country && c.name !== city.name) || bestCities[0] || {};
+  data.ALT_CITY = altCity.name || 'a top-ranked city from this report';
+  
+  return data;
+}
+
 export {
   GOAL_ICONS,
   GOAL_COLORS,
   GOAL_DESCRIPTIONS,
   PLANET_DATA,
   LINE_TYPES,
-  TEMPLATES_DIR
+  TEMPLATES_DIR,
+  GOAL_KEY_PLANETS,
+  RASHI_TRAITS,
+  NAKSHATRA_TRAITS
 };
