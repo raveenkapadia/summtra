@@ -186,7 +186,11 @@ async function scoreCitiesFromPowerZones(birthData, cities, region = 'global') {
     const topLines = [];
     
     for (const lineInfo of nearbyLines.slice(0, 5)) { // Consider top 5 lines
+      if (!lineInfo || !lineInfo.line) continue; // Skip invalid entries
+      
       const [planet, lineType] = lineInfo.line.split('-');
+      if (!planet) continue; // Skip if split failed
+      
       const planetScore = PLANET_SCORES[planet] || 5;
       const modifier = LINE_MODIFIERS[lineType] || 1.0;
       const distanceFactor = Math.max(0.2, 1 - (lineInfo.distance / 15)); // Closer = stronger
