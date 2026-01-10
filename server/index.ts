@@ -442,10 +442,29 @@ async function startServer() {
   app.get("/api/test-report-maps", async (req, res) => {
     try {
       const MapGenerator = require('./services/mapGenerator');
+      const { ALL_CITIES } = require('./services/geocodingService');
       const generator = new MapGenerator();
 
       const goal = (req.query.goal as string) || 'Career';
       const scope = (req.query.scope as string) || 'both';
+
+      // Generate sample goal scores for all 88 cities
+      const generateGoalScores = (seed: number) => ({
+        Career: 50 + Math.floor((seed * 7) % 50),
+        Wealth: 50 + Math.floor((seed * 11) % 50),
+        Love: 50 + Math.floor((seed * 13) % 50),
+        Education: 50 + Math.floor((seed * 17) % 50),
+        Settlement: 50 + Math.floor((seed * 19) % 50)
+      });
+
+      // Use real city data from geocodingService with added goal scores
+      const testCities = ALL_CITIES.map((city: any, index: number) => ({
+        ...city,
+        latitude: city.lat,
+        longitude: city.lng,
+        score: 50 + Math.floor((index * 7) % 50),
+        goalScores: generateGoalScores(index + 1)
+      }));
 
       const sampleAstroData = {
         lines: [
@@ -453,19 +472,18 @@ async function startServer() {
           { planet: 'Jupiter', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 60 + Math.sin(i * 0.3) * 15 })) },
           { planet: 'Venus', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 40 + Math.cos(i * 0.25) * 12 })) },
           { planet: 'Saturn', line_type: 'MC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 0 + Math.sin(i * 0.15) * 20 })) },
-          { planet: 'Mercury', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 90 + Math.sin(i * 0.22) * 8 })) }
+          { planet: 'Mercury', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 90 + Math.sin(i * 0.22) * 8 })) },
+          { planet: 'Mars', line_type: 'IC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -80 + Math.sin(i * 0.18) * 15 })) },
+          { planet: 'Moon', line_type: 'AC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: 120 + Math.cos(i * 0.2) * 12 })) },
+          { planet: 'Neptune', line_type: 'DC', points: Array.from({ length: 35 }, (_, i) => ({ latitude: -85 + i * 5, longitude: -40 + Math.sin(i * 0.25) * 10 })) }
         ],
-        topCities: [
-          { name: 'Mumbai', lat: 19.076, lng: 72.8777, latitude: 19.076, longitude: 72.8777, score: 92, country: 'India' },
-          { name: 'Delhi', lat: 28.6139, lng: 77.209, latitude: 28.6139, longitude: 77.209, score: 88, country: 'India' },
-          { name: 'Bangalore', lat: 12.9716, lng: 77.5946, latitude: 12.9716, longitude: 77.5946, score: 85, country: 'India' },
-          { name: 'Singapore', lat: 1.3521, lng: 103.8198, latitude: 1.3521, longitude: 103.8198, score: 90, country: 'Singapore' },
-          { name: 'Dubai', lat: 25.2048, lng: 55.2708, latitude: 25.2048, longitude: 55.2708, score: 88, country: 'UAE' },
-          { name: 'London', lat: 51.5074, lng: -0.1278, latitude: 51.5074, longitude: -0.1278, score: 84, country: 'UK' }
-        ],
+        topCities: testCities,
         powerZones: [
-          { latitude: 19.5, longitude: 73, strength: 0.9 },
-          { latitude: 28.5, longitude: 77, strength: 0.85 }
+          { latitude: 19.5, longitude: 73, strength: 0.9, category: 'Career' },
+          { latitude: 28.5, longitude: 77, strength: 0.85, category: 'Wealth' },
+          { latitude: 12.9, longitude: 77.5, strength: 0.82, category: 'Education' },
+          { latitude: 51.5, longitude: -0.1, strength: 0.88, category: 'Career' },
+          { latitude: 40.7, longitude: -74, strength: 0.91, category: 'Wealth' }
         ]
       };
 
