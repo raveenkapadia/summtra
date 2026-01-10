@@ -470,12 +470,12 @@
             <div class="city-hero-pattern"></div>
             <div class="city-hero-content">
                 <div class="city-info">
-                    <div class="city-rank">#{{RANK}} Recommended City</div>
+                    <div class="city-rank">#{{CITY_RANK}} Recommended City</div>
                     <h1 class="city-name">{{CITY_NAME}}</h1>
-                    <div class="city-country">{{COUNTRY}}</div>
+                    <div class="city-country">{{CITY_COUNTRY}}</div>
                 </div>
                 <div class="score-circle">
-                    <div class="score-value">{{SCORE}}%</div>
+                    <div class="score-value">{{CITY_SCORE}}%</div>
                     <div class="score-label">Match Score</div>
                 </div>
             </div>
@@ -492,21 +492,7 @@
                         <div class="card-title">Planetary Lines Present</div>
                     </div>
                     <div class="lines-list">
-                        <div class="line-item">
-                            <div class="line-dot jupiter-dot"></div>
-                            <span class="line-name">Jupiter-MC</span>
-                            <span class="line-meaning">Career Growth</span>
-                        </div>
-                        <div class="line-item">
-                            <div class="line-dot mercury-dot"></div>
-                            <span class="line-name">Mercury-AC</span>
-                            <span class="line-meaning">Communication</span>
-                        </div>
-                        <div class="line-item">
-                            <div class="line-dot saturn-dot"></div>
-                            <span class="line-name">Saturn-DC</span>
-                            <span class="line-meaning">Discipline</span>
-                        </div>
+                        {{CITY_PLANETARY_INFLUENCES}}
                     </div>
                 </div>
                 
@@ -521,7 +507,7 @@
                             <span class="status-label">Direction from Birthplace</span>
                             <span class="status-value">
                                 <span class="status-icon status-success">✓</span>
-                                {{DIRECTION}}
+                                {{CITY_DIRECTION}}
                             </span>
                         </div>
                         <div class="status-item">
@@ -553,12 +539,10 @@
             <div class="verdict-section">
                 <div class="verdict-header">
                     <div class="verdict-title">✦ Our Verdict</div>
-                    <div class="verdict-badge">⭐⭐⭐ Highly Recommended</div>
+                    <div class="verdict-badge">{{CITY_VERDICT}}</div>
                 </div>
                 <p class="verdict-text">
-                    {{CITY_NAME}} emerges as an exceptional choice for your {{GOAL}} goals. The presence of <strong>Jupiter-MC</strong> line here indicates significant potential for career expansion, financial growth, and professional recognition. Combined with the <strong>Mercury-AC</strong> influence, this location strongly supports business communication, networking, and intellectual pursuits.
-                    <br><br>
-                    The city's eastward direction from your birthplace aligns favorably with your Nakshatra (Vishakha), and Vastu principles support this direction for your Scorpio Lagna. All systems indicate positive energy flow for your intended purpose.
+                    {{CITY_INTERPRETATION}}
                 </p>
             </div>
             
@@ -571,22 +555,22 @@
                 <div class="timing-content">
                     <div class="timing-box">
                         <div class="timing-label">Current Dasha</div>
-                        <div class="timing-value">Mercury-Rahu</div>
+                        <div class="timing-value">{{CURRENT_DASHA_LORD}}</div>
                     </div>
                     <div class="timing-box">
                         <div class="timing-label">Current Period Ends</div>
-                        <div class="timing-value">June 2026</div>
+                        <div class="timing-value">{{CURRENT_DASHA_END}}</div>
                     </div>
                     <div class="timing-box">
-                        <div class="timing-label">Best Period to Move</div>
-                        <div class="timing-value">Jun 2026 - Sep 2028</div>
+                        <div class="timing-label">Active Lines</div>
+                        <div class="timing-value">{{CITY_ACTIVE_LINES}}</div>
                     </div>
                     <div class="timing-box">
-                        <div class="timing-label">Upcoming Dasha</div>
-                        <div class="timing-value">Mercury-Jupiter ⭐</div>
+                        <div class="timing-label">Nakshatra Aligned</div>
+                        <div class="timing-value">{{CITY_NAKSHATRA_MATCH}}</div>
                     </div>
                     <div class="timing-note">
-                        <strong>💡 Timing Insight:</strong> While you can move now during Mercury-Rahu period, this city's Jupiter-MC line will become significantly more powerful after June 2026 when your Mercury-Jupiter Antardasha begins. Consider planning your move for this optimal window.
+                        <strong>💡 Timing Insight:</strong> The planetary lines at this location combined with your current {{CURRENT_DASHA_LORD}} period create specific opportunities for {{GOAL}} pursuits.
                     </div>
                 </div>
             </div>

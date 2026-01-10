@@ -369,27 +369,63 @@ export function prepareCityPageData(city, rank, goal, baseData) {
   };
 }
 
+const LINE_MEANINGS = {
+  'Sun-AC': 'Self-expression & Identity',
+  'Sun-MC': 'Career Recognition',
+  'Sun-DC': 'Partnerships',
+  'Sun-IC': 'Home Foundation',
+  'Moon-AC': 'Emotional Expression',
+  'Moon-MC': 'Public Image',
+  'Moon-DC': 'Emotional Bonds',
+  'Moon-IC': 'Inner Security',
+  'Mercury-AC': 'Communication',
+  'Mercury-MC': 'Business Acumen',
+  'Mercury-DC': 'Intellectual Connections',
+  'Mercury-IC': 'Learning & Study',
+  'Venus-AC': 'Personal Charm',
+  'Venus-MC': 'Creative Success',
+  'Venus-DC': 'Love & Romance',
+  'Venus-IC': 'Domestic Harmony',
+  'Mars-AC': 'Personal Drive',
+  'Mars-MC': 'Career Ambition',
+  'Mars-DC': 'Dynamic Partnerships',
+  'Mars-IC': 'Home Energy',
+  'Jupiter-AC': 'Personal Growth',
+  'Jupiter-MC': 'Career Expansion',
+  'Jupiter-DC': 'Beneficial Partnerships',
+  'Jupiter-IC': 'Family Blessings',
+  'Saturn-AC': 'Self-Discipline',
+  'Saturn-MC': 'Career Authority',
+  'Saturn-DC': 'Committed Partnerships',
+  'Saturn-IC': 'Stable Foundation'
+};
+
 function generateCityPlanetaryInfluences(lines) {
   if (!lines || lines.length === 0) {
-    return '<p>No major planetary lines pass through this location.</p>';
+    return '<div class="line-item"><span class="line-name">No major lines nearby</span></div>';
   }
   
-  return lines.map(line => {
-    let planetName, lineType;
+  return lines.slice(0, 4).map(line => {
+    let planetName, lineType, lineName;
     if (typeof line === 'string') {
       const parts = line.split('-');
       planetName = parts[0];
       lineType = parts[1] || '';
+      lineName = line;
     } else {
       planetName = line.planet;
-      lineType = line.line_type;
+      lineType = line.line_type || line.type;
+      lineName = `${planetName}-${lineType}`;
     }
     const planet = PLANET_DATA.find(p => p.name === planetName) || { symbol: '?', color: '#888' };
+    const planetLower = planetName.toLowerCase();
+    const meaning = LINE_MEANINGS[lineName] || `${planetName} influence`;
+    
     return `
-      <div class="influence-item" style="border-left-color: ${planet.color}">
-        <span class="planet-symbol">${planet.symbol}</span>
-        <span class="planet-name">${planetName}</span>
-        <span class="line-type">${lineType}</span>
+      <div class="line-item">
+        <div class="line-dot ${planetLower}-dot" style="background: ${planet.color};"></div>
+        <span class="line-name">${lineName}</span>
+        <span class="line-meaning">${meaning}</span>
       </div>
     `;
   }).join('');
