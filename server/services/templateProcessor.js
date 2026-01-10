@@ -343,8 +343,8 @@ export function prepareReportData(birthData, astroData, options = {}) {
 export function prepareCityPageData(city, rank, goal, baseData) {
   const scoreClass = city.score >= 85 ? 'Excellent' : city.score >= 75 ? 'Good' : city.score >= 65 ? 'Moderate' : 'Challenging';
   
-  const interpretation = city.aiInterpretation || city.analysis || city.interpretation || 
-    `This location offers ${scoreClass.toLowerCase()} potential for ${goal.toLowerCase()} based on your planetary alignments.`;
+  const fallbackInterpretation = generateFallbackInterpretation(city, goal, scoreClass);
+  const interpretation = city.aiInterpretation || city.analysis || city.interpretation || fallbackInterpretation;
   
   return {
     ...baseData,
@@ -400,6 +400,43 @@ const LINE_MEANINGS = {
   'Saturn-IC': 'Stable Foundation'
 };
 
+function generateFallbackInterpretation(city, goal, scoreClass) {
+  const goalTexts = {
+    'Career': 'professional growth and career advancement',
+    'Wealth': 'financial prosperity and material success',
+    'Love': 'romantic connections and meaningful relationships',
+    'Education': 'academic excellence and intellectual development',
+    'Settlement': 'settling down and building a stable home life',
+    'Complete': 'overall life success and personal transformation'
+  };
+  
+  const lines = city.lines || [];
+  const lineDescriptions = lines.slice(0, 2).map(l => {
+    let lineName;
+    if (typeof l === 'string') {
+      lineName = l;
+    } else if (l && l.planet) {
+      lineName = `${l.planet}-${l.line_type || l.type}`;
+    } else {
+      return null;
+    }
+    return LINE_MEANINGS[lineName] || null;
+  }).filter(Boolean);
+  
+  const goalText = goalTexts[goal] || 'personal growth and success';
+  const cityName = city.name || 'This location';
+  const country = city.country || '';
+  
+  if (lineDescriptions.length >= 2) {
+    return `${cityName}${country ? ', ' + country : ''} offers ${scoreClass.toLowerCase()} potential for ${goalText}. The planetary alignments here activate ${lineDescriptions[0].toLowerCase()} while also enhancing ${lineDescriptions[1].toLowerCase()}. This combination creates a supportive environment for achieving your goals in this domain.`;
+  } else if (lineDescriptions.length === 1) {
+    return `${cityName}${country ? ', ' + country : ''} shows ${scoreClass.toLowerCase()} compatibility for ${goalText}. The cosmic energies here particularly support ${lineDescriptions[0].toLowerCase()}, which aligns well with your aspirations in this area.`;
+  }
+  
+  const directionText = city.direction ? ` Located to the ${city.direction} of your birthplace,` : '';
+  return `${cityName}${country ? ', ' + country : ''} demonstrates ${scoreClass.toLowerCase()} potential for ${goalText}.${directionText} the planetary configurations at this location offer opportunities for growth and development in your chosen area of focus.`;
+}
+
 function generateCityPlanetaryInfluences(lines) {
   if (!lines || lines.length === 0) {
     return '<div class="line-item"><span class="line-name">No major lines nearby</span></div>';
@@ -441,19 +478,19 @@ export function prepareMapPageData(mapImage, viewName, viewLabel, baseData) {
   };
 }
 
-export function generateRankingTableData(cities, baseData, totalCitiesCount = null) {
+export function generateRankingTableData(pageCities, baseData, startRank = 1, allCitiesCount = null) {
   const data = { ...baseData };
   
-  const directions = ['North', 'South', 'East', 'West', 'Northeast', 'Northwest', 'Southeast', 'Southwest'];
-  
-  for (let i = 0; i < 15; i++) {
-    const num = i + 1;
-    const city = cities[i] || {};
+  for (let i = 0; i < 9; i++) {
+    const slotNum = i + 1;
+    const city = pageCities[i] || {};
+    const hasCity = Boolean(city.name);
     
-    data[`CITY${num}_NAME`] = city.name || '';
-    data[`CITY${num}_COUNTRY`] = city.country || '';
-    data[`CITY${num}_SCORE`] = city.score || '';
-    data[`CITY${num}_DIRECTION`] = city.direction || directions[i % directions.length];
+    data[`CITY${slotNum}_NAME`] = city.name || '';
+    data[`CITY${slotNum}_COUNTRY`] = city.country || '';
+    data[`CITY${slotNum}_SCORE`] = hasCity ? (city.score || '') : '';
+    data[`CITY${slotNum}_DIRECTION`] = hasCity ? (city.direction || '') : '';
+    data[`CITY${slotNum}_RANK`] = hasCity ? startRank + i : '';
     
     const lines = city.lines || [];
     const formattedLines = lines.map(l => {
@@ -466,18 +503,18 @@ export function generateRankingTableData(cities, baseData, totalCitiesCount = nu
       return '';
     });
     
-    data[`CITY${num}_LINE1`] = formattedLines[0] || '';
-    data[`CITY${num}_LINE2`] = formattedLines[1] || '';
-    data[`CITY${num}_LINE3`] = formattedLines[2] || '';
+    data[`CITY${slotNum}_LINE1`] = formattedLines[0] || '';
+    data[`CITY${slotNum}_LINE2`] = formattedLines[1] || '';
+    data[`CITY${slotNum}_LINE3`] = formattedLines[2] || '';
   }
   
-  const allCitiesCount = totalCitiesCount || cities.length;
-  const scores = cities.map(c => c.score || 0);
-  data.TOTAL_CITIES = allCitiesCount;
+  const totalCount = allCitiesCount || pageCities.length;
+  const scores = pageCities.filter(c => c.score).map(c => c.score || 0);
+  data.TOTAL_CITIES = totalCount;
   data.AVG_SCORE = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
   data.TOP_SCORE = scores.length > 0 ? Math.max(...scores) : 0;
-  data.POWER_ZONES = cities.filter(c => c.lines && c.lines.length > 0).length;
-  data.TABLE_TITLE = `Top ${allCitiesCount} Cities`;
+  data.POWER_ZONES = pageCities.filter(c => c.lines && c.lines.length > 0).length;
+  data.TABLE_TITLE = `Top ${totalCount} Cities`;
   
   return data;
 }

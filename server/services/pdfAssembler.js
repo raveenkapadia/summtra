@@ -277,13 +277,14 @@ export class PDFAssembler {
     
     for (let i = 0; i < totalPages; i++) {
       const startIdx = i * citiesPerPage;
+      const startRank = startIdx + 1;
       const pageCities = allBestCities.slice(startIdx, startIdx + citiesPerPage);
       
-      const pageData = generateRankingTableData(pageCities, this.baseData, allBestCities.length);
+      const pageData = generateRankingTableData(pageCities, this.baseData, startRank, allBestCities.length);
       pageData.GOAL = goal;
       pageData.GOAL_ICON = this.getGoalIcon(goal);
       pageData.SCOPE = this.scope;
-      pageData.CITY_ROWS = generateCityRows(pageCities, startIdx + 1);
+      pageData.CITY_ROWS = generateCityRows(pageCities, startRank);
       pageData.RANKING_PAGE = i + 1;
       pageData.RANKING_TOTAL_PAGES = totalPages;
       
@@ -406,8 +407,33 @@ export class PDFAssembler {
   
   async addDashaTimelinePage() {
     const template = loadTemplate('dasha-timeline-page.html');
-    const html = processTemplate(template, this.baseData);
+    
+    const dashaData = {
+      ...this.baseData,
+      MAHADASHA: this.birthData.currentDashaLord || this.baseData.MAHADASHA || 'Jupiter',
+      ANTARDASHA: this.birthData.currentAntardasha || this.baseData.ANTARDASHA || 'Venus',
+      CURRENT_THEME: this.getDashaTheme(this.birthData.currentDashaLord),
+      ANTARDASHA_END: this.birthData.currentDashaEnd || this.baseData.CURRENT_DASHA_END || 'December 2027',
+      MAHADASHA_PERIOD: this.birthData.mahadashaPeriod || '2020 - 2036'
+    };
+    
+    const html = processTemplate(template, dashaData);
     this.pages.push({ html, type: 'dasha' });
+  }
+  
+  getDashaTheme(dashaLord) {
+    const themes = {
+      'Sun': 'Leadership, Recognition & Self-Expression',
+      'Moon': 'Emotional Growth, Home & Nurturing',
+      'Mars': 'Action, Courage & Physical Energy',
+      'Mercury': 'Communication, Learning & Commerce',
+      'Jupiter': 'Expansion, Wisdom & Spiritual Growth',
+      'Venus': 'Love, Creativity & Material Comfort',
+      'Saturn': 'Discipline, Karma & Long-term Goals',
+      'Rahu': 'Ambition, Unconventional Paths & Desires',
+      'Ketu': 'Spirituality, Detachment & Past-life Karma'
+    };
+    return themes[dashaLord] || 'Personal Growth & Transformation';
   }
   
   async addGlossaryPages() {
