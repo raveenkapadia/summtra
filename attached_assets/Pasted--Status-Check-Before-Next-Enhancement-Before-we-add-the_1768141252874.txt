@@ -1,0 +1,71 @@
+## 🔍 Status Check Before Next Enhancement
+
+Before we add the next feature (personalized planet weighting), I want to confirm the current state.
+
+### Please Confirm Current Implementation:
+
+**1. Goal-Planet Filtering**
+- [ ] For Wealth: Only showing Jupiter, Venus, Mercury, Sun lines?
+- [ ] For Career: Only showing Sun, Saturn, Jupiter, Mercury lines?
+- [ ] No "fallback" to wrong planets?
+
+**2. Direction Penalty**
+- [ ] What is the current penalty? (Full -25 or proportional?)
+- [ ] Has this been changed to proportional (×0.65) yet?
+
+**3. Scoring Components**
+Please confirm the current breakdown:
+
+| Component | Max Points | Source |
+|-----------|------------|--------|
+| Line Proximity | ? | Western/API |
+| Paran Lines | ? | Western |
+| Nakshatra Direction | ? | Vedic |
+| Rashi Alignment | ? | Vedic |
+| Vastu-Lagna | ? | Vedic |
+| Dasha Timing | ? | Vedic |
+| Direction Penalty | ? | Vedic |
+| **TOTAL** | ? | |
+
+**4. Sample Output**
+For test user (Raveen Kapadia, Nov 15 1982, 8:20 AM, Ahmedabad):
+- Goal: Wealth
+- Scope: Both
+
+Please show Top 5 cities with full breakdown:
+
+| Rank | City | Planet-Line | Distance | Line Score | Paran | Vedic Total | Dir Penalty | Final |
+|------|------|-------------|----------|------------|-------|-------------|-------------|-------|
+| 1 | ? | ? | ? | ? | ? | ? | ? | ? |
+| 2 | ? | ? | ? | ? | ? | ? | ? | ? |
+| 3 | ? | ? | ? | ? | ? | ? | ? | ? |
+| 4 | ? | ? | ? | ? | ? | ? | ? | ? |
+| 5 | ? | ? | ? | ? | ? | ? | ? | ? |
+
+Also show Doha/Dubai specifically (even if not in top 5):
+
+| City | Planet-Line | Distance | Line Score | Paran | Vedic Total | Dir Penalty | Final |
+|------|-------------|----------|------------|-------|-------------|-------------|-------|
+| Doha | ? | ? | ? | ? | ? | ? | ? |
+| Dubai | ? | ? | ? | ? | ? | ? | ? |
+
+**5. Pending Changes**
+Which of these are done vs pending?
+
+| Change | Status |
+|--------|--------|
+| Goal-planet filtering (no wrong planets) | ✅ Done / ⏳ Pending |
+| Proportional direction penalty (×0.65) | ✅ Done / ⏳ Pending |
+| Two-pass planet selection | ✅ Done / ⏳ Pending |
+
+---
+
+### Why This Matters
+
+We're about to add **personalized planet weighting** (boosting 2nd/11th house lords and Dasha lord). Before adding that, I need to understand:
+
+1. What's currently working
+2. What's still pending
+3. Exact current scoring formula
+
+This will help us add the next feature cleanly without breaking anything.
