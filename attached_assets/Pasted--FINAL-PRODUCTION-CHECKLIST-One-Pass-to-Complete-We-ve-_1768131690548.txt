@@ -1,0 +1,123 @@
+## 🚀 FINAL PRODUCTION CHECKLIST - One Pass to Complete
+
+We've been iterating piece by piece. Let's consolidate ALL remaining issues and fix them in ONE go. After this, we need a final PDF that passes ALL checks below.
+
+---
+
+## ALL ISSUES TO FIX
+
+### 1. SCORING MATH TRANSPARENCY (Critical)
+**Problem:** Displayed % doesn't match visible breakdown due to hidden direction bonus.
+
+**Example - Nagpur:**
+- Western: 21/50 (visible)
+- Vedic: 49/50 (visible: 20+14+15)
+- **Hidden:** +7 direction bonus
+- Displayed: 77%
+
+**Required Fix:** Make direction modifier VISIBLE in breakdown:
+```
+☉ WESTERN 21/50
+├─ Line Proximity: 15/25
+└─ Paran Lines: 6/25
+
+🕉 VEDIC 49/50
+├─ Nakshatra + Rashi: 20/20
+├─ Lagna-Vastu: 14/15
+└─ Dasha Timing: 15/15
+
+⭐ DIRECTION BONUS: +7
+(East = favorable for Vishakha Nakshatra)
+
+━━━━━━━━━━━━━━━━━━━━
+TOTAL: 21 + 49 + 7 = 77%
+```
+
+**Acceptance:** User can manually verify: Western + Vedic + Direction Bonus = Displayed %
+
+---
+
+### 2. RANKING TABLE - PLANETARY LINES COLUMN EMPTY
+**Problem:** Top 12 table shows blank in "PLANETARY LINES" column.
+
+**Required Fix:** Show nearest relevant line for each city:
+| Nagpur | Venus-AC (2346km) | East | 77% |
+
+**Acceptance:** Every city row has planetary line info populated.
+
+---
+
+### 3. BIRTHPLACE HANDLING
+**Problem:** Ahmedabad (user's birthplace) appears in "Cities to Avoid" at 57%.
+
+**Required Fix:** 
+- Do NOT include birthplace in "Avoid" section
+- Either exclude from ranking entirely OR show with neutral note: "Your birthplace - baseline reference point"
+- Direction should show "Origin" (already fixed ✓)
+
+**Acceptance:** Birthplace never appears in "Avoid" section.
+
+---
+
+### 4. POWER ZONES COUNT INCONSISTENT
+**Problem:** Summary shows "4 Power Zones", ranking table shows "0 POWER ZONES"
+
+**Required Fix:** Consistent count everywhere, or remove if not calculated.
+
+**Acceptance:** Same number displayed on all pages.
+
+---
+
+### 5. VERDICT TEXT ALIGNMENT
+**Problem:** Nagpur (77%) badge says "HIGHLY FAVORABLE" but text says "good potential"
+
+**Required Fix:**
+- 70%+ → "excellent potential" + HIGHLY FAVORABLE
+- 60-69% → "good potential" + FAVORABLE  
+- 52-59% → "moderate potential" + MODERATE
+- <52% → "challenging" + CHALLENGING
+
+**Acceptance:** Badge and descriptive text always match.
+
+---
+
+### 6. USER GUIDE THRESHOLDS OUTDATED
+**Problem:** User Guide page still shows old thresholds (85-100%, 70-84%, etc.)
+
+**Required Fix:** Update to match new scoring:
+- 70-100% = Highly Favorable
+- 60-69% = Favorable
+- 52-59% = Moderate
+- Below 52% = Challenging
+
+**Acceptance:** User Guide matches actual scoring thresholds used.
+
+---
+
+## PRODUCTION ACCEPTANCE CHECKLIST
+
+Generate ONE final test PDF. It must pass ALL these checks:
+
+| # | Check | Pass/Fail |
+|---|-------|-----------|
+| 1 | Score breakdown math is verifiable (W + V + Dir = %) | ☐ |
+| 2 | Ranking table has planetary lines for all cities | ☐ |
+| 3 | Birthplace NOT in "Avoid" section | ☐ |
+| 4 | Power zones count consistent across all pages | ☐ |
+| 5 | Verdict badge matches descriptive text | ☐ |
+| 6 | User Guide thresholds updated to new system | ☐ |
+| 7 | Score range is 48-77% (not inflated 90%+) | ☐ |
+| 8 | East/Northeast cities rank highest for Vishakha | ☐ |
+| 9 | Mumbai/Pune show <52% as "Challenging" | ☐ |
+| 10 | Direction shows 8-point compass + "Origin" for birthplace | ☐ |
+
+---
+
+## DELIVERABLES
+
+1. ✅ Apply ALL 6 fixes above
+2. ✅ Generate final test PDF (same user: Raveen Kapadia, Career, India)
+3. ✅ Share PDF link + JSON validation output
+4. ✅ Confirm all 10 checklist items pass
+
+After this, we go to production. No more iterations.

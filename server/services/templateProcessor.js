@@ -447,9 +447,11 @@ export function prepareReportData(birthData, astroData, options = {}) {
 }
 
 export function prepareCityPageData(city, rank, goal, baseData, credibilityData = null) {
-  const scoreClass = city.score >= 85 ? 'Excellent' : city.score >= 75 ? 'Good' : city.score >= 65 ? 'Moderate' : 'Challenging';
+  const score = city.score || 0;
+  const verdictLabel = score >= 70 ? 'Highly Favorable' : score >= 60 ? 'Favorable' : score >= 52 ? 'Moderate' : 'Challenging';
+  const verdictPotential = score >= 70 ? 'excellent' : score >= 60 ? 'good' : score >= 52 ? 'moderate' : 'challenging';
   
-  const fallbackInterpretation = generateFallbackInterpretation(city, goal, scoreClass);
+  const fallbackInterpretation = generateFallbackInterpretation(city, goal, verdictPotential);
   const interpretation = city.aiInterpretation || city.analysis || city.interpretation || fallbackInterpretation;
   
   const cred = credibilityData || {};
@@ -462,19 +464,30 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     `<span class="paran-tag">${p.planets?.join(' ☌ ') || p.key} - ${p.interpretation || ''}</span>`
   ).join('') || '<span class="paran-tag">No strong parans</span>';
   
+  const directionBonus = cred.directionBonus || 0;
+  const directionExplanation = directionBonus > 0 
+    ? `${city.direction} = favorable for ${baseData.NAKSHATRA || 'your nakshatra'}`
+    : directionBonus < 0 
+      ? `${city.direction} = challenging for ${baseData.NAKSHATRA || 'your nakshatra'}`
+      : 'Neutral direction';
+  
+  const westernTotal = Math.min(50, western.total || 25);
+  const vedicTotal = Math.min(50, vedic.total || 25);
+  const calculatedTotal = westernTotal + vedicTotal + directionBonus;
+  
   return {
     ...baseData,
     CITY_NAME: city.name || '',
     CITY_COUNTRY: city.country || '',
     CITY_REGION: city.region || '',
-    CITY_SCORE: city.score || 0,
+    CITY_SCORE: score,
     CITY_RANK: rank,
     CITY_LATITUDE: Math.round(city.latitude || city.lat || 0),
     CITY_LONGITUDE: city.longitude || city.lng || '',
     CITY_DIRECTION: city.direction || '',
     CITY_NAKSHATRA_MATCH: city.nakshatraMatch ? 'Yes' : 'No',
-    CITY_VERDICT: city.verdict || scoreClass,
-    CITY_SCORE_CLASS: scoreClass.toLowerCase(),
+    CITY_VERDICT: city.verdict || verdictLabel,
+    CITY_SCORE_CLASS: verdictPotential,
     CITY_ANALYSIS: interpretation,
     CITY_INTERPRETATION: interpretation,
     CITY_ACTIVE_LINES: (city.lines || []).map(l => typeof l === 'string' ? l : `${l.planet} ${l.line_type}`).join(', '),
@@ -491,13 +504,18 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     
     PARAN_TAGS: paranTagsHtml,
     
-    WESTERN_SCORE: Math.min(50, western.total || 35),
+    WESTERN_SCORE: westernTotal,
     LINE_PROXIMITY_SCORE: Math.min(25, lineProx.score || 15),
-    PARAN_SCORE: Math.min(25, western.parans?.score || 20),
-    VEDIC_SCORE: Math.min(50, vedic.total || 40),
+    PARAN_SCORE: Math.min(25, western.parans?.score || 10),
+    VEDIC_SCORE: vedicTotal,
     NAKSHATRA_RASHI_SCORE: Math.min(20, vedic.nakshatraRashi?.score || 15),
-    LAGNA_VASTU_SCORE: Math.min(15, vedic.lagnaVastu?.score || 12),
-    DASHA_SCORE: Math.min(15, vedic.dashaTiming?.score || 12)
+    LAGNA_VASTU_SCORE: Math.min(15, vedic.lagnaVastu?.score || 10),
+    DASHA_SCORE: Math.min(15, vedic.dashaTiming?.score || 10),
+    
+    DIRECTION_BONUS: directionBonus,
+    DIRECTION_BONUS_DISPLAY: directionBonus >= 0 ? `+${directionBonus}` : `${directionBonus}`,
+    DIRECTION_EXPLANATION: directionExplanation,
+    SCORE_TOTAL_CALC: `${westernTotal} + ${vedicTotal} + ${directionBonus >= 0 ? directionBonus : `(${directionBonus})`} = ${calculatedTotal}%`
   };
 }
 
@@ -626,20 +644,34 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     data[`CITY${slotNum}_DIRECTION`] = hasCity ? (city.direction || '') : '';
     data[`CITY${slotNum}_RANK`] = hasCity ? rank : '';
     data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
-    data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 85 ? 'score-excellent' : score >= 75 ? 'score-good' : 'score-moderate') : '';
+    data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 70 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-moderate') : '';
     
     const lines = city.lines || [];
-    const formattedLines = lines.map(l => {
-      if (typeof l === 'string') {
-        const [planet, type] = l.split('-');
-        return formatPlanetLine(planet, type);
-      } else if (l && l.planet) {
-        return formatPlanetLine(l.planet, l.line_type || l.type);
-      }
-      return '';
-    });
+    let formattedLines = [];
     
-    data[`CITY${slotNum}_LINE1`] = formattedLines[0] || '';
+    if (lines.length > 0) {
+      formattedLines = lines.slice(0, 3).map(l => {
+        if (typeof l === 'string') {
+          const [planet, type] = l.split('-');
+          return formatPlanetLine(planet, type);
+        } else if (l && l.planet) {
+          return formatPlanetLine(l.planet, l.line_type || l.type);
+        }
+        return '';
+      }).filter(Boolean);
+    }
+    
+    if (formattedLines.length === 0 && city.nearestLine) {
+      const [planet, type] = (city.nearestLine || '').split('-');
+      const distKm = city.lineDistanceKm || '';
+      formattedLines = [`${formatPlanetLine(planet, type)} (${distKm}km)`];
+    }
+    
+    if (formattedLines.length === 0) {
+      formattedLines = ['—'];
+    }
+    
+    data[`CITY${slotNum}_LINE1`] = formattedLines[0] || '—';
     data[`CITY${slotNum}_LINE2`] = formattedLines[1] || '';
     data[`CITY${slotNum}_LINE3`] = formattedLines[2] || '';
   }
