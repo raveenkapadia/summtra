@@ -345,7 +345,7 @@ export class PDFAssembler {
     
     for (let i = 0; i < cities.length; i++) {
       const city = cities[i];
-      const credibilityData = this.calculateCredibilityData(city, lines, goal);
+      const credibilityData = this.calculateCredibilityData(city, lines, goal, this.birthData);
       const cityData = prepareCityPageData(city, i + 1, goal, this.baseData, credibilityData);
       this.pages.push({ html: processTemplate(template, cityData), type: 'city-best' });
       
@@ -391,23 +391,61 @@ export class PDFAssembler {
     return regionMap[city.region] || (city.country === 'India' ? 'india' : 'world');
   }
   
-  calculateCredibilityData(city, lines, goal) {
+  calculateCredibilityData(city, lines, goal, birthData = null) {
     const cityLat = city.latitude || city.lat || 0;
     const cityLng = city.longitude || city.lng || 0;
+    const totalScore = city.score || 75;
     
     const nearestLine = this.findNearestLine(cityLat, cityLng, lines);
     const distanceKm = nearestLine.distanceKm;
     const orbData = this.getOrbData(distanceKm);
     const paranLines = this.calculateParanLines(cityLat, goal);
     
-    const lineProximityScore = Math.max(0, Math.round(25 * (1 - distanceKm / 700)));
-    const paranScore = Math.min(25, Math.round(5 * paranLines.length));
-    const westernTotal = lineProximityScore + paranScore;
+    const rawLineProximity = Math.max(0, Math.round(25 * (1 - distanceKm / 700)));
+    const rawParanScore = Math.min(25, Math.round(5 * paranLines.length));
+    const rawWesternTotal = rawLineProximity + rawParanScore;
     
-    const nakshatraScore = Math.round(10 + Math.random() * 10);
-    const lagnaVastuScore = Math.round(8 + Math.random() * 7);
-    const dashaScore = Math.round(7 + Math.random() * 8);
-    const vedicTotal = nakshatraScore + lagnaVastuScore + dashaScore;
+    const birthNakshatra = birthData?.nakshatra || '';
+    const birthRashi = birthData?.rashi || '';
+    const birthLagna = birthData?.lagna || '';
+    const currentDasha = birthData?.currentDashaLord || '';
+    
+    const nakshatraMatch = birthNakshatra ? this.getNakshatraAffinityScore(birthNakshatra, city, goal) : 12;
+    const rashiMatch = birthRashi ? this.getRashiDirectionScore(birthRashi, cityLat, cityLng) : 10;
+    const lagnaScore = birthLagna ? this.getLagnaVastuScore(birthLagna, city) : 10;
+    const dashaScore = currentDasha ? this.getDashaTimingScore(currentDasha, goal) : 10;
+    
+    const rawNakshatraRashi = Math.min(20, nakshatraMatch + rashiMatch);
+    const rawLagnaVastu = Math.min(15, lagnaScore);
+    const rawDashaTiming = Math.min(15, dashaScore);
+    const rawVedicTotal = rawNakshatraRashi + rawLagnaVastu + rawDashaTiming;
+    
+    const rawTotal = rawWesternTotal + rawVedicTotal;
+    const scaleFactor = rawTotal > 0 ? totalScore / rawTotal : 0.5;
+    
+    const westernTotal = Math.round(rawWesternTotal * scaleFactor);
+    const vedicTotal = totalScore - westernTotal;
+    
+    const lineProximityScore = Math.round(rawLineProximity * scaleFactor);
+    const paranScore = westernTotal - lineProximityScore;
+    
+    const vedicScaleFactor = rawVedicTotal > 0 ? vedicTotal / rawVedicTotal : 1/3;
+    const scaledNakshatraRashi = Math.round(rawNakshatraRashi * vedicScaleFactor);
+    const scaledLagnaVastu = Math.round(rawLagnaVastu * vedicScaleFactor);
+    const scaledDashaTiming = vedicTotal - scaledNakshatraRashi - scaledLagnaVastu;
+    
+    const birthLat2 = birthData?.latitude ? parseFloat(birthData.latitude) : null;
+    const birthLng2 = birthData?.longitude ? parseFloat(birthData.longitude) : null;
+    let direction = nearestLine.direction;
+    
+    if (birthLat2 && birthLng2) {
+      const distFromBirth = this.haversineDistance(birthLat2, birthLng2, cityLat, cityLng);
+      if (distFromBirth < 50) {
+        direction = 'Origin';
+      } else {
+        direction = this.getCardinalDirection(birthLat2, birthLng2, cityLat, cityLng);
+      }
+    }
     
     return {
       breakdown: {
@@ -417,7 +455,7 @@ export class PDFAssembler {
             score: lineProximityScore,
             nearestLine: nearestLine.name,
             distanceKm: Math.round(distanceKm),
-            direction: nearestLine.direction,
+            direction: direction,
             orbBars: orbData.bars,
             orbStrength: orbData.strength
           },
@@ -428,12 +466,99 @@ export class PDFAssembler {
         },
         vedic: {
           total: vedicTotal,
-          nakshatraRashi: { score: nakshatraScore },
-          lagnaVastu: { score: lagnaVastuScore },
-          dashaTiming: { score: dashaScore }
+          nakshatraRashi: { score: scaledNakshatraRashi },
+          lagnaVastu: { score: scaledLagnaVastu },
+          dashaTiming: { score: scaledDashaTiming }
         }
       }
     };
+  }
+  
+  getNakshatraAffinityScore(nakshatra, city, goal) {
+    const nakshatraElements = {
+      'Ashwini': 'fire', 'Bharani': 'earth', 'Krittika': 'fire', 'Rohini': 'earth',
+      'Mrigashira': 'air', 'Ardra': 'water', 'Punarvasu': 'air', 'Pushya': 'water',
+      'Ashlesha': 'water', 'Magha': 'fire', 'Purva Phalguni': 'fire', 'Uttara Phalguni': 'earth',
+      'Hasta': 'earth', 'Chitra': 'fire', 'Swati': 'air', 'Vishakha': 'fire',
+      'Anuradha': 'water', 'Jyeshtha': 'water', 'Mula': 'air', 'Purva Ashadha': 'water',
+      'Uttara Ashadha': 'earth', 'Shravana': 'air', 'Dhanishta': 'air', 'Shatabhisha': 'air',
+      'Purva Bhadrapada': 'air', 'Uttara Bhadrapada': 'water', 'Revati': 'water'
+    };
+    const element = nakshatraElements[nakshatra] || 'earth';
+    const cityLat = city.latitude || city.lat || 20;
+    
+    const elementAffinities = {
+      'fire': cityLat > 20 ? 12 : 8,
+      'earth': Math.abs(cityLat - 25) < 15 ? 12 : 8,
+      'air': cityLat > 30 ? 12 : 8,
+      'water': cityLat < 25 ? 12 : 8
+    };
+    return elementAffinities[element] || 10;
+  }
+  
+  getRashiDirectionScore(rashi, cityLat, cityLng) {
+    const rashiDirections = {
+      'Aries': 'east', 'Taurus': 'south', 'Gemini': 'west', 'Cancer': 'north',
+      'Leo': 'east', 'Virgo': 'south', 'Libra': 'west', 'Scorpio': 'north',
+      'Sagittarius': 'east', 'Capricorn': 'south', 'Aquarius': 'west', 'Pisces': 'north'
+    };
+    const direction = rashiDirections[rashi] || 'east';
+    
+    const directionScores = {
+      'east': cityLng > 75 ? 10 : 6,
+      'west': cityLng < 75 ? 10 : 6,
+      'north': cityLat > 25 ? 10 : 6,
+      'south': cityLat < 20 ? 10 : 6
+    };
+    return directionScores[direction] || 8;
+  }
+  
+  getLagnaVastuScore(lagna, city) {
+    const lagnaElements = {
+      'Aries': 'fire', 'Taurus': 'earth', 'Gemini': 'air', 'Cancer': 'water',
+      'Leo': 'fire', 'Virgo': 'earth', 'Libra': 'air', 'Scorpio': 'water',
+      'Sagittarius': 'fire', 'Capricorn': 'earth', 'Aquarius': 'air', 'Pisces': 'water'
+    };
+    const element = lagnaElements[lagna] || 'earth';
+    const cityScore = city.score || 75;
+    
+    if (cityScore > 85) return 13 + (element === 'fire' ? 2 : 0);
+    if (cityScore > 75) return 10 + (element === 'earth' ? 2 : 0);
+    if (cityScore > 65) return 8;
+    return 6;
+  }
+  
+  getDashaTimingScore(dashaLord, goal) {
+    const dashaGoalAffinity = {
+      'Sun': { Career: 15, Wealth: 10, Love: 8, Education: 12, Settlement: 8 },
+      'Moon': { Career: 8, Wealth: 8, Love: 14, Education: 10, Settlement: 14 },
+      'Mars': { Career: 12, Wealth: 10, Love: 10, Education: 8, Settlement: 8 },
+      'Mercury': { Career: 12, Wealth: 14, Love: 8, Education: 15, Settlement: 10 },
+      'Jupiter': { Career: 14, Wealth: 15, Love: 10, Education: 14, Settlement: 12 },
+      'Venus': { Career: 8, Wealth: 12, Love: 15, Education: 8, Settlement: 12 },
+      'Saturn': { Career: 10, Wealth: 8, Love: 6, Education: 10, Settlement: 14 },
+      'Rahu': { Career: 12, Wealth: 12, Love: 8, Education: 10, Settlement: 8 },
+      'Ketu': { Career: 8, Wealth: 6, Love: 8, Education: 12, Settlement: 10 }
+    };
+    const affinities = dashaGoalAffinity[dashaLord] || {};
+    return affinities[goal] || 10;
+  }
+  
+  getCardinalDirection(fromLat, fromLng, toLat, toLng) {
+    const latDiff = toLat - fromLat;
+    const lngDiff = toLng - fromLng;
+    
+    const angle = Math.atan2(lngDiff, latDiff) * 180 / Math.PI;
+    
+    if (angle >= -22.5 && angle < 22.5) return 'North';
+    if (angle >= 22.5 && angle < 67.5) return 'Northeast';
+    if (angle >= 67.5 && angle < 112.5) return 'East';
+    if (angle >= 112.5 && angle < 157.5) return 'Southeast';
+    if (angle >= 157.5 || angle < -157.5) return 'South';
+    if (angle >= -157.5 && angle < -112.5) return 'Southwest';
+    if (angle >= -112.5 && angle < -67.5) return 'West';
+    if (angle >= -67.5 && angle < -22.5) return 'Northwest';
+    return 'Unknown';
   }
   
   findNearestLine(cityLat, cityLng, lines) {
@@ -519,42 +644,68 @@ export class PDFAssembler {
   }
   
   calculateParanLines(latitude, goal) {
-    const paranCombinations = {
-      'Career': [
-        { planets: ['Sun', 'Jupiter'], key: 'Sun-Jupiter', interpretation: 'Recognition' },
-        { planets: ['Sun', 'Mercury'], key: 'Sun-Mercury', interpretation: 'Authority' }
-      ],
-      'Wealth': [
+    const latitudeBandParans = {
+      'tropical': [
         { planets: ['Jupiter', 'Venus'], key: 'Jupiter-Venus', interpretation: 'Prosperity' },
-        { planets: ['Venus', 'Mercury'], key: 'Venus-Mercury', interpretation: 'Commerce' }
+        { planets: ['Moon', 'Venus'], key: 'Moon-Venus', interpretation: 'Nurturing' }
       ],
-      'Love': [
-        { planets: ['Venus', 'Moon'], key: 'Venus-Moon', interpretation: 'Harmony' },
-        { planets: ['Venus', 'Mars'], key: 'Venus-Mars', interpretation: 'Passion' }
+      'subtropical': [
+        { planets: ['Sun', 'Mercury'], key: 'Sun-Mercury', interpretation: 'Commerce' },
+        { planets: ['Mars', 'Jupiter'], key: 'Mars-Jupiter', interpretation: 'Expansion' }
       ],
-      'Education': [
-        { planets: ['Mercury', 'Jupiter'], key: 'Mercury-Jupiter', interpretation: 'Wisdom' },
-        { planets: ['Mercury', 'Moon'], key: 'Mercury-Moon', interpretation: 'Intuition' }
+      'temperate': [
+        { planets: ['Saturn', 'Jupiter'], key: 'Saturn-Jupiter', interpretation: 'Foundation' },
+        { planets: ['Mercury', 'Jupiter'], key: 'Mercury-Jupiter', interpretation: 'Wisdom' }
       ],
-      'Settlement': [
-        { planets: ['Moon', 'Saturn'], key: 'Moon-Saturn', interpretation: 'Stability' },
-        { planets: ['Jupiter', 'Saturn'], key: 'Jupiter-Saturn', interpretation: 'Foundation' }
-      ],
-      'Complete': [
-        { planets: ['Jupiter', 'Venus'], key: 'Jupiter-Venus', interpretation: 'Fortune' },
-        { planets: ['Sun', 'Moon'], key: 'Sun-Moon', interpretation: 'Balance' }
+      'northern': [
+        { planets: ['Sun', 'Jupiter'], key: 'Sun-Jupiter', interpretation: 'Authority' },
+        { planets: ['Venus', 'Saturn'], key: 'Venus-Saturn', interpretation: 'Stability' }
       ]
     };
     
-    const goalParans = paranCombinations[goal] || paranCombinations['Complete'];
-    const activatedParans = goalParans.filter(() => Math.random() > 0.3);
-    return activatedParans.length > 0 ? activatedParans : [goalParans[0]];
+    const goalModifiers = {
+      'Career': { planets: ['Sun', 'Jupiter'], key: 'Sun-Jupiter', interpretation: 'Recognition' },
+      'Wealth': { planets: ['Jupiter', 'Venus'], key: 'Jupiter-Venus', interpretation: 'Abundance' },
+      'Love': { planets: ['Venus', 'Mars'], key: 'Venus-Mars', interpretation: 'Passion' },
+      'Education': { planets: ['Mercury', 'Moon'], key: 'Mercury-Moon', interpretation: 'Intuition' },
+      'Settlement': { planets: ['Moon', 'Saturn'], key: 'Moon-Saturn', interpretation: 'Roots' },
+      'Complete': { planets: ['Sun', 'Moon'], key: 'Sun-Moon', interpretation: 'Balance' }
+    };
+    
+    let band = 'temperate';
+    const absLat = Math.abs(latitude);
+    if (absLat < 15) band = 'tropical';
+    else if (absLat < 25) band = 'subtropical';
+    else if (absLat < 40) band = 'temperate';
+    else band = 'northern';
+    
+    const bandParans = latitudeBandParans[band] || latitudeBandParans['temperate'];
+    const goalParan = goalModifiers[goal] || goalModifiers['Complete'];
+    
+    const result = [...bandParans];
+    if (!result.some(p => p.key === goalParan.key)) {
+      result.push(goalParan);
+    }
+    
+    return result;
   }
   
   async addAvoidCityPages(goal) {
     const template = loadTemplate('city-avoid-page.html');
-    const avoidCities = this.getCitiesForGoal(goal, 'avoid');
+    let avoidCities = this.getCitiesForGoal(goal, 'avoid');
     const bestCities = this.getCitiesForGoal(goal, 'best');
+    
+    try {
+      const userData = {
+        name: this.birthData.name || 'User',
+        birthDate: this.birthData.birthDate || this.birthData.birth_date,
+        reportGoal: goal.toLowerCase()
+      };
+      
+      avoidCities = await claudeService.generateAvoidCityInterpretations(avoidCities, userData);
+    } catch (error) {
+      console.warn(`   ⚠️ Could not generate AI interpretations for avoid cities: ${error.message}`);
+    }
     
     for (let i = 0; i < avoidCities.length; i++) {
       const city = avoidCities[i];

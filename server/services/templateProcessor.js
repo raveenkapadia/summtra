@@ -281,42 +281,51 @@ function generateTopCitiesHTML(cities) {
 }
 
 function generateLinePaths(planetaryLines) {
-  const lineRegions = {
-    'Sun': { AC: 'Central Europe → North Africa', MC: 'East Asia → Australia', DC: 'Americas → Pacific', IC: 'Middle East → South Asia' },
-    'Moon': { AC: 'Northern Europe → Russia', MC: 'Southeast Asia → Indian Ocean', DC: 'South America → Atlantic', IC: 'Central Asia → Arabia' },
-    'Mercury': { AC: 'Western Europe → Sahara', MC: 'Japan → Philippines', DC: 'North America → Caribbean', IC: 'Iran → Pakistan' },
-    'Venus': { AC: 'Iberian Peninsula → West Africa', MC: 'Korea → Indonesia', DC: 'Eastern USA → Brazil', IC: 'Turkey → India' },
-    'Mars': { AC: 'Scandinavia → East Africa', MC: 'China → Vietnam', DC: 'Central USA → Argentina', IC: 'Levant → Tibet' },
-    'Jupiter': { AC: 'UK → Nigeria', MC: 'Mongolia → Thailand', DC: 'Midwest USA → Chile', IC: 'Egypt → Nepal' },
-    'Saturn': { AC: 'France → Congo', MC: 'Siberia → Malaysia', DC: 'Atlantic Coast → Peru', IC: 'Libya → Bhutan' },
-    'Uranus': { AC: 'Iceland → West Africa', MC: 'Eastern Siberia → Indonesia', DC: 'Eastern Canada → Brazil', IC: 'Mediterranean → India' },
-    'Neptune': { AC: 'Scotland → Morocco', MC: 'Japan → Australia', DC: 'Central USA → Argentina', IC: 'Egypt → Bangladesh' },
-    'Pluto': { AC: 'Ireland → Mauritania', MC: 'Korea → Papua', DC: 'Texas → Peru', IC: 'Libya → Myanmar' }
-  };
-  
   if (!planetaryLines || planetaryLines.length === 0) {
-    return Object.entries(lineRegions).slice(0, 5).map(([planet, paths]) => `
+    return `
       <div class="line-list-item">
-        <span class="line-name">${planet}-MC</span>
-        <span class="line-region">${paths.MC}</span>
+        <span class="line-name">Jupiter-MC</span>
+        <span class="line-region">Mongolia → Thailand</span>
       </div>
-    `).join('');
+      <div class="line-list-item">
+        <span class="line-name">Venus-AC</span>
+        <span class="line-region">Iberian Peninsula → West Africa</span>
+      </div>
+      <div class="line-list-item">
+        <span class="line-name">Sun-MC</span>
+        <span class="line-region">East Asia → Australia</span>
+      </div>
+    `;
   }
   
   const processedLines = planetaryLines.slice(0, 7).map(line => {
     const planet = line.planet || 'Jupiter';
     const lineType = line.lineType || line.line_type || 'MC';
-    const paths = lineRegions[planet] || lineRegions['Jupiter'];
     
-    let regionPath = paths[lineType] || 'Global influence';
+    let regionPath = 'Global influence';
     
-    if (line.points && Array.isArray(line.points) && line.points.length > 0) {
+    if (line.points && Array.isArray(line.points) && line.points.length > 1) {
       const firstPoint = line.points[0];
+      const midPoint = line.points[Math.floor(line.points.length / 2)];
       const lastPoint = line.points[line.points.length - 1];
-      const startLat = Array.isArray(firstPoint) ? firstPoint[1] : (firstPoint?.latitude ?? firstPoint?.lat ?? 0);
-      const endLat = Array.isArray(lastPoint) ? lastPoint[1] : (lastPoint?.latitude ?? lastPoint?.lat ?? 0);
       
-      regionPath = `${getRegionFromLat(startLat)} → ${getRegionFromLat(endLat)}`;
+      const startLng = getPointLng(firstPoint);
+      const midLng = getPointLng(midPoint);
+      const endLng = getPointLng(lastPoint);
+      
+      const startRegion = getRegionFromLng(startLng);
+      const midRegion = getRegionFromLng(midLng);
+      const endRegion = getRegionFromLng(endLng);
+      
+      const regions = [startRegion];
+      if (midRegion !== startRegion && midRegion !== endRegion) {
+        regions.push(midRegion);
+      }
+      if (endRegion !== startRegion) {
+        regions.push(endRegion);
+      }
+      
+      regionPath = regions.join(' → ');
     }
     
     return `
@@ -330,16 +339,27 @@ function generateLinePaths(planetaryLines) {
   return processedLines.join('');
 }
 
-function getRegionFromLat(lat) {
-  if (lat > 60) return 'Arctic';
-  if (lat > 45) return 'Northern Europe/Canada';
-  if (lat > 30) return 'Southern Europe/USA';
-  if (lat > 15) return 'North Africa/India';
-  if (lat > 0) return 'Tropical Africa/SE Asia';
-  if (lat > -15) return 'Southern Africa/Indonesia';
-  if (lat > -30) return 'South America/Australia';
-  if (lat > -45) return 'Southern Oceans';
-  return 'Antarctica';
+function getPointLng(point) {
+  if (Array.isArray(point)) return point[0];
+  if (point && typeof point === 'object') {
+    return point.longitude ?? point.lng ?? point.lon ?? 0;
+  }
+  return 0;
+}
+
+function getRegionFromLng(lng) {
+  if (lng >= -180 && lng < -120) return 'Pacific/Alaska';
+  if (lng >= -120 && lng < -90) return 'Western Americas';
+  if (lng >= -90 && lng < -60) return 'Central Americas';
+  if (lng >= -60 && lng < -30) return 'Eastern Americas';
+  if (lng >= -30 && lng < 0) return 'Atlantic';
+  if (lng >= 0 && lng < 30) return 'Western Europe/Africa';
+  if (lng >= 30 && lng < 60) return 'Eastern Europe/Middle East';
+  if (lng >= 60 && lng < 90) return 'Central Asia/India';
+  if (lng >= 90 && lng < 120) return 'Southeast Asia/China';
+  if (lng >= 120 && lng < 150) return 'East Asia/Australia';
+  if (lng >= 150 && lng <= 180) return 'Pacific/Oceania';
+  return 'Global';
 }
 
 function generateParanTags(birthData) {
@@ -841,6 +861,8 @@ export function prepareAvoidCityData(city, goal, bestCities, baseData) {
   
   const altCity = bestCities.find(c => c.country === city.country && c.name !== city.name) || bestCities[0] || {};
   data.ALT_CITY = altCity.name || 'a top-ranked city from this report';
+  
+  data.AVOID_INTERPRETATION = city.avoidInterpretation || `This location may present some challenges for your ${goal} goals. Consider alternative cities from this report for better alignment with your objectives.`;
   
   return data;
 }

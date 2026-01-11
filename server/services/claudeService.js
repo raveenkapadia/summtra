@@ -839,6 +839,112 @@ async function generateAllInterpretations(astrologyData, userData, reportType) {
   }
 }
 
+async function generateAvoidCityInterpretation(city, userData) {
+  const anthropic = getAnthropicClient();
+  const zodiac = getZodiacSign(userData.birthDate);
+  const goal = (userData.reportGoal || 'complete').toLowerCase();
+  
+  const cityName = city.name || city.city;
+  const country = city.country || '';
+  const score = city.score || 45;
+  
+  const challengingPlanets = ['Saturn', 'Mars', 'Pluto'];
+  const randomPlanet = challengingPlanets[Math.floor(Math.random() * challengingPlanets.length)];
+  const lineTypes = ['MC', 'IC', 'AC', 'DC'];
+  const randomLine = lineTypes[Math.floor(Math.random() * lineTypes.length)];
+  
+  const goalChallenges = {
+    'career': 'authority conflicts, workplace obstacles, and slow career progression',
+    'wealth': 'financial blocks, unexpected expenses, and limited earning potential',
+    'love': 'communication barriers, misunderstandings, and relationship tensions',
+    'education': 'learning difficulties, mentor conflicts, and academic pressure',
+    'settlement': 'instability, adaptation challenges, and difficulty establishing roots',
+    'complete': 'general life friction, recurring obstacles, and energy drain'
+  };
+  
+  const prompt = `You are an expert astrocartographer providing cautionary guidance.
+
+USER: ${userData.name || 'the user'}
+ZODIAC: ${zodiac.name} (${zodiac.element} sign)
+GOAL: ${goal}
+CITY: ${cityName}, ${country}
+SCORE: ${score}% compatibility (LOW)
+CHALLENGING LINE: ${randomPlanet}-${randomLine}
+
+Write a brief (2-3 sentences) personalized caution interpretation explaining:
+1. Why this location may present challenges for their ${goal} goal
+2. One specific planetary influence creating friction
+3. A neutral, non-discouraging tone - not "avoid at all costs" but "proceed with awareness"
+
+Keep it under 50 words. Be specific to this city and goal.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 150,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    
+    return response.content[0].text.trim();
+  } catch (error) {
+    console.error(`   ⚠️ Failed to generate avoid interpretation for ${cityName}: ${error.message}`);
+    return `${cityName} may present challenges for your ${goal} goals due to ${randomPlanet}-${randomLine} line influences. As a ${zodiac.name}, you might experience ${goalChallenges[goal] || 'general friction'} here. Consider this location with careful planning.`;
+  }
+}
+
+async function generateAvoidCityInterpretations(cities, userData) {
+  console.log(`🤖 Generating AI interpretations for ${cities.length} caution cities...`);
+  
+  const BATCH_SIZE = 3;
+  const BATCH_DELAY = 800;
+  
+  const allResults = [];
+  
+  for (let i = 0; i < cities.length; i += BATCH_SIZE) {
+    const batch = cities.slice(i, i + BATCH_SIZE);
+    
+    const batchResults = await Promise.allSettled(
+      batch.map(async (city) => {
+        try {
+          const interpretation = await generateAvoidCityInterpretation(city, userData);
+          return {
+            ...city,
+            avoidInterpretation: interpretation
+          };
+        } catch (error) {
+          const zodiac = getZodiacSign(userData.birthDate);
+          const goal = userData.reportGoal || 'complete';
+          return {
+            ...city,
+            avoidInterpretation: `${city.name || city.city} may present some challenges for your ${goal} objectives. As a ${zodiac.name}, careful consideration is advised before committing to this location.`
+          };
+        }
+      })
+    );
+    
+    allResults.push(...batchResults);
+    
+    if (i + BATCH_SIZE < cities.length) {
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+    }
+  }
+  
+  const interpretedCities = allResults.map((result, index) => {
+    if (result.status === 'fulfilled') {
+      console.log(`   ⚠️ ${cities[index].name || cities[index].city}: Caution interpretation generated`);
+      return result.value;
+    } else {
+      return {
+        ...cities[index],
+        avoidInterpretation: `This location may require extra consideration for your goals.`
+      };
+    }
+  });
+  
+  console.log(`   ✅ All ${interpretedCities.length} caution interpretations complete!`);
+  return interpretedCities;
+}
+
 module.exports = {
   generateIntroduction,
   generateAllLineInterpretations,
@@ -852,6 +958,8 @@ module.exports = {
   generateAllInterpretations,
   generateQuickCityInterpretation,
   generateCityInterpretations,
+  generateAvoidCityInterpretation,
+  generateAvoidCityInterpretations,
   getZodiacSign,
   applyGoalScoreBoost,
   ALL_PLANETS,
