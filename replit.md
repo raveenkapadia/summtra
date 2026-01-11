@@ -149,20 +149,33 @@ The report includes a comprehensive credibility/transparency layer to build user
    - Explains that lines influence areas within 700km orb
 
 3. **Paran Lines System**
-   - Latitude-based planetary alignments that exist everywhere
-   - Goal-specific paran combinations:
-     - Career: Sun-Jupiter (Recognition), Sun-Mercury (Authority)
-     - Wealth: Jupiter-Venus (Prosperity), Venus-Mercury (Commerce)
-     - Love: Venus-Moon (Harmony), Venus-Mars (Passion)
-     - Education: Mercury-Jupiter (Wisdom), Mercury-Moon (Intuition)
-     - Settlement: Moon-Saturn (Stability), Jupiter-Saturn (Foundation)
+   - Latitude-based planetary alignments with zone-specific combinations
+   - **Latitude Bands**: Tropical (<15°), Subtropical (15-25°), Temperate (25-40°), Northern (>40°)
+   - Each band has distinct paran combinations + goal-specific modifiers
+   - Goal paran additions: Career (Sun-Jupiter), Wealth (Jupiter-Venus), Love (Venus-Mars), etc.
 
-4. **50/50 Western + Vedic Scoring**
-   - Western (50 points): Line Proximity (25), Paran Lines (25)
-   - Vedic (50 points): Nakshatra+Rashi (20), Lagna-Vastu (15), Dasha Timing (15)
+4. **Data-Driven 50/50 Western + Vedic Scoring**
+   - **Western Score** (scaled from raw data):
+     - Line Proximity: Haversine distance to nearest planetary line (max 25 raw points)
+     - Paran Lines: Count of active parans for city latitude (max 25 raw points)
+   - **Vedic Score** (scaled from birth data):
+     - Nakshatra+Rashi Affinity: Element affinity + directional matching (max 20 raw points)
+     - Lagna-Vastu: Lagna element correlation with city score (max 15 raw points)
+     - Dasha Timing: Dasha lord affinity table per goal (max 15 raw points)
+   - Raw totals proportionally scaled to match city's published score
    - Displayed on city pages with visual breakdown
 
-5. **Understanding Your Lines Page**
+5. **Birthplace Direction Logic**
+   - Shows cardinal direction from birthplace to city (N/S/E/W/NE/NW/SE/SW)
+   - Shows "Origin" instead when city is within 50km of birthplace
+   - Uses atan2 for accurate compass bearing calculation
+
+6. **Avoid City AI Interpretations**
+   - Claude generates unique caution interpretations for each low-score city
+   - Goal-specific challenging factors (authority conflicts, financial blocks, etc.)
+   - Neutral, non-discouraging tone with planetary influence context
+
+7. **Understanding Your Lines Page**
    - Educational page explaining orb influence, paran lines, and scoring methodology
    - Shows user's planetary line paths across globe regions
    - Explains why cities work even when direct lines pass elsewhere
