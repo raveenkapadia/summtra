@@ -1,0 +1,210 @@
+## Technical Verification Request - Complete Audit
+
+### Test User Details
+
+Name: Raveen Kapadia
+Date of Birth: November 15, 1982
+Time of Birth: 8:20 AM IST
+Birth Place: Ahmedabad, Gujarat, India
+Coordinates: 23.0225°N, 72.5714°E
+Goal: Wealth
+Scope: Both (India + International)
+
+---
+
+### PART A: Verify Vedic API Data
+
+Please query your Vedic API and confirm these values:
+
+| Parameter | Expected Value | API Returns | Match? |
+|-----------|----------------|-------------|--------|
+| Lagna (Ascendant) | Scorpio | ? | ? |
+| Rashi (Moon Sign) | Libra | ? | ? |
+| Nakshatra | Vishakha | ? | ? |
+| Mahadasha Lord | Mercury | ? | ? |
+| Mahadasha Period | Feb 2014 - Jun 2031 | ? | ? |
+| Antardasha Lord | Rahu | ? | ? |
+| Antardasha Period | Nov 2023 - Jun 2026 | ? | ? |
+
+---
+
+### PART B: Verify Lookup Tables
+
+For Scorpio Lagna, confirm your code returns:
+
+| Lookup | Expected | Your Code Returns | Match? |
+|--------|----------|-------------------|--------|
+| 2nd House Lord | Jupiter | ? | ? |
+| 11th House Lord | Mercury | ? | ? |
+| Yogakaraka | null | ? | ? |
+
+---
+
+### PART C: Verify Boost Calculations
+
+For each planet, show the step-by-step multiplication:
+
+**Mercury:**
+| Factor | Condition | Applies? | Value |
+|--------|-----------|----------|-------|
+| Natural Benefic | Is Jupiter or Venus? | No | ×1.0 |
+| 2nd Lord | Is Jupiter? | No | ×1.0 |
+| 11th Lord | Is Mercury? | Yes | ×1.20 |
+| Yogakaraka | Is null? | No | ×1.0 |
+| Mahadasha | Is Mercury? | Yes | ×1.15 |
+| **TOTAL** | 1.0 × 1.0 × 1.20 × 1.0 × 1.15 | | **1.38** |
+
+Your calculation: ?
+
+**Jupiter:**
+| Factor | Condition | Applies? | Value |
+|--------|-----------|----------|-------|
+| Natural Benefic | Is Jupiter or Venus? | Yes | ×1.10 |
+| 2nd Lord | Is Jupiter? | Yes | ×1.25 |
+| 11th Lord | Is Mercury? | No | ×1.0 |
+| Yogakaraka | Is null? | No | ×1.0 |
+| Mahadasha | Is Mercury? | No | ×1.0 |
+| **TOTAL** | 1.10 × 1.25 × 1.0 × 1.0 × 1.0 | | **1.375** |
+
+Your calculation: ?
+
+**Venus:**
+| Factor | Condition | Applies? | Value |
+|--------|-----------|----------|-------|
+| Natural Benefic | Is Jupiter or Venus? | Yes | ×1.10 |
+| 2nd Lord | Is Jupiter? | No | ×1.0 |
+| 11th Lord | Is Mercury? | No | ×1.0 |
+| Yogakaraka | Is null? | No | ×1.0 |
+| Mahadasha | Is Mercury? | No | ×1.0 |
+| **TOTAL** | 1.10 × 1.0 × 1.0 × 1.0 × 1.0 | | **1.10** |
+
+Your calculation: ?
+
+**Sun, Mars, Saturn, Moon:**
+| Planet | Expected Boost | Your Calculation |
+|--------|----------------|------------------|
+| Sun | 1.0 | ? |
+| Mars | 1.0 | ? |
+| Saturn | 1.0 | ? |
+| Moon | 1.0 | ? |
+
+---
+
+### PART D: Verify Astrocartography API Data
+
+For this user's birth chart, confirm planetary line positions:
+
+| Planet-Line | Passes Near (City) | Distance | Verified? |
+|-------------|-------------------|----------|-----------|
+| Jupiter-AC | Doha | ~44km | ? |
+| Venus-AC | Dubai | ~43km | ? |
+| Mercury-MC | Seoul | ~347km | ? |
+| Venus-MC | Tokyo | ~279km | ? |
+
+---
+
+### PART E: Verify Complete Score Flow
+
+Show detailed calculation for these 3 cities:
+
+**City 1: Seoul (Should be #1)**
+
+| Step | Calculation | Value |
+|------|-------------|-------|
+| Nearest Goal Planet | Mercury-MC | |
+| Distance | | ?km |
+| Base Line Score (from distance) | | ?/25 |
+| Planet Boost | Mercury = 1.38 | ×1.38 |
+| Adjusted Line Score | Base × 1.38 | ? (cap 35) |
+| Paran Score | | ?/25 |
+| Western Raw | Adj Line + Paran | ? |
+| Western Final | Cap at 50 | ? |
+| Direction | East | ×1.0 |
+| Western After Direction | Western × 1.0 | ? |
+| Vedic Total | | ?/50 |
+| Final Score | Western + Vedic | ?% |
+
+**City 2: Tokyo (Should be #3)**
+
+| Step | Calculation | Value |
+|------|-------------|-------|
+| Nearest Goal Planet | Venus-MC | |
+| Distance | | ?km |
+| Base Line Score | | ?/25 |
+| Planet Boost | Venus = 1.10 | ×1.10 |
+| Adjusted Line Score | Base × 1.10 | ? (cap 35) |
+| Paran Score | | ?/25 |
+| Western Raw | | ? |
+| Western Final | Cap at 50 | ? |
+| Direction | East | ×1.0 |
+| Western After Direction | | ? |
+| Vedic Total | | ?/50 |
+| Final Score | | ?% |
+
+**City 3: Doha (Should be ~#28)**
+
+| Step | Calculation | Value |
+|------|-------------|-------|
+| Nearest Goal Planet | Jupiter-AC | |
+| Distance | | ?km |
+| Base Line Score | | ?/25 |
+| Planet Boost | Jupiter = 1.375 | ×1.375 |
+| Adjusted Line Score | Base × 1.375 | ? (cap 35) |
+| Paran Score | | ?/25 |
+| Western Raw | | ? |
+| Western Final | Cap at 50 | ? |
+| Direction | West | ×0.75 |
+| Western After Direction | Western × 0.75 | ? |
+| Vedic Total | | ?/50 |
+| Final Score | | ?% |
+
+---
+
+### PART F: Verify Edge Cases
+
+**F1: Rahu/Ketu Mahadasha Skip**
+
+If a user has Rahu Mahadasha, confirm:
+- Mahadasha boost (×1.15) is NOT applied
+- Show: "Rahu detected → Mahadasha boost skipped"
+
+**F2: Yogakaraka Test**
+
+For a Capricorn Lagna user:
+- Yogakaraka should be Venus
+- Venus boost should be: 1.10 × 1.30 = 1.43
+- Confirm this works
+
+**F3: Unboosted Planet**
+
+For Sun line (boost = 1.0):
+- Score should be same as before Step 2
+- No penalty for having boost = 1.0
+
+---
+
+### PART G: Summary Table
+
+After verification, show final Top 10 + Gulf cities:
+
+| Rank | City | Planet | Distance | Base Line | Boost | Adj Line | Paran | West | Dir | West Adj | Vedic | Final % |
+|------|------|--------|----------|-----------|-------|----------|-------|------|-----|----------|-------|---------|
+| 1 | Seoul | Mercury-MC | ?km | ? | 1.38 | ? | ? | ? | ×1.0 | ? | ? | ?% |
+| 2 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ?% |
+| 3 | Tokyo | Venus-MC | ?km | ? | 1.10 | ? | ? | ? | ×1.0 | ? | ? | ?% |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
+| ? | Doha | Jupiter-AC | ?km | ? | 1.375 | ? | ? | ? | ×0.75 | ? | ? | ?% |
+| ? | Dubai | Venus-AC | ?km | ? | 1.10 | ? | ? | ? | ×0.75 | ? | ? | ?% |
+
+---
+
+### What I Need Confirmed
+
+1. ✅ or ❌ - Vedic API returns correct Lagna, Nakshatra, Dasha
+2. ✅ or ❌ - Lookup tables return correct 2nd/11th Lords
+3. ✅ or ❌ - Boost calculations match expected values
+4. ✅ or ❌ - Astrocartography API returns correct line distances
+5. ✅ or ❌ - Score flow is calculated correctly
+6. ✅ or ❌ - Edge cases handled properly
+
+Please fill in all "?" values and confirm each step.

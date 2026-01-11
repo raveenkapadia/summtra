@@ -1,0 +1,190 @@
+## Multiple Test Cases - Complete Verification
+
+---
+
+### TEST CASE 1: India Scope Verification
+
+Same user, but India scope only:
+
+**User:** Raveen Kapadia
+**DOB:** November 15, 1982, 8:20 AM
+**Place:** Ahmedabad
+**Goal:** Wealth
+**Scope:** India (not Both)
+
+**Verify:**
+
+1. Does the API filter to only Indian cities?
+2. Are boost calculations same as "Both" scope?
+3. Are direction penalties applied correctly?
+
+**Show results:**
+
+| Rank | City | Planet | Distance | Boost | Dir Factor | Final % |
+|------|------|--------|----------|-------|------------|---------|
+| 1 | ? | ? | ? | ? | ? | ? |
+| 2 | ? | ? | ? | ? | ? | ? |
+| 3 | ? | ? | ? | ? | ? | ? |
+| ... | ... | ... | ... | ... | ... | ... |
+| Top East city | ? | ? | ? | ? | ×1.0 | ? |
+| Top West city | ? | ? | ? | ? | ×0.75 | ? |
+
+**Expected:**
+- Kolkata, Nagpur, Bhopal (East) should rank higher
+- Mumbai, Ahmedabad (West) should have direction penalty
+
+---
+
+### TEST CASE 2: Different Lagna - Capricorn (Has Yogakaraka)
+
+Create test for Capricorn Lagna user:
+
+**User:** Test User 2
+**DOB:** January 15, 1990, 10:00 AM
+**Place:** Delhi
+**Goal:** Wealth
+**Scope:** Both
+
+**First, confirm Vedic data:**
+
+| Parameter | Expected | API Returns | Match? |
+|-----------|----------|-------------|--------|
+| Lagna | Capricorn (or nearby) | ? | ? |
+| Yogakaraka | Venus | ? | ? |
+| 2nd Lord | Saturn | ? | ? |
+| 11th Lord | Mars | ? | ? |
+| Current Mahadasha | ? | ? | ? |
+
+**If Lagna is Capricorn, expected boosts:**
+
+| Planet | Calculation | Expected Boost |
+|--------|-------------|----------------|
+| Venus | 1.10 × 1.30 (Yogakaraka) | 1.43 |
+| Saturn | 1.0 × 1.25 (2nd Lord) | 1.25 |
+| Mars | 1.0 × 1.20 (11th Lord) | 1.20 |
+| Jupiter | 1.10 | 1.10 |
+
+**Show Top 5 cities and verify Venus lines rank highest.**
+
+---
+
+### TEST CASE 3: Challenging Mahadasha - Saturn for Cancer Lagna
+
+This tests: Does location help during difficult period?
+
+**User:** Test User 3
+**DOB:** July 10, 1985, 6:00 AM
+**Place:** Mumbai
+**Goal:** Wealth
+**Scope:** Both
+
+**Expected Vedic data:**
+
+| Parameter | Expected |
+|-----------|----------|
+| Lagna | Cancer (approximate) |
+| 2nd Lord | Sun |
+| 11th Lord | Venus |
+| Yogakaraka | Mars |
+
+**Key Question:** If this user is in Saturn Mahadasha:
+
+| Current Logic | Better Logic |
+|---------------|--------------|
+| Boost Saturn lines (×1.15) | Saturn is MALEFIC for Cancer - DON'T boost |
+
+**Verify:**
+- What Mahadasha is this user in?
+- If Saturn, is it being boosted?
+- Should we ADD a check for functional malefic?
+
+---
+
+### TEST CASE 4: Rahu Mahadasha (Shadow Planet Skip)
+
+**User:** Test User 4
+**DOB:** March 5, 1978, 3:30 PM
+**Place:** Chennai
+**Goal:** Wealth
+**Scope:** Both
+
+**Verify:**
+- If user is in Rahu Mahadasha
+- Mahadasha boost (×1.15) should be SKIPPED
+- Show: "Rahu Mahadasha detected → No Dasha boost applied"
+
+---
+
+### TEST CASE 5: Same Lagna, Different Mahadasha
+
+Compare two users with SAME Lagna but DIFFERENT Mahadasha:
+
+**User 5A:** Scorpio Lagna + Mercury Mahadasha (our original user)
+**User 5B:** Scorpio Lagna + Jupiter Mahadasha
+
+**For User 5A:**
+| Planet | Boost |
+|--------|-------|
+| Mercury | 1.38 (11th + Dasha) |
+| Jupiter | 1.375 (Natural + 2nd) |
+
+**For User 5B (if Jupiter Dasha):**
+| Planet | Boost |
+|--------|-------|
+| Mercury | 1.20 (11th only) |
+| Jupiter | 1.58 (Natural + 2nd + Dasha) |
+
+**User 5B should see Jupiter lines ranked higher than Mercury lines.**
+
+Can you create a test user with Scorpio Lagna + Jupiter Mahadasha to verify?
+
+---
+
+### OUTPUT FORMAT
+
+For each test case, show:
+
+**1. Vedic Profile:**
+| Parameter | Value |
+|-----------|-------|
+| Lagna | ? |
+| 2nd Lord | ? |
+| 11th Lord | ? |
+| Yogakaraka | ? |
+| Mahadasha | ? |
+
+**2. Boost Table:**
+| Planet | Boost | Calculation |
+|--------|-------|-------------|
+| ? | ? | ? |
+
+**3. Top 5 Results:**
+| Rank | City | Planet | Boost | Final % |
+|------|------|--------|-------|---------|
+
+**4. Validation:**
+- ✅ or ❌ for each check
+
+---
+
+### SUMMARY TABLE NEEDED
+
+After all tests, show:
+
+| Test Case | Lagna | Mahadasha | Top Planet | Top City | Working? |
+|-----------|-------|-----------|------------|----------|----------|
+| 1 (India) | Scorpio | Mercury | Mercury | ? | ? |
+| 2 (Yogakaraka) | Capricorn | ? | Venus | ? | ? |
+| 3 (Challenging) | Cancer | Saturn? | ? | ? | ? |
+| 4 (Rahu Skip) | ? | Rahu | ? | ? | ? |
+| 5 (Different Dasha) | Scorpio | Jupiter | Jupiter | ? | ? |
+
+---
+
+### QUESTIONS TO ANSWER
+
+1. Does India scope apply same boost logic? ✅ or ❌
+2. Does Yogakaraka boost work (×1.30)? ✅ or ❌
+3. Is Rahu/Ketu Mahadasha skipped? ✅ or ❌
+4. Does different Mahadasha change rankings? ✅ or ❌
+5. Should we add "functional malefic" check? (Discussion)

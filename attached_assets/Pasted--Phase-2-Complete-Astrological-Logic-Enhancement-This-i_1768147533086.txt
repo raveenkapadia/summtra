@@ -1,0 +1,309 @@
+## Phase 2: Complete Astrological Logic Enhancement
+
+This is astrology - people's lives depend on accurate recommendations.
+We need to fix 3 issues for perfect logic.
+
+---
+
+### ISSUE 1: Add Yogakaraka to Goal Planets
+
+**Problem:** 
+For Taurus Lagna, Yogakaraka is Saturn.
+But Saturn is NOT in Wealth goal planets (Jupiter, Venus, Mercury, Sun).
+So Taurus users never see their most beneficial planet.
+
+**Solution:**
+When user has a Yogakaraka, ADD that planet to their personal goal planets.
+```javascript
+function getPersonalGoalPlanets(goal, lagna) {
+  // Base goal planets
+  const baseGoalPlanets = {
+    'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+    'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+    'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
+    'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+    'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+    'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon', 'Mercury', 'Saturn', 'Mars']
+  };
+  
+  let personalPlanets = [...baseGoalPlanets[goal]];
+  
+  // Add Yogakaraka if exists and not already in list
+  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
+  if (yogakaraka && !personalPlanets.includes(yogakaraka)) {
+    personalPlanets.push(yogakaraka);
+  }
+  
+  return personalPlanets;
+}
+```
+
+**Example:**
+- Taurus Lagna + Wealth Goal
+- Base: [Jupiter, Venus, Mercury, Sun]
+- Yogakaraka: Saturn
+- Personal: [Jupiter, Venus, Mercury, Sun, **Saturn**]
+
+Now Saturn lines will appear for Taurus users!
+
+---
+
+### ISSUE 2: Functional Benefic/Malefic Check
+
+**Problem:**
+If Cancer Lagna user is in Saturn Mahadasha:
+- Saturn rules 7th (maraka) and 8th (challenges)
+- Saturn is FUNCTIONAL MALEFIC for Cancer
+- Current system gives ×1.15 boost (WRONG!)
+- Should give PENALTY instead
+
+**Solution:**
+Add functional benefic/malefic lookup table.
+```javascript
+const FUNCTIONAL_STATUS_BY_LAGNA = {
+  'Aries': {
+    benefics: ['Jupiter', 'Sun', 'Mars', 'Moon'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Taurus': {
+    benefics: ['Saturn', 'Venus', 'Sun', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Gemini': {
+    benefics: ['Venus', 'Saturn', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Cancer': {
+    benefics: ['Mars', 'Jupiter', 'Moon'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Leo': {
+    benefics: ['Mars', 'Jupiter', 'Sun'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Virgo': {
+    benefics: ['Venus', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
+  },
+  'Libra': {
+    benefics: ['Saturn', 'Venus', 'Mercury'],
+    malefics: ['Sun', 'Moon', 'Mars', 'Jupiter']
+  },
+  'Scorpio': {
+    benefics: ['Jupiter', 'Moon', 'Sun'],
+    malefics: ['Mercury', 'Venus', 'Mars']
+  },
+  'Sagittarius': {
+    benefics: ['Jupiter', 'Sun', 'Mars'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Capricorn': {
+    benefics: ['Venus', 'Saturn', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Aquarius': {
+    benefics: ['Venus', 'Saturn'],
+    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
+  },
+  'Pisces': {
+    benefics: ['Jupiter', 'Moon', 'Mars'],
+    malefics: ['Sun', 'Mercury', 'Venus', 'Saturn']
+  }
+};
+```
+
+---
+
+### ISSUE 3: Updated Boost Calculation
+
+**New Logic:**
+```javascript
+function getPersonalizedPlanetMultiplier(planet, lagna, mahadasha) {
+  const wealthLords = WEALTH_LORDS_BY_LAGNA[lagna];
+  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
+  const functionalStatus = FUNCTIONAL_STATUS_BY_LAGNA[lagna];
+  
+  let multiplier = 1.0;
+  
+  // 1. Natural wealth planets (Jupiter, Venus)
+  if (['Jupiter', 'Venus'].includes(planet)) {
+    multiplier *= 1.10;
+  }
+  
+  // 2. Personal 2nd house lord (wealth)
+  if (planet === wealthLords.secondLord) {
+    multiplier *= 1.20;
+  }
+  
+  // 3. Personal 11th house lord (gains)
+  if (planet === wealthLords.eleventhLord) {
+    multiplier *= 1.15;
+  }
+  
+  // 4. Yogakaraka (most beneficial planet)
+  if (yogakaraka && planet === yogakaraka) {
+    multiplier *= 1.35;
+  }
+  
+  // 5. Mahadasha Lord - BUT CHECK IF BENEFIC OR MALEFIC
+  if (mahadasha && mahadasha !== 'Rahu' && mahadasha !== 'Ketu') {
+    if (planet === mahadasha) {
+      // Check if Mahadasha planet is benefic or malefic for this Lagna
+      if (functionalStatus.benefics.includes(mahadasha)) {
+        multiplier *= 1.15;  // Boost for benefic Mahadasha
+      } else if (functionalStatus.malefics.includes(mahadasha)) {
+        multiplier *= 0.85;  // PENALTY for malefic Mahadasha
+      }
+    }
+  }
+  
+  // 6. General functional malefic penalty (even if not Mahadasha)
+  if (functionalStatus.malefics.includes(planet)) {
+    multiplier *= 0.90;  // Slight penalty for malefic planets
+  }
+  
+  return multiplier;
+}
+```
+
+---
+
+### EXAMPLES OF NEW LOGIC
+
+**Example 1: Taurus Lagna + Saturn Mahadasha**
+
+Saturn is Yogakaraka AND Mahadasha Lord AND Benefic:
+
+| Factor | Applies | Multiplier |
+|--------|---------|------------|
+| Natural Benefic | No | ×1.0 |
+| 2nd Lord | No | ×1.0 |
+| 11th Lord | No | ×1.0 |
+| Yogakaraka | Yes | ×1.35 |
+| Mahadasha (Benefic) | Yes | ×1.15 |
+| Functional Malefic | No | ×1.0 |
+| **TOTAL** | | **×1.55** |
+
+Saturn lines should be HIGHLY recommended for this user!
+
+---
+
+**Example 2: Cancer Lagna + Saturn Mahadasha**
+
+Saturn is Mahadasha Lord BUT Functional Malefic:
+
+| Factor | Applies | Multiplier |
+|--------|---------|------------|
+| Natural Benefic | No | ×1.0 |
+| 2nd Lord | No (Sun is 2nd Lord) | ×1.0 |
+| 11th Lord | No (Venus is 11th Lord) | ×1.0 |
+| Yogakaraka | No (Mars is Yoga) | ×1.0 |
+| Mahadasha (Malefic) | Yes | ×0.85 |
+| Functional Malefic | Yes | ×0.90 |
+| **TOTAL** | | **×0.765** |
+
+Saturn lines should be PENALIZED for this user!
+
+---
+
+**Example 3: Cancer Lagna + Jupiter Mahadasha**
+
+Jupiter is Natural Benefic AND Mahadasha Lord AND Functional Benefic:
+
+| Factor | Applies | Multiplier |
+|--------|---------|------------|
+| Natural Benefic | Yes | ×1.10 |
+| 2nd Lord | No | ×1.0 |
+| 11th Lord | No | ×1.0 |
+| Yogakaraka | No | ×1.0 |
+| Mahadasha (Benefic) | Yes | ×1.15 |
+| Functional Malefic | No | ×1.0 |
+| **TOTAL** | | **×1.265** |
+
+Jupiter lines should be recommended for this user.
+
+---
+
+### TEST CASES AFTER IMPLEMENTATION
+
+**Test 1: Taurus Lagna + Saturn Mahadasha**
+
+| Check | Expected |
+|-------|----------|
+| Saturn in goal planets? | Yes (Yogakaraka added) |
+| Saturn boost | ×1.55 (Yoga + Benefic Dasha) |
+| Saturn lines appear in top rankings? | Yes |
+
+**Test 2: Cancer Lagna + Saturn Mahadasha**
+
+| Check | Expected |
+|-------|----------|
+| Saturn boost | ×0.765 (Malefic penalty) |
+| Saturn lines ranked low? | Yes |
+| Jupiter/Mars lines ranked higher? | Yes |
+
+**Test 3: Cancer Lagna + Mars Mahadasha**
+
+Mars is Yogakaraka for Cancer!
+
+| Check | Expected |
+|-------|----------|
+| Mars in goal planets? | Yes (Yogakaraka added) |
+| Mars boost | ×1.35 × 1.15 = ×1.55 (Yoga + Benefic Dasha) |
+| Mars lines appear high in rankings? | Yes |
+
+---
+
+### OUTPUT FORMAT
+
+After implementation, show for each test:
+
+**Vedic Profile:**
+| Parameter | Value |
+|-----------|-------|
+| Lagna | ? |
+| Yogakaraka | ? |
+| Mahadasha | ? |
+| Is Mahadasha Benefic? | Yes/No |
+
+**Planet Boosts:**
+| Planet | Calculation | Final Boost |
+|--------|-------------|-------------|
+| Jupiter | ? | ? |
+| Venus | ? | ? |
+| Saturn | ? | ? |
+| Mars | ? | ? |
+| Mercury | ? | ? |
+| Sun | ? | ? |
+| Moon | ? | ? |
+
+**Top 5 Results:**
+| Rank | City | Planet | Boost | Final % |
+|------|------|--------|-------|---------|
+
+---
+
+### SUMMARY OF CHANGES
+
+| Change | Before | After |
+|--------|--------|-------|
+| Yogakaraka in goal planets | No | Yes - added dynamically |
+| Malefic Mahadasha | ×1.15 boost (wrong) | ×0.85 penalty (correct) |
+| Functional malefic penalty | None | ×0.90 penalty |
+| Goal planets | Fixed list | Personalized per Lagna |
+
+---
+
+### IMPORTANT NOTES
+
+1. This makes recommendations TRULY personalized
+2. A Taurus user in Saturn Dasha will see DIFFERENT results than Cancer user in Saturn Dasha
+3. We're now recommending BENEFICIAL lines and PENALIZING harmful lines
+4. This is proper Vedic astrology logic
+
+Please implement and test with:
+- Taurus Lagna + Saturn Mahadasha
+- Cancer Lagna + Saturn Mahadasha
+- Cancer Lagna + Mars Mahadasha
+
+Compare results to verify the logic is working correctly.
