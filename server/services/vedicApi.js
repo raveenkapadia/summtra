@@ -184,6 +184,19 @@ export async function getVedicProfile(birthData) {
       }
     }
     
+    // Build planetPositions object for exaltation/combustion checks
+    const planetPositions = {};
+    for (const p of planets) {
+      if (p.name && p.name !== 'Ascendant') {
+        planetPositions[p.name] = {
+          sign: p.sign,
+          longitude: p.fullDegree || null,
+          normDegree: p.normDegree || null,
+          isRetro: p.isRetro === 'true' || p.isRetro === true
+        };
+      }
+    }
+    
     return {
       rashi: moon?.sign || null,
       rashiLord: moon?.signLord || null,
@@ -195,12 +208,14 @@ export async function getVedicProfile(birthData) {
       sunSign: sun?.sign || null,
       currentDashaLord: currentDasha?.planet || currentDasha?.major || null,
       currentDashaEnd: currentDasha?.end || null,
+      planetPositions, // For exaltation/combustion checks
       planets: planets.map(p => ({
         name: p.name,
         sign: p.sign,
         house: p.house,
         nakshatra: p.nakshatra,
-        isRetro: p.isRetro === 'true' || p.isRetro === true
+        isRetro: p.isRetro === 'true' || p.isRetro === true,
+        longitude: p.fullDegree || null
       }))
     };
   } catch (error) {

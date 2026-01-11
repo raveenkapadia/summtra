@@ -1287,6 +1287,64 @@ const FUNCTIONAL_STATUS_BY_LAGNA = {
   }
 };
 
+// Exaltation and Debilitation signs for each planet
+const EXALTATION = {
+  'Sun': { exalted: 'Aries', debilitated: 'Libra' },
+  'Moon': { exalted: 'Taurus', debilitated: 'Scorpio' },
+  'Mars': { exalted: 'Capricorn', debilitated: 'Cancer' },
+  'Mercury': { exalted: 'Virgo', debilitated: 'Pisces' },
+  'Jupiter': { exalted: 'Cancer', debilitated: 'Capricorn' },
+  'Venus': { exalted: 'Pisces', debilitated: 'Virgo' },
+  'Saturn': { exalted: 'Libra', debilitated: 'Aries' }
+};
+
+// Combustion orbs (degrees from Sun) for each planet
+const COMBUSTION_ORBS = {
+  'Moon': 12,
+  'Mars': 17,
+  'Mercury': 14,
+  'Jupiter': 11,
+  'Venus': 10,
+  'Saturn': 15
+};
+
+// Get exaltation modifier based on planet's sign placement
+function getExaltationModifier(planet, planetSign) {
+  const status = EXALTATION[planet];
+  if (!status || !planetSign) return { modifier: 1.0, status: 'normal' };
+  
+  // Clean the sign name
+  const cleanSign = planetSign.split(' ')[0].replace(/[()]/g, '');
+  
+  if (cleanSign === status.exalted) {
+    return { modifier: 1.15, status: 'exalted' }; // +15% boost
+  } else if (cleanSign === status.debilitated) {
+    return { modifier: 0.85, status: 'debilitated' }; // -15% penalty
+  }
+  return { modifier: 1.0, status: 'normal' };
+}
+
+// Check if planet is combust (too close to Sun)
+function isCombust(planet, sunLongitude, planetLongitude) {
+  if (!COMBUSTION_ORBS[planet]) return false; // Sun, Rahu, Ketu can't be combust
+  if (sunLongitude === null || sunLongitude === undefined) return false;
+  if (planetLongitude === null || planetLongitude === undefined) return false;
+  
+  const orb = COMBUSTION_ORBS[planet];
+  const distance = Math.abs(sunLongitude - planetLongitude);
+  const normalizedDistance = distance > 180 ? 360 - distance : distance;
+  
+  return normalizedDistance <= orb;
+}
+
+// Get combustion modifier
+function getCombustionModifier(planet, sunLongitude, planetLongitude) {
+  if (isCombust(planet, sunLongitude, planetLongitude)) {
+    return { modifier: 0.85, isCombust: true }; // -15% penalty for combust planets
+  }
+  return { modifier: 1.0, isCombust: false };
+}
+
 // Get personalized goal planets (adds Yogakaraka to base list)
 function getPersonalGoalPlanets(goal, lagna) {
   const baseGoalPlanets = {
@@ -1310,6 +1368,8 @@ function getPersonalGoalPlanets(goal, lagna) {
 }
 
 // Calculate personalized planet boost based on user's chart
+// Note: Mahadasha timing is handled separately in Vedic Score (WHEN results manifest)
+// This function calculates planet strength (WHERE to go based on natal chart)
 function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   let boost = 1.0;
   const reasons = [];
@@ -1323,15 +1383,15 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   const yogakaraka = YOGAKARAKA_BY_LAGNA[lagnaClean];
   const functionalStatus = FUNCTIONAL_STATUS_BY_LAGNA[lagnaClean] || { benefics: [], malefics: [] };
   
-  // Extract mahadasha planet name (handle both string and object formats)
-  let mahadasha = birthData.currentDashaLord || birthData.mahadasha || null;
-  if (mahadasha && typeof mahadasha === 'object') {
-    mahadasha = mahadasha.planet || null;
-  }
-  
   // Check if this planet is functional benefic or malefic for this lagna
   const isFunctionalBenefic = functionalStatus.benefics.includes(planet);
   const isFunctionalMalefic = functionalStatus.malefics.includes(planet);
+  
+  // Get planet positions for exaltation/combustion checks
+  const planetPositions = birthData.planetPositions || {};
+  const planetSign = planetPositions[planet]?.sign || null;
+  const sunLongitude = planetPositions['Sun']?.longitude || null;
+  const planetLongitude = planetPositions[planet]?.longitude || null;
   
   // 1. Natural benefic boost for Jupiter and Venus (×1.10)
   if (planet === 'Jupiter' || planet === 'Venus') {
@@ -1357,22 +1417,25 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     reasons.push(`Yogakaraka for ${lagnaClean} (×1.35)`);
   }
   
-  // 5. Mahadasha boost/penalty - depends on if planet is benefic or malefic
-  if (mahadasha && mahadasha !== 'Rahu' && mahadasha !== 'Ketu' && mahadasha === planet) {
-    // Check if Mahadasha lord is benefic or malefic for this lagna
-    const isMahadashaBenefic = functionalStatus.benefics.includes(mahadasha);
-    const isMahadashaMalefic = functionalStatus.malefics.includes(mahadasha);
-    
-    if (isMahadashaBenefic) {
-      boost *= 1.15;
-      reasons.push(`Benefic Mahadasha (×1.15)`);
-    } else if (isMahadashaMalefic) {
-      boost *= 0.85;
-      reasons.push(`Malefic Mahadasha (×0.85)`);
+  // 5. Exaltation/Debilitation modifier (±15%)
+  const exaltStatus = getExaltationModifier(planet, planetSign);
+  if (exaltStatus.modifier !== 1.0) {
+    boost *= exaltStatus.modifier;
+    if (exaltStatus.status === 'exalted') {
+      reasons.push(`Exalted in ${planetSign} (×1.15)`);
+    } else if (exaltStatus.status === 'debilitated') {
+      reasons.push(`Debilitated in ${planetSign} (×0.85)`);
     }
   }
   
-  // 6. General functional malefic penalty (×0.90) - even if not Mahadasha
+  // 6. Combustion check (-15% for combust planets)
+  const combustStatus = getCombustionModifier(planet, sunLongitude, planetLongitude);
+  if (combustStatus.isCombust) {
+    boost *= combustStatus.modifier;
+    reasons.push(`Combust (within ${COMBUSTION_ORBS[planet]}° of Sun) (×0.85)`);
+  }
+  
+  // 7. General functional malefic penalty (×0.90)
   if (isFunctionalMalefic) {
     boost *= 0.90;
     reasons.push(`Functional malefic for ${lagnaClean} (×0.90)`);
@@ -1383,9 +1446,11 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     reasons,
     wealthLords,
     yogakaraka,
-    mahadasha,
     isFunctionalBenefic,
-    isFunctionalMalefic
+    isFunctionalMalefic,
+    exaltationStatus: exaltStatus.status,
+    isCombust: combustStatus.isCombust,
+    planetSign: planetSign
   };
 }
 
