@@ -1,0 +1,111 @@
+## ROOT CAUSE INVESTIGATION: Why Does Vedic Exceed 50?
+
+### The Symptom
+Manila shows:
+- Vedic: 71/50 (exceeds maximum by 21)
+- Sub-components: 24/20, 23/15, 24/15 (all exceed)
+
+### Need to Trace Data Flow
+
+Please show me the ACTUAL values at each step for Manila:
+
+---
+
+### Step 1: Analysis Engine Output
+
+**Where is city.score calculated?**
+
+Show the function that calculates the score for a city.
+
+For Manila, what does the raw calculation return?
+```javascript
+// What function produces city.score = 88?
+// Show the actual code and values
+```
+
+**Questions:**
+1. Does the analysis engine apply caps?
+2. What are the raw Vedic sub-component values BEFORE any scaling?
+   - Raw Nakshatra score: ?
+   - Raw Lagna-Vastu score: ?
+   - Raw Dasha score: ?
+
+---
+
+### Step 2: Where Do Sub-Component Scores Come From?
+
+**For Nakshatra + Rashi (showing 24/20):**
+- What function calculates this?
+- What inputs does it use?
+- Why does it produce 24 instead of max 20?
+
+**For Lagna-Vastu (showing 23/15):**
+- What function calculates this?
+- Why does it produce 23 instead of max 15?
+
+**For Dasha Timing (showing 24/15):**
+- What function calculates this?
+- Why does it produce 24 instead of max 15?
+
+---
+
+### Step 3: PDF Assembler Transformation
+
+In `pdfAssembler.js`, you mentioned:
+```javascript
+const scaleFactor = rawTotal > 0 ? totalScore / rawTotal : 0.5;
+const westernTotal = Math.round(rawWesternTotal * scaleFactor);
+const vedicTotal = totalScore - westernTotal;
+```
+
+**Questions:**
+1. What is `totalScore` for Manila? (city.score = 88?)
+2. What is `rawTotal` for Manila?
+3. What is the `scaleFactor` being applied?
+4. Is this scaling causing the values to exceed caps?
+
+---
+
+### Step 4: Show Me The Code Path
+
+Please share the relevant code from:
+
+1. **Scoring function** - Where city.score is originally calculated
+2. **Vedic sub-component functions** - Where 24/20, 23/15, 24/15 come from
+3. **PDF Assembler** - Where breakdown values are prepared for display
+
+---
+
+### What We're Looking For
+
+| Possibility | How to Verify |
+|-------------|---------------|
+| Analysis engine never had caps | Check if Math.min() exists in scoring functions |
+| Scaling in PDF Assembler inflates values | Check scaleFactor calculation |
+| Boost multipliers push beyond caps | Check if boosts are applied after caps |
+| Caps exist but applied in wrong order | Check sequence of operations |
+
+---
+
+### Expected Output
+
+For Manila, show:
+```
+ANALYSIS ENGINE:
+- Raw Nakshatra score: X (before any scaling/caps)
+- Raw Lagna-Vastu score: X
+- Raw Dasha score: X
+- Raw Western score: X
+- city.score calculation: [show formula and result]
+
+PDF ASSEMBLER:
+- scaleFactor: X
+- Scaled Western: X
+- Scaled Vedic: X
+
+FINAL DISPLAY:
+- Western shown: 17/50
+- Vedic shown: 71/50
+```
+
+This will tell us exactly where the problem originates.
