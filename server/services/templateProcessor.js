@@ -924,7 +924,14 @@ export function prepareAvoidCityData(city, goal, bestCities, baseData) {
   
   data.ALT_CITY = altCity.name || 'a top-ranked city from this report';
   
-  data.AVOID_INTERPRETATION = city.avoidInterpretation || `This location may present some challenges for your ${goal} goals. Consider alternative cities from this report for better alignment with your objectives.`;
+  // Strip markdown formatting from interpretation text
+  let interpretation = city.avoidInterpretation || `This location may present some challenges for your ${goal} goals. Consider alternative cities from this report for better alignment with your objectives.`;
+  interpretation = interpretation
+    .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+    .replace(/\*(.*?)\*/g, '$1')      // Remove *italic*
+    .replace(/__(.*?)__/g, '$1')      // Remove __underline__
+    .replace(/_(.*?)_/g, '$1');       // Remove _italic_
+  data.AVOID_INTERPRETATION = interpretation;
   
   return data;
 }

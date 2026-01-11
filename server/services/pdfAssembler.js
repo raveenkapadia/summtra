@@ -144,7 +144,8 @@ export class PDFAssembler {
     if (this.scope === 'India') {
       regionalViews = REGIONAL_VIEWS_INDIA;
     } else if (this.scope === 'International') {
-      regionalViews = REGIONAL_VIEWS_INTERNATIONAL;
+      // Filter out 'world' since we already added World Overview above
+      regionalViews = REGIONAL_VIEWS_INTERNATIONAL.filter(v => v !== 'world');
     } else {
       regionalViews = [...REGIONAL_VIEWS_INDIA, ...REGIONAL_VIEWS_INTERNATIONAL.filter(v => v !== 'world')];
     }
