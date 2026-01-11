@@ -873,7 +873,21 @@ export class PDFAssembler {
 }
 
 function convertBirthDataForAPI(birthData) {
-  const [day, month, year] = birthData.birthDate.split('/').map(Number);
+  let day, month, year;
+  const dateStr = birthData.birthDate;
+  
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts[0].length === 4) {
+      [year, month, day] = parts.map(Number);
+    } else {
+      [day, month, year] = parts.map(Number);
+    }
+  } else if (dateStr.includes('/')) {
+    [day, month, year] = dateStr.split('/').map(Number);
+  } else {
+    year = 1990; month = 1; day = 1;
+  }
   
   let hour = 12, minute = 0;
   const timeMatch = birthData.birthTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
