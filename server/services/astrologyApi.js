@@ -1325,13 +1325,19 @@ function getExaltationModifier(planet, planetSign) {
 }
 
 // Check if planet is combust (too close to Sun)
+// Note: Combustion only applies when planet is in same hemisphere as Sun
+// Retrograde planets on opposite side are not truly combust (edge case, not handled)
 function isCombust(planet, sunLongitude, planetLongitude) {
   if (!COMBUSTION_ORBS[planet]) return false; // Sun, Rahu, Ketu can't be combust
   if (sunLongitude === null || sunLongitude === undefined) return false;
   if (planetLongitude === null || planetLongitude === undefined) return false;
   
+  // Normalize both values to 0-360 range
+  const sunNorm = ((sunLongitude % 360) + 360) % 360;
+  const planetNorm = ((planetLongitude % 360) + 360) % 360;
+  
   const orb = COMBUSTION_ORBS[planet];
-  const distance = Math.abs(sunLongitude - planetLongitude);
+  const distance = Math.abs(sunNorm - planetNorm);
   const normalizedDistance = distance > 180 ? 360 - distance : distance;
   
   return normalizedDistance <= orb;

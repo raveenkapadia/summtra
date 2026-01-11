@@ -1623,7 +1623,7 @@ async function startServer() {
       }
 
       // Step 2: Prepare birth data for astrology API
-      const birthData = {
+      const birthDataBase = {
         date: birthDate,
         time: birthTime,
         latitude: locationData.lat,
@@ -1631,8 +1631,39 @@ async function startServer() {
         timezone: locationData.timezone
       };
 
+      // Step 2.5: Fetch Vedic profile for personalized planet weighting
+      console.log("\n🔮 Step 2.5: Fetching Vedic profile for personalization...");
+      let vedicProfile: any = {};
+      try {
+        // Convert date to DD/MM/YYYY format for AstrologyAPI
+        let vedicBirthDate = birthDate;
+        if (birthDate.includes('-')) {
+          const [year, month, day] = birthDate.split('-');
+          vedicBirthDate = `${day}/${month}/${year}`;
+        }
+        vedicProfile = await getVedicProfile({
+          birthDate: vedicBirthDate,
+          birthTime: birthTime,
+          latitude: locationData.lat,
+          longitude: locationData.lng
+        });
+        console.log(`   ✅ Vedic: Lagna=${vedicProfile.lagna}, Nakshatra=${vedicProfile.nakshatra}, Dasha=${vedicProfile.currentDashaLord}`);
+      } catch (e: any) {
+        console.log(`   ⚠️ Vedic fetch failed: ${e.message} - using defaults`);
+      }
+      
+      // Enrich birth data with Vedic profile for personalized scoring
+      const birthData = {
+        ...birthDataBase,
+        nakshatra: vedicProfile?.nakshatra || 'Vishakha',
+        rashi: vedicProfile?.rashi || 'Libra',
+        lagna: vedicProfile?.lagna || 'Scorpio',
+        currentDashaLord: vedicProfile?.currentDashaLord || 'Mercury',
+        planetPositions: vedicProfile?.planetPositions || {}
+      };
+
       // Step 3: Call real astrology APIs - TRANSPARENT SCORING
-      console.log("\n🌟 Step 2: Calling RapidAPI for astrocartography data...");
+      console.log("\n🌟 Step 3: Calling RapidAPI for astrocartography data...");
       
       const astrologyApi = require('./services/astrologyApi');
       const { INDIAN_CITIES, INTERNATIONAL_CITIES, ALL_CITIES } = require('./services/geocodingService');
