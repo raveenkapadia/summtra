@@ -1110,10 +1110,10 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
           nearestDistanceKm = result.distance;
           nearestLine = `${line.planet}-${line.line_type || line.type || line.angle}`;
           
-          // Boost score for preferred planets
+          // Boost score for preferred planets (capped at max 25)
           const planetBonus = preferredPlanets.includes(line.planet) ? 1.2 : 1.0;
           const baseOrb = getOrbStrength(result.distance);
-          lineProximityScore = Math.round(baseOrb.score * planetBonus);
+          lineProximityScore = Math.min(25, Math.round(baseOrb.score * planetBonus));
           orbStrength = baseOrb;
         }
       }

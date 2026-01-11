@@ -491,13 +491,13 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     
     PARAN_TAGS: paranTagsHtml,
     
-    WESTERN_SCORE: western.total || 35,
-    LINE_PROXIMITY_SCORE: lineProx.score || 15,
-    PARAN_SCORE: western.parans?.score || 20,
-    VEDIC_SCORE: vedic.total || 40,
-    NAKSHATRA_RASHI_SCORE: vedic.nakshatraRashi?.score || 15,
-    LAGNA_VASTU_SCORE: vedic.lagnaVastu?.score || 12,
-    DASHA_SCORE: vedic.dashaTiming?.score || 12
+    WESTERN_SCORE: Math.min(50, western.total || 35),
+    LINE_PROXIMITY_SCORE: Math.min(25, lineProx.score || 15),
+    PARAN_SCORE: Math.min(25, western.parans?.score || 20),
+    VEDIC_SCORE: Math.min(50, vedic.total || 40),
+    NAKSHATRA_RASHI_SCORE: Math.min(20, vedic.nakshatraRashi?.score || 15),
+    LAGNA_VASTU_SCORE: Math.min(15, vedic.lagnaVastu?.score || 12),
+    DASHA_SCORE: Math.min(15, vedic.dashaTiming?.score || 12)
   };
 }
 
@@ -848,6 +848,44 @@ function getLagnaMeaning(lagna) {
   return meanings[lagna] || 'Your ascendant shapes how others perceive you and your approach to life.';
 }
 
+// Smart regional mapping for avoid city alternatives
+const CITY_REGIONS = {
+  // North America
+  'Toronto': 'North America', 'Vancouver': 'North America', 'San Francisco': 'North America',
+  'Los Angeles': 'North America', 'New York': 'North America', 'Chicago': 'North America',
+  'Miami': 'North America', 'Seattle': 'North America', 'Boston': 'North America',
+  // Oceania
+  'Auckland': 'Oceania', 'Sydney': 'Oceania', 'Melbourne': 'Oceania', 'Brisbane': 'Oceania',
+  'Perth': 'Oceania', 'Wellington': 'Oceania',
+  // Europe
+  'London': 'Europe', 'Paris': 'Europe', 'Amsterdam': 'Europe', 'Berlin': 'Europe',
+  'Lisbon': 'Europe', 'Barcelona': 'Europe', 'Rome': 'Europe', 'Vienna': 'Europe',
+  'Prague': 'Europe', 'Zurich': 'Europe', 'Stockholm': 'Europe', 'Dublin': 'Europe',
+  // Middle East
+  'Dubai': 'Middle East', 'Abu Dhabi': 'Middle East', 'Doha': 'Middle East', 
+  'Muscat': 'Middle East', 'Riyadh': 'Middle East', 'Kuwait City': 'Middle East',
+  // Africa
+  'Marrakech': 'Africa', 'Casablanca': 'Africa', 'Cape Town': 'Africa', 
+  'Johannesburg': 'Africa', 'Cairo': 'Africa', 'Nairobi': 'Africa',
+  // East Asia
+  'Tokyo': 'East Asia', 'Seoul': 'East Asia', 'Hong Kong': 'East Asia', 
+  'Shanghai': 'East Asia', 'Beijing': 'East Asia', 'Taipei': 'East Asia',
+  // Southeast Asia
+  'Singapore': 'Southeast Asia', 'Bangkok': 'Southeast Asia', 'Kuala Lumpur': 'Southeast Asia',
+  'Jakarta': 'Southeast Asia', 'Manila': 'Southeast Asia', 'Ho Chi Minh City': 'Southeast Asia',
+  'Bali': 'Southeast Asia'
+};
+
+const REGION_ALTERNATIVES = {
+  'North America': ['San Francisco', 'Los Angeles', 'Vancouver', 'New York', 'Toronto'],
+  'Oceania': ['Sydney', 'Melbourne', 'Brisbane', 'Auckland', 'Wellington'],
+  'Europe': ['London', 'Amsterdam', 'Paris', 'Berlin', 'Barcelona'],
+  'Middle East': ['Dubai', 'Abu Dhabi', 'Doha', 'Muscat'],
+  'Africa': ['Cape Town', 'Dubai', 'Doha'],
+  'East Asia': ['Tokyo', 'Singapore', 'Hong Kong', 'Seoul'],
+  'Southeast Asia': ['Singapore', 'Bangkok', 'Kuala Lumpur', 'Bali', 'Tokyo']
+};
+
 export function prepareAvoidCityData(city, goal, bestCities, baseData) {
   const data = { ...baseData };
   
@@ -859,7 +897,31 @@ export function prepareAvoidCityData(city, goal, bestCities, baseData) {
   const directions = ['North', 'South', 'East', 'West', 'Northeast', 'Northwest'];
   data.DIRECTION = city.direction || directions[Math.floor(Math.random() * directions.length)];
   
-  const altCity = bestCities.find(c => c.country === city.country && c.name !== city.name) || bestCities[0] || {};
+  // Smart regional alternative - find from same region first
+  const cityRegion = CITY_REGIONS[city.name];
+  let altCity = null;
+  
+  if (cityRegion) {
+    // Try to find a best city from the same region
+    const regionAlts = REGION_ALTERNATIVES[cityRegion] || [];
+    altCity = bestCities.find(c => 
+      regionAlts.includes(c.name) && c.name !== city.name
+    );
+    
+    // If no regional match in best cities, use predefined regional alternatives
+    if (!altCity) {
+      const altName = regionAlts.find(name => name !== city.name);
+      if (altName) {
+        altCity = { name: altName };
+      }
+    }
+  }
+  
+  // Fallback: same country or first best city
+  if (!altCity) {
+    altCity = bestCities.find(c => c.country === city.country && c.name !== city.name) || bestCities[0] || {};
+  }
+  
   data.ALT_CITY = altCity.name || 'a top-ranked city from this report';
   
   data.AVOID_INTERPRETATION = city.avoidInterpretation || `This location may present some challenges for your ${goal} goals. Consider alternative cities from this report for better alignment with your objectives.`;

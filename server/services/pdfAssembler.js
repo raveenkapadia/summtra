@@ -996,6 +996,19 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
       const vedicProfile = await vedicApi.getVedicProfile(vedicBirthData);
       
       if (vedicProfile) {
+        // Extract dasha lord - handle both string and object formats
+        let dashaLord = testBirthData.currentDashaLord;
+        if (vedicProfile.currentDashaLord) {
+          if (typeof vedicProfile.currentDashaLord === 'string') {
+            dashaLord = vedicProfile.currentDashaLord;
+          } else if (typeof vedicProfile.currentDashaLord === 'object') {
+            dashaLord = vedicProfile.currentDashaLord.planet || 
+                       vedicProfile.currentDashaLord.major || 
+                       vedicProfile.currentDashaLord.name ||
+                       JSON.stringify(vedicProfile.currentDashaLord);
+          }
+        }
+        
         testBirthData = {
           ...testBirthData,
           rashi: vedicProfile.rashi || testBirthData.rashi,
@@ -1006,7 +1019,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
           lagna: vedicProfile.lagna || testBirthData.lagna,
           lagnaLord: vedicProfile.lagnaLord || testBirthData.lagnaLord,
           sunSign: vedicProfile.sunSign || testBirthData.sunSign,
-          currentDashaLord: vedicProfile.currentDashaLord || testBirthData.currentDashaLord,
+          currentDashaLord: dashaLord,
           currentDashaEnd: vedicProfile.currentDashaEnd || testBirthData.currentDashaEnd
         };
         console.log(`   ✅ Vedic Profile: Rashi=${testBirthData.rashi}, Lagna=${testBirthData.lagna}, Nakshatra=${testBirthData.nakshatra}, Dasha=${testBirthData.currentDashaLord}`);

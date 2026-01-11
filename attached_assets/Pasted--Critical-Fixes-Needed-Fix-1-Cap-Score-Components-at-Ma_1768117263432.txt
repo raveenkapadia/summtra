@@ -1,0 +1,88 @@
+## 🔴 Critical Fixes Needed
+
+### Fix 1: Cap Score Components at Maximum (STILL BROKEN)
+
+**Problem:** Still showing "27/25" and "52/50"
+
+**Solution:**
+```javascript
+// Before displaying any score component
+const displayScore = Math.min(actualScore, maxScore);
+// Display: `${displayScore}/${maxScore}`
+```
+
+Apply this cap to ALL score components:
+- Line Proximity (max 25)
+- Paran Lines (max 25)
+- Nakshatra + Rashi (max 20)
+- Lagna-Vastu (max 15)
+- Dasha Timing (max 15)
+- Western Total (max 50)
+- Vedic Total (max 50)
+
+---
+
+### Fix 2: 🚨 Missing Mahadasha Planet Name (NEW CRITICAL BUG)
+
+**Affected Locations:**
+1. "Understanding Your Influences" page - "Your Mahadasha amplifies all -related influences"
+2. Timing Analysis header - "Mahadasha (2020 - 2036)"
+3. Antardasha labels - "-Jupiter Period", "-Saturn Period"
+4. Current Period box - "MAHADASHA: [blank]"
+5. Every city page - "CURRENT DASHA: [blank]"
+
+**Root Cause:** The `currentMahadashaPlanet` variable is not being passed or is empty.
+
+**Debug Steps:**
+1. Check Vedic API response for Dasha data
+2. Verify `currentMahadashaPlanet` is extracted correctly
+3. Ensure it's passed to all template sections
+
+**Expected Output:**
+- "Your Jupiter Mahadasha amplifies all Jupiter-related influences"
+- "Jupiter Mahadasha (2020 - 2036)"
+- "Jupiter-Jupiter Period", "Jupiter-Saturn Period"
+- "MAHADASHA: Jupiter"
+- "CURRENT DASHA: Jupiter"
+
+---
+
+### Fix 3: Smart Regional Alternatives (STILL BROKEN)
+
+**Problem:** Auckland (New Zealand) suggesting Doha (Qatar)
+
+**Solution:** Map cities to regions and suggest alternatives from same region:
+```javascript
+const cityRegions = {
+  'Toronto': 'North America',
+  'Auckland': 'Oceania',
+  'Lisbon': 'Europe',
+  'Marrakech': 'Africa/Middle East',
+  'Casablanca': 'Africa/Middle East'
+};
+
+const regionAlternatives = {
+  'North America': ['San Francisco', 'Los Angeles'],
+  'Oceania': ['Sydney', 'Melbourne', 'Tokyo'],
+  'Europe': ['Dubai', 'Abu Dhabi'],
+  'Africa/Middle East': ['Doha', 'Dubai', 'Abu Dhabi']
+};
+```
+
+---
+
+### Fix 4: International Map Views (STILL BROKEN)
+
+**Current:** 10 identical pages labeled "INTERNATIONAL VIEW"
+
+**Options:**
+A) Create continental zoom views with labels:
+   - World Overview
+   - Americas View
+   - Europe/Africa View
+   - Asia/Middle East View
+   - Asia Pacific View
+
+B) Reduce to 2-3 maps for International scope
+
+C) Single world map with city markers
