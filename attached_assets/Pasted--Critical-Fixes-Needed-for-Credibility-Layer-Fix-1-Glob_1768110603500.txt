@@ -1,0 +1,138 @@
+## 🔧 Critical Fixes Needed for Credibility Layer
+
+### Fix 1: Global Lines - Replace Placeholder Data
+
+**Location:** "Understanding Your Planetary Influences" page
+
+**Current Problem:**
+All lines show "Antarctica → Arctic" which is placeholder data.
+
+**Required Change:**
+Calculate actual regions where each planetary line passes through.
+```javascript
+// Example logic needed
+function getLineRegions(lineData) {
+  // For each line, determine which major regions it passes through
+  // Return format: "Eastern Europe → Middle East → East Africa"
+  
+  const regions = [];
+  // Check longitude ranges the line passes through
+  // Map to region names
+  return regions.join(' → ');
+}
+```
+
+**If API doesn't provide regions:**
+Use longitude-based estimation:
+- 0-30°E: Western Europe/Africa
+- 30-60°E: Middle East/Eastern Europe
+- 60-90°E: Central Asia/India
+- 90-120°E: Southeast Asia/China
+- etc.
+
+---
+
+### Fix 2: Remove Duplicate Map Pages
+
+**Problem:** 7 identical "Your Planetary Lines" map pages appear consecutively.
+
+**Likely Cause:** Loop in PDF assembly iterating incorrectly.
+
+**Check:** `pdfAssembler.js` or template processor for map page generation logic.
+
+---
+
+### Fix 3: Score Components Must Sum to Total
+
+**Problem:** 
+- Varanasi shows 34 + 32 = 66, but displays 95%
+- Scores don't add up
+
+**Options:**
+
+**Option A: Add Synergy/Bonus Row**
+```
+☉ WESTERN                        34/50
+ VEDIC                          32/50
+✦ GOAL SYNERGY                   +29
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL                            95/100
+```
+
+**Option B: Recalculate Components**
+Make sure Line Proximity + Paran + Nakshatra + Lagna + Dasha = Total displayed
+
+---
+
+### Fix 4: Unique Caution City Analysis
+
+**Problem:** All 5 caution cities have identical text (just city name replaced).
+
+**Required:** Generate unique Claude interpretation for each caution city.
+
+**Caution City Claude Prompt Should Include:**
+```javascript
+const cautionPrompt = `
+For ${cityName}, this is a CAUTION city for ${goal}.
+
+Specific challenging factors:
+- Nearest challenging line: ${challengingLine} at ${distance}km
+- Direction from birthplace: ${direction}
+- Why this conflicts with ${nakshatra} Nakshatra
+- Why this conflicts with ${lagna} Lagna
+
+Write 2-3 sentences explaining the SPECIFIC challenges 
+this user would face here. Be specific to their chart.
+`;
+```
+
+---
+
+### Fix 5: Birthplace Direction Logic
+
+**Problem:** Mumbai is birthplace but shows "Direction: West"
+
+**Fix:**
+```javascript
+if (city.name === userData.birthPlace.city) {
+  direction = "Origin";
+  // Or exclude from regular city list
+}
+```
+
+---
+
+### Fix 6: Latitude-Specific Parans
+
+**Problem:** Same parans shown for all cities regardless of latitude.
+
+**Fix Option A - Calculate per latitude:**
+```javascript
+function getParansForLatitude(birthData, latitude) {
+  // Actual paran calculation
+}
+```
+
+**Fix Option B - Use latitude bands:**
+```javascript
+const paransByLatitude = {
+  '8-15': ['Jupiter ☌ Venus', 'Moon ☌ Mars'],
+  '15-22': ['Sun ☌ Mercury', 'Venus ☌ Saturn'],
+  '22-28': ['Jupiter ☌ Saturn', 'Sun ☌ Jupiter'],
+  '28-35': ['Mars ☌ Jupiter', 'Mercury ☌ Venus']
+};
+
+const band = getLatitudeBand(city.latitude);
+const parans = paransByLatitude[band];
+```
+
+---
+
+## Priority Order
+
+1. **HIGH:** Fix duplicate map pages (visual bug)
+2. **HIGH:** Fix score math (credibility issue)
+3. **HIGH:** Fix global lines placeholder (credibility issue)
+4. **MEDIUM:** Unique caution city analysis
+5. **MEDIUM:** Birthplace direction logic
+6. **LOW:** Latitude-specific parans
