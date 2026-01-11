@@ -246,12 +246,26 @@ function generatePlanetaryLinesHTML(lines) {
   }).join('');
 }
 
+function flattenPowerZones(zones) {
+  if (!zones) return [];
+  if (Array.isArray(zones)) return zones;
+  const india = zones.india || [];
+  const international = zones.international || [];
+  return [...india, ...international];
+}
+
+export function getPowerZonesCount(zones) {
+  const flat = flattenPowerZones(zones);
+  return flat.length;
+}
+
 function generatePowerZonesHTML(zones) {
-  if (!zones || zones.length === 0) {
+  const flatZones = flattenPowerZones(zones);
+  if (!flatZones || flatZones.length === 0) {
     return '<p>No power zones identified.</p>';
   }
   
-  return zones.slice(0, 10).map(zone => {
+  return flatZones.slice(0, 10).map(zone => {
     const color = zone.is_challenging ? '#DC143C' : '#4ADE80';
     const label = zone.is_challenging ? 'Challenging' : 'Favorable';
     return `
@@ -434,7 +448,7 @@ export function prepareReportData(birthData, astroData, options = {}) {
     POWER_ZONES: generatePowerZonesHTML(astroData?.powerZones || []),
     TOP_CITIES: generateTopCitiesHTML(astroData?.topCities || []),
     PLANETARY_LINES_COUNT: (astroData?.planetaryLines || []).length,
-    POWER_ZONES_COUNT: (astroData?.powerZones || []).length,
+    POWER_ZONES_COUNT: getPowerZonesCount(astroData?.powerZones),
     TOP_CITIES_COUNT: (astroData?.topCities || []).length,
     
     LINE_PATHS: generateLinePaths(astroData?.planetaryLines || []),

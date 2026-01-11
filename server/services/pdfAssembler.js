@@ -14,6 +14,7 @@ import {
   generateDividerPlanetData,
   generateVedicTraitsData,
   prepareAvoidCityData,
+  getPowerZonesCount,
   PLANET_DATA
 } from './templateProcessor.js';
 
@@ -243,16 +244,11 @@ export class PDFAssembler {
     const cities = this.getCitiesForGoal(goal, 'best');
     const avoidCities = this.getCitiesForGoal(goal, 'avoid');
     
-    const powerZonesFromApi = (this.astroData?.powerZones?.india?.length || 0) + 
-                              (this.astroData?.powerZones?.international?.length || 0);
-    const citiesWithLines = cities.filter(c => c.lines && c.lines.length > 0).length;
-    const powerZonesCount = powerZonesFromApi > 0 ? Math.min(powerZonesFromApi, 10) : citiesWithLines;
-    
     const baseWithCounts = {
       ...this.baseData,
       BEST_CITIES_COUNT: cities.length,
       AVOID_CITIES_COUNT: avoidCities.length,
-      POWER_ZONES_COUNT: powerZonesCount
+      POWER_ZONES_COUNT: getPowerZonesCount(this.astroData?.powerZones) || cities.filter(c => c.lines && c.lines.length > 0).length
     };
     
     const goalData = generateDividerPlanetData(goal, baseWithCounts);
