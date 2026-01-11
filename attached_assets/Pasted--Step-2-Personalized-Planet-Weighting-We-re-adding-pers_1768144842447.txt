@@ -1,0 +1,143 @@
+## Step 2: Personalized Planet Weighting
+
+We're adding personalized planet weighting based on user's Lagna. This makes wealth recommendations specific to each user's birth chart.
+
+---
+
+### PART 1: Add This Lookup Table (Wealth Lords by Lagna)
+
+| Lagna | 2nd Lord | 11th Lord |
+|-------|----------|-----------|
+| Aries | Venus | Saturn |
+| Taurus | Mercury | Jupiter |
+| Gemini | Moon | Mars |
+| Cancer | Sun | Venus |
+| Leo | Mercury | Mercury |
+| Virgo | Venus | Moon |
+| Libra | Mars | Sun |
+| Scorpio | Jupiter | Mercury |
+| Sagittarius | Saturn | Venus |
+| Capricorn | Saturn | Mars |
+| Aquarius | Jupiter | Jupiter |
+| Pisces | Mars | Saturn |
+
+---
+
+### PART 2: Add This Lookup Table (Yogakaraka by Lagna)
+
+| Lagna | Yogakaraka |
+|-------|------------|
+| Aries | null |
+| Taurus | Saturn |
+| Gemini | null |
+| Cancer | Mars |
+| Leo | Mars |
+| Virgo | null |
+| Libra | Saturn |
+| Scorpio | null |
+| Sagittarius | null |
+| Capricorn | Venus |
+| Aquarius | Venus |
+| Pisces | null |
+
+---
+
+### PART 3: Boost Rules
+
+For each planet, check these conditions. Multiply all matching boosts together:
+
+| Condition | Multiply By |
+|-----------|-------------|
+| Planet is Jupiter OR Venus | ×1.10 |
+| Planet = User's 2nd Lord | ×1.25 |
+| Planet = User's 11th Lord | ×1.20 |
+| Planet = User's Yogakaraka | ×1.30 |
+| Planet = User's Mahadasha | ×1.15 |
+
+SKIP Mahadasha boost if Mahadasha is Rahu or Ketu.
+
+---
+
+### PART 4: How to Calculate
+
+Step 1: Get user's Lagna from Vedic API
+Step 2: Look up their 2nd Lord from Table 1
+Step 3: Look up their 11th Lord from Table 1
+Step 4: Look up their Yogakaraka from Table 2
+Step 5: Get user's Mahadasha from Vedic API
+
+Step 6: For each planet, calculate total boost:
+- Start with 1.0
+- Multiply by 1.10 if planet is Jupiter or Venus
+- Multiply by 1.25 if planet matches 2nd Lord
+- Multiply by 1.20 if planet matches 11th Lord
+- Multiply by 1.30 if planet matches Yogakaraka
+- Multiply by 1.15 if planet matches Mahadasha (skip if Rahu/Ketu)
+
+Step 7: Apply boost to line score:
+- Adjusted Line Score = Base Line Score × Boost
+- Cap at maximum 35
+
+Step 8: Normalize Western Total:
+- Western Total = Adjusted Line Score + Paran Score
+- Western Normalized = (Western Total ÷ 60) × 50
+
+---
+
+### PART 5: Test Case
+
+User: Raveen Kapadia
+DOB: November 15, 1982, 8:20 AM, Ahmedabad
+Goal: Wealth
+Scope: Both
+
+User's Vedic Data:
+- Lagna: Scorpio
+- 2nd Lord: Jupiter (from table)
+- 11th Lord: Mercury (from table)
+- Yogakaraka: null (from table)
+- Mahadasha: Mercury
+
+Expected Boosts for this user:
+
+| Planet | Boost Calculation | Result |
+|--------|-------------------|--------|
+| Mercury | 1.0 × 1.20 (11th) × 1.15 (Dasha) | 1.38 |
+| Jupiter | 1.10 (natural) × 1.25 (2nd) | 1.375 |
+| Venus | 1.10 (natural) | 1.10 |
+| Sun | 1.0 | 1.0 |
+| Mars | 1.0 | 1.0 |
+| Saturn | 1.0 | 1.0 |
+| Moon | 1.0 | 1.0 |
+
+---
+
+### PART 6: Show Results
+
+After implementation, show this table:
+
+| Rank | City | Planet | Base Line | Boost | Adj Line | Paran | West Norm | Vedic | Final % |
+|------|------|--------|-----------|-------|----------|-------|-----------|-------|---------|
+
+Include:
+1. Top 10 cities
+2. Doha (even if not in top 10)
+3. Dubai (even if not in top 10)
+
+---
+
+### PART 7: What Should Change
+
+| City | Before | After | Why |
+|------|--------|-------|-----|
+| Seoul (Mercury) | 87% | Higher | Mercury gets ×1.38 boost |
+| Tokyo (Venus) | 87% | Slightly lower | Venus only gets ×1.10 |
+| Doha (Jupiter) | 64% | Higher | Jupiter gets ×1.375 boost |
+
+Seoul should now rank ABOVE Tokyo because Mercury is more important for this user.
+
+---
+
+### Questions?
+
+Please ask if anything is unclear before implementing.

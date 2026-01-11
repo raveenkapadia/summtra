@@ -959,7 +959,7 @@ async function startServer() {
         nakshatra: vedicProfile?.nakshatra || 'Vishakha',
         rashi: vedicProfile?.rashi || 'Libra',
         lagna: vedicProfile?.lagna || 'Scorpio',
-        currentDashaLord: vedicProfile?.currentDashaLord || 'Mercury'
+        currentDashaLord: vedicProfile?.currentDasha?.planet || vedicProfile?.currentDashaLord || 'Mercury'
       };
       
       const scoresResult = await astrologyApi.getScoresForAllCities(enrichedBirthData, cities, astroLines, goal);
@@ -980,6 +980,7 @@ async function startServer() {
         const lagnaVastu = vedic.lagnaVastu || {};
         const dashaTiming = vedic.dashaTiming || {};
         const dirAdj = cred.directionAdjustment || {};
+        const personalization = western.personalization || {};
         
         return {
           rank: index + 1,
@@ -989,10 +990,16 @@ async function startServer() {
           totalScore: city.score,
           breakdown: {
             nearestLine: lineProx.nearestLine || 'N/A',
+            nearestPlanet: lineProx.nearestPlanet || 'N/A',
             distanceKm: lineProx.distanceKm ? Math.round(lineProx.distanceKm) : 'N/A',
             orbStrength: lineProx.orbStrength || 'N/A',
-            lineScore: lineProx.score || 0,
+            baseLineScore: lineProx.score || 0,
+            planetBoost: lineProx.boost || 1.0,
+            boostedLineScore: lineProx.boostedScore || lineProx.score || 0,
+            boostReasons: lineProx.boostReasons || [],
             paranScore: parans.score || 0,
+            westernRaw: western.rawTotal || 0,
+            westernNormalized: western.total || 0,
             westernOriginal: western.originalTotal || western.total || 0,
             westernAdjusted: western.adjustedTotal || western.total || 0,
             dirMultiplier: western.directionMultiplier || 1.0,
@@ -1002,6 +1009,13 @@ async function startServer() {
             vedicTotal: vedic.total || 0,
             directionType: dirAdj.type || 'favorable',
             directionReason: dirAdj.reason || null
+          },
+          personalization: {
+            lagna: personalization.lagna || 'N/A',
+            secondLord: personalization.secondLord || 'N/A',
+            eleventhLord: personalization.eleventhLord || 'N/A',
+            yogakaraka: personalization.yogakaraka || null,
+            mahadasha: personalization.mahadasha || 'N/A'
           }
         };
       });

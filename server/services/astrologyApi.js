@@ -1198,6 +1198,100 @@ function calculateParanScore(parans) {
   return 18;
 }
 
+// ============================================
+// PERSONALIZED PLANET WEIGHTING TABLES
+// ============================================
+
+// Wealth Lords by Lagna (2nd and 11th house lords)
+const WEALTH_LORDS_BY_LAGNA = {
+  'Aries': { second: 'Venus', eleventh: 'Saturn' },
+  'Taurus': { second: 'Mercury', eleventh: 'Jupiter' },
+  'Gemini': { second: 'Moon', eleventh: 'Mars' },
+  'Cancer': { second: 'Sun', eleventh: 'Venus' },
+  'Leo': { second: 'Mercury', eleventh: 'Mercury' },
+  'Virgo': { second: 'Venus', eleventh: 'Moon' },
+  'Libra': { second: 'Mars', eleventh: 'Sun' },
+  'Scorpio': { second: 'Jupiter', eleventh: 'Mercury' },
+  'Sagittarius': { second: 'Saturn', eleventh: 'Venus' },
+  'Capricorn': { second: 'Saturn', eleventh: 'Mars' },
+  'Aquarius': { second: 'Jupiter', eleventh: 'Jupiter' },
+  'Pisces': { second: 'Mars', eleventh: 'Saturn' }
+};
+
+// Yogakaraka planets by Lagna (benefic lords of angles + trines)
+const YOGAKARAKA_BY_LAGNA = {
+  'Aries': null,
+  'Taurus': 'Saturn',
+  'Gemini': null,
+  'Cancer': 'Mars',
+  'Leo': 'Mars',
+  'Virgo': null,
+  'Libra': 'Saturn',
+  'Scorpio': null,
+  'Sagittarius': null,
+  'Capricorn': 'Venus',
+  'Aquarius': 'Venus',
+  'Pisces': null
+};
+
+// Calculate personalized planet boost based on user's chart
+function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
+  let boost = 1.0;
+  const reasons = [];
+  
+  // Get user's Lagna
+  const userLagna = birthData.lagna || birthData.lagnaSign || 'Scorpio';
+  const lagnaClean = userLagna.split(' ')[0].replace(/[()]/g, '');
+  
+  // Get wealth lords for this lagna
+  const wealthLords = WEALTH_LORDS_BY_LAGNA[lagnaClean] || { second: null, eleventh: null };
+  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagnaClean];
+  
+  // Extract mahadasha planet name (handle both string and object formats)
+  let mahadasha = birthData.currentDashaLord || birthData.mahadasha || null;
+  if (mahadasha && typeof mahadasha === 'object') {
+    mahadasha = mahadasha.planet || null;
+  }
+  
+  // 1. Natural benefic boost for Jupiter and Venus (×1.10)
+  if (planet === 'Jupiter' || planet === 'Venus') {
+    boost *= 1.10;
+    reasons.push(`${planet} natural benefic (×1.10)`);
+  }
+  
+  // 2. Second Lord boost (×1.25) - for Wealth goal
+  if (goal === 'Wealth' && wealthLords.second === planet) {
+    boost *= 1.25;
+    reasons.push(`2nd Lord for ${lagnaClean} (×1.25)`);
+  }
+  
+  // 3. Eleventh Lord boost (×1.20) - for Wealth goal
+  if (goal === 'Wealth' && wealthLords.eleventh === planet) {
+    boost *= 1.20;
+    reasons.push(`11th Lord for ${lagnaClean} (×1.20)`);
+  }
+  
+  // 4. Yogakaraka boost (×1.30)
+  if (yogakaraka === planet) {
+    boost *= 1.30;
+    reasons.push(`Yogakaraka for ${lagnaClean} (×1.30)`);
+  }
+  
+  // 5. Mahadasha boost (×1.15) - skip if Rahu or Ketu
+  if (mahadasha && mahadasha !== 'Rahu' && mahadasha !== 'Ketu' && mahadasha === planet) {
+    boost *= 1.15;
+    reasons.push(`Current Mahadasha (×1.15)`);
+  }
+  
+  return {
+    boost: Math.round(boost * 100) / 100, // Round to 2 decimal places
+    reasons,
+    wealthLords,
+    yogakaraka,
+    mahadasha
+  };
+}
+
 // CREDIBILITY SCORING: Calculate 50/50 Western + Vedic breakdown
 function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Career') {
   const cityLat = cityData.lat || cityData.latitude;
@@ -1205,12 +1299,14 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   
   // ========== WESTERN ASTROCARTOGRAPHY (50 points) ==========
   
-  // 1. Line Proximity Score (25 points max)
+  // 1. Line Proximity Score (25 points base, boosted up to 35 max)
   // Base score is 13 for cities with no nearby lines - balanced floor
   let lineProximityScore = 13;
   let nearestLine = null;
   let nearestDistanceKm = null;
   let orbStrength = { label: 'None', bars: 0 };
+  let nearestPlanet = null;
+  let planetBoostInfo = null;
   
   if (astroLines) {
     const linesData = astroLines.lines || astroLines;
@@ -1235,14 +1331,26 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
         const result = calculateLineDistanceKm(cityLat, cityLng, line.points);
         if (result && (nearestDistanceKm === null || result.distance < nearestDistanceKm)) {
           nearestDistanceKm = result.distance;
+          nearestPlanet = line.planet;
           nearestLine = `${line.planet}-${line.line_type || line.type || line.angle}`;
           
-          // All goal planets get full weight (no bonus needed since we filtered)
+          // Get base orb score
           const baseOrb = getOrbStrength(result.distance);
-          lineProximityScore = Math.min(25, Math.round(baseOrb.score * 1.2));
+          lineProximityScore = baseOrb.score;
           orbStrength = baseOrb;
         }
       }
+    }
+  }
+  
+  // Apply personalized planet boost to line score
+  let boostedLineScore = lineProximityScore;
+  let hasBoost = false;
+  if (nearestPlanet && goal === 'Wealth') {
+    planetBoostInfo = calculatePlanetBoost(nearestPlanet, birthData, goal);
+    if (planetBoostInfo.boost > 1.0) {
+      hasBoost = true;
+      boostedLineScore = Math.min(35, Math.round(lineProximityScore * planetBoostInfo.boost));
     }
   }
   
@@ -1250,7 +1358,14 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   const parans = calculateParansForCity(birthData, cityLat, goal);
   const paranScore = calculateParanScore(parans);
   
-  const westernTotal = Math.min(50, lineProximityScore + paranScore);
+  // Calculate raw Western total
+  const rawWesternTotal = boostedLineScore + paranScore;
+  
+  // Cap at 50 to maintain 50/50 Western/Vedic balance
+  // Boosted planets benefit because their raw score is higher (can reach 50 more easily)
+  // Max unboosted = 25 line + 25 paran = 50
+  // Max boosted = 35 line + 25 paran = 60 → capped at 50
+  const westernTotal = Math.min(50, rawWesternTotal);
   
   // ========== VEDIC ASTROLOGY (50 points) ==========
   
@@ -1305,10 +1420,16 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
     breakdown: {
       western: {
         total: westernTotal,
+        rawTotal: rawWesternTotal,
         lineProximity: {
           score: lineProximityScore,
+          boostedScore: boostedLineScore,
+          boost: planetBoostInfo?.boost || 1.0,
+          boostReasons: planetBoostInfo?.reasons || [],
           max: 25,
+          boostedMax: 35,
           nearestLine,
+          nearestPlanet,
           distanceKm: nearestDistanceKm,
           orbStrength: orbStrength.label,
           orbBars: generateOrbBars(orbStrength.bars),
@@ -1318,7 +1439,14 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
           score: paranScore,
           max: 25,
           details: parans
-        }
+        },
+        personalization: planetBoostInfo ? {
+          lagna: birthData.lagna,
+          secondLord: planetBoostInfo.wealthLords?.second,
+          eleventhLord: planetBoostInfo.wealthLords?.eleventh,
+          yogakaraka: planetBoostInfo.yogakaraka,
+          mahadasha: planetBoostInfo.mahadasha
+        } : null
       },
       vedic: {
         total: vedicTotal,
