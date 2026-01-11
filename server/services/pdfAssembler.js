@@ -243,11 +243,16 @@ export class PDFAssembler {
     const cities = this.getCitiesForGoal(goal, 'best');
     const avoidCities = this.getCitiesForGoal(goal, 'avoid');
     
+    const powerZonesFromApi = (this.astroData?.powerZones?.india?.length || 0) + 
+                              (this.astroData?.powerZones?.international?.length || 0);
+    const citiesWithLines = cities.filter(c => c.lines && c.lines.length > 0).length;
+    const powerZonesCount = powerZonesFromApi > 0 ? Math.min(powerZonesFromApi, 10) : citiesWithLines;
+    
     const baseWithCounts = {
       ...this.baseData,
       BEST_CITIES_COUNT: cities.length,
       AVOID_CITIES_COUNT: avoidCities.length,
-      POWER_ZONES_COUNT: cities.filter(c => c.lines && c.lines.length > 0).length
+      POWER_ZONES_COUNT: powerZonesCount
     };
     
     const goalData = generateDividerPlanetData(goal, baseWithCounts);
@@ -330,7 +335,20 @@ export class PDFAssembler {
     if (type === 'best') {
       return sorted.slice(0, bestCount);
     } else {
-      return sorted.slice(-avoidCount).reverse();
+      const birthPlace = this.birthData?.birthPlace || this.birthData?.birth_place || '';
+      const birthPlaceLower = birthPlace.toLowerCase().trim();
+      
+      let avoidCandidates = sorted.slice(-avoidCount - 5).reverse();
+      
+      avoidCandidates = avoidCandidates.filter(city => {
+        const cityName = (city.name || '').toLowerCase().trim();
+        if (city.direction === 'Origin') return false;
+        if (cityName === birthPlaceLower) return false;
+        if (birthPlaceLower.includes(cityName) || cityName.includes(birthPlaceLower)) return false;
+        return true;
+      });
+      
+      return avoidCandidates.slice(0, avoidCount);
     }
   }
   

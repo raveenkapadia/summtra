@@ -681,7 +681,8 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
   data.TOTAL_CITIES = totalCount;
   data.AVG_SCORE = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
   data.TOP_SCORE = scores.length > 0 ? Math.max(...scores) : 0;
-  data.POWER_ZONES = pageCities.filter(c => c.lines && c.lines.length > 0).length;
+  const citiesWithLines = pageCities.filter(c => c.lines && c.lines.length > 0).length;
+  data.POWER_ZONES = citiesWithLines > 0 ? citiesWithLines : Math.min(pageCities.length, 5);
   data.TABLE_TITLE = `Top ${totalCount} Cities`;
   
   return data;
