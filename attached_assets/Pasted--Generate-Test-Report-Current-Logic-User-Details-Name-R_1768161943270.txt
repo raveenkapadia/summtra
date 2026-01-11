@@ -1,0 +1,71 @@
+## Generate Test Report - Current Logic
+
+### User Details
+**Name:** Raveen Kapadia
+**DOB:** November 15, 1982
+**Time:** 8:20 AM
+**Place:** Ahmedabad, Gujarat, India
+**Goal:** Wealth
+**Scope:** Both (India + International)
+
+---
+
+### Before Generating, Show Current Planet Boosts
+
+| Planet | Current Boost | Calculation |
+|--------|---------------|-------------|
+| Jupiter | ? | ? |
+| Mercury | ? | ? |
+| Venus | ? | ? |
+| Saturn | ? | ? |
+| Sun | ? | ? |
+| Moon | ? | ? |
+| Mars | ? | ? |
+
+---
+
+### After Generating PDF, Show:
+
+**1. Top 15 Cities with Planet Info:**
+
+| Rank | City | Primary Planet | Planet Boost | Line Distance | Final Score |
+|------|------|----------------|--------------|---------------|-------------|
+| 1 | ? | ? | ? | ? | ? |
+| 2 | ? | ? | ? | ? | ? |
+| ... | ... | ... | ... | ... | ... |
+| 15 | ? | ? | ? | ? | ? |
+
+**2. Where do Saturn-line cities rank?**
+
+| City | Planet | Boost (×1.15 exalted) | Line Distance | Final Score | Rank |
+|------|--------|----------------------|---------------|-------------|------|
+| ? | Saturn-AC | ×1.15 | ? km | ? | #? |
+| ? | Saturn-MC | ×1.15 | ? km | ? | #? |
+
+**3. Where do Jupiter-line cities rank?**
+
+| City | Planet | Boost (×1.12 combust) | Line Distance | Final Score | Rank |
+|------|--------|----------------------|---------------|-------------|------|
+| ? | Jupiter-AC | ×1.12 | ? km | ? | #? |
+| ? | Jupiter-MC | ×1.12 | ? km | ? | #? |
+
+---
+
+### Key Questions to Answer
+
+1. **Is any Saturn-line city in Top 10?** 
+   - If YES → We may need the exaltation fix
+   - If NO → Current logic is fine
+
+2. **Are Jupiter-line cities still ranking high despite combustion?**
+   - If YES → Combustion penalty is balanced correctly
+   - If NO → May need to reduce combustion penalty
+
+3. **What's the score difference between best Saturn city and best Jupiter city?**
+   - If Saturn > Jupiter for wealth → Problem confirmed
+   - If Jupiter > Saturn → No fix needed
+
+---
+
+### PDF Link
+Please share the generated PDF link for visual verification.
