@@ -959,7 +959,8 @@ async function startServer() {
         nakshatra: vedicProfile?.nakshatra || 'Vishakha',
         rashi: vedicProfile?.rashi || 'Libra',
         lagna: vedicProfile?.lagna || 'Scorpio',
-        currentDashaLord: vedicProfile?.currentDasha?.planet || vedicProfile?.currentDashaLord || 'Mercury'
+        currentDashaLord: vedicProfile?.currentDasha?.planet || vedicProfile?.currentDashaLord || 'Mercury',
+        planetPositions: vedicProfile?.planetPositions || {} // For exaltation/combustion checks
       };
       
       const scoresResult = await astrologyApi.getScoresForAllCities(enrichedBirthData, cities, astroLines, goal);
@@ -1050,7 +1051,8 @@ async function startServer() {
           lagna: vedicProfile?.lagna || 'N/A',
           currentDasha: vedicProfile?.currentDashaLord || 'N/A',
           favorableDirection: vedicProfile?.favorableDirection || 'East',
-          ayanamsa: 'Lahiri'
+          ayanamsa: 'Lahiri',
+          planetPositions: vedicProfile?.planetPositions || {} // For exaltation/combustion
         },
         planetaryLines: astroLines ? {
           count: Array.isArray(astroLines.lines || astroLines) ? (astroLines.lines || astroLines).length : 0,
