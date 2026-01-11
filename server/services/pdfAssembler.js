@@ -425,10 +425,15 @@ export class PDFAssembler {
       const displayParanScore = Math.min(25, rawParanScore);
       
       // Direction adjustment info
-      const hasDirectionPenalty = dirAdj.multiplier && dirAdj.multiplier < 1.0;
-      const directionMultiplier = dirAdj.multiplier || 1.0;
-      const originalWestern = western.originalTotal || western.total || 0;
-      const adjustedWestern = western.adjustedTotal || western.total || 0;
+      // western.originalTotal = pre-penalty, western.adjustedTotal = post-penalty
+      // western.total = the original pre-penalty value from calculateCredibilityScore
+      const multiplier = western.directionMultiplier || dirAdj.multiplier || 1.0;
+      const hasDirectionPenalty = multiplier < 1.0;
+      
+      // originalTotal is the pre-penalty Western score
+      const originalWestern = western.originalTotal ?? western.total ?? 0;
+      // adjustedTotal is the post-penalty Western score (after multiplier)
+      const adjustedWestern = western.adjustedTotal ?? (hasDirectionPenalty ? Math.round(originalWestern * multiplier) : originalWestern);
       const penaltyAmount = hasDirectionPenalty ? Math.round(originalWestern - adjustedWestern) : 0;
       
       return {
@@ -457,9 +462,9 @@ export class PDFAssembler {
           },
           directionAdjustment: {
             hasPenalty: hasDirectionPenalty,
-            multiplier: directionMultiplier,
+            multiplier: multiplier,
             penaltyAmount: penaltyAmount,
-            type: dirAdj.type || 'neutral',
+            type: dirAdj.type || (hasDirectionPenalty ? 'unfavorable' : 'favorable'),
             favorableDirection: dirAdj.favorableDirection || 'N/A'
           }
         }
