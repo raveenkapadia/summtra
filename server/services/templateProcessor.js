@@ -478,27 +478,33 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     `<span class="paran-tag">${p.planets?.join(' ☌ ') || p.key} - ${p.interpretation || ''}</span>`
   ).join('') || '<span class="paran-tag">No strong parans</span>';
   
-  const directionBonus = cred.directionBonus || 0;
-  const directionExplanation = directionBonus > 0 
-    ? `${city.direction} = favorable for ${baseData.NAKSHATRA || 'your nakshatra'}`
-    : directionBonus < 0 
-      ? `${city.direction} = challenging for ${baseData.NAKSHATRA || 'your nakshatra'}`
-      : 'Neutral direction';
+  // Direction info is for display only - the direction adjustment is already baked into 
+  // city.score via applyDirectionPenalty() multiplier in astrologyApi.js
+  const cityDirection = city.direction || 'N/A';
+  const directionExplanation = `Direction from birthplace: ${cityDirection} (factored into Western score)`;
   
-  // Use pre-scaled values from credibilityData - they already add up to city.score
-  // Don't apply Math.min caps as pdfAssembler already scaled them correctly
-  const westernTotal = western.total || Math.round(score * 0.5);
-  const vedicTotal = vedic.total || (score - westernTotal);
+  // Check if credibilityData has valid breakdown data
+  const hasValidBreakdown = cred.breakdown && (western.total !== undefined || vedic.total !== undefined);
   
-  // Sub-scores should also come from credibilityData (already scaled)
-  const lineProximityScore = lineProx.score || Math.round(westernTotal * 0.6);
-  const paranScore = western.parans?.score || (westernTotal - lineProximityScore);
-  const nakshatraRashiScore = vedic.nakshatraRashi?.score || Math.round(vedicTotal * 0.4);
-  const lagnaVastuScore = vedic.lagnaVastu?.score || Math.round(vedicTotal * 0.3);
-  const dashaScore = vedic.dashaTiming?.score || (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
+  // Use pre-scaled values from credibilityData directly - pdfAssembler already scaled them
+  // to ensure westernTotal + vedicTotal = city.score (direction is ALREADY factored into score)
+  // If no breakdown data, split score 50/50 for display
+  const westernTotal = hasValidBreakdown ? (western.total ?? Math.round(score / 2)) : Math.round(score / 2);
+  const vedicTotal = hasValidBreakdown ? (vedic.total ?? (score - westernTotal)) : (score - westernTotal);
   
-  // Calculated total should match city.score (the header score)
+  // Sub-scores from credibilityData (already scaled by pdfAssembler)
+  // If breakdown missing, distribute within category totals proportionally
+  const lineProximityScore = hasValidBreakdown ? (lineProx.score ?? Math.round(westernTotal * 0.6)) : Math.round(westernTotal * 0.6);
+  const paranScore = hasValidBreakdown ? (western.parans?.score ?? (westernTotal - lineProximityScore)) : (westernTotal - lineProximityScore);
+  const nakshatraRashiScore = hasValidBreakdown ? (vedic.nakshatraRashi?.score ?? Math.round(vedicTotal * 0.4)) : Math.round(vedicTotal * 0.4);
+  const lagnaVastuScore = hasValidBreakdown ? (vedic.lagnaVastu?.score ?? Math.round(vedicTotal * 0.3)) : Math.round(vedicTotal * 0.3);
+  const dashaScore = hasValidBreakdown ? (vedic.dashaTiming?.score ?? (vedicTotal - nakshatraRashiScore - lagnaVastuScore)) : (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
+  
+  // Calculated total should match city.score (direction already factored in via multiplier)
   const calculatedTotal = westernTotal + vedicTotal;
+  
+  // Build the calculation display string (no separate direction bonus - it's in the score)
+  const calcString = `${westernTotal} + ${vedicTotal} = ${calculatedTotal}%`;
   
   return {
     ...baseData,
@@ -537,10 +543,10 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     LAGNA_VASTU_SCORE: lagnaVastuScore,
     DASHA_SCORE: dashaScore,
     
-    DIRECTION_BONUS: directionBonus,
-    DIRECTION_BONUS_DISPLAY: directionBonus >= 0 ? `+${directionBonus}` : `${directionBonus}`,
+    DIRECTION_BONUS: 0,
+    DIRECTION_BONUS_DISPLAY: cityDirection,
     DIRECTION_EXPLANATION: directionExplanation,
-    SCORE_TOTAL_CALC: `${westernTotal} + ${vedicTotal} = ${calculatedTotal}%`
+    SCORE_TOTAL_CALC: calcString
   };
 }
 
