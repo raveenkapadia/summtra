@@ -1234,6 +1234,81 @@ const YOGAKARAKA_BY_LAGNA = {
   'Pisces': null
 };
 
+// Functional Benefic/Malefic status by Lagna
+// Based on house lordships: Trines/Angles = Benefic, 6th/8th/12th = Malefic
+const FUNCTIONAL_STATUS_BY_LAGNA = {
+  'Aries': {
+    benefics: ['Jupiter', 'Sun', 'Mars', 'Moon'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Taurus': {
+    benefics: ['Saturn', 'Venus', 'Sun', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Gemini': {
+    benefics: ['Venus', 'Saturn', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Cancer': {
+    benefics: ['Mars', 'Jupiter', 'Moon'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Leo': {
+    benefics: ['Mars', 'Jupiter', 'Sun'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Virgo': {
+    benefics: ['Venus', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
+  },
+  'Libra': {
+    benefics: ['Saturn', 'Venus', 'Mercury'],
+    malefics: ['Sun', 'Moon', 'Mars', 'Jupiter']
+  },
+  'Scorpio': {
+    benefics: ['Jupiter', 'Moon', 'Sun'],
+    malefics: ['Mercury', 'Venus', 'Mars']
+  },
+  'Sagittarius': {
+    benefics: ['Jupiter', 'Sun', 'Mars'],
+    malefics: ['Mercury', 'Venus', 'Saturn']
+  },
+  'Capricorn': {
+    benefics: ['Venus', 'Saturn', 'Mercury'],
+    malefics: ['Moon', 'Mars', 'Jupiter']
+  },
+  'Aquarius': {
+    benefics: ['Venus', 'Saturn'],
+    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
+  },
+  'Pisces': {
+    benefics: ['Jupiter', 'Moon', 'Mars'],
+    malefics: ['Sun', 'Mercury', 'Venus', 'Saturn']
+  }
+};
+
+// Get personalized goal planets (adds Yogakaraka to base list)
+function getPersonalGoalPlanets(goal, lagna) {
+  const baseGoalPlanets = {
+    'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+    'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+    'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
+    'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+    'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+    'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon', 'Mercury', 'Saturn', 'Mars']
+  };
+  
+  let personalPlanets = [...(baseGoalPlanets[goal] || baseGoalPlanets['Complete'])];
+  
+  // Add Yogakaraka if exists and not already in list
+  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
+  if (yogakaraka && !personalPlanets.includes(yogakaraka)) {
+    personalPlanets.push(yogakaraka);
+  }
+  
+  return personalPlanets;
+}
+
 // Calculate personalized planet boost based on user's chart
 function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   let boost = 1.0;
@@ -1246,6 +1321,7 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   // Get wealth lords for this lagna
   const wealthLords = WEALTH_LORDS_BY_LAGNA[lagnaClean] || { second: null, eleventh: null };
   const yogakaraka = YOGAKARAKA_BY_LAGNA[lagnaClean];
+  const functionalStatus = FUNCTIONAL_STATUS_BY_LAGNA[lagnaClean] || { benefics: [], malefics: [] };
   
   // Extract mahadasha planet name (handle both string and object formats)
   let mahadasha = birthData.currentDashaLord || birthData.mahadasha || null;
@@ -1253,34 +1329,53 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     mahadasha = mahadasha.planet || null;
   }
   
+  // Check if this planet is functional benefic or malefic for this lagna
+  const isFunctionalBenefic = functionalStatus.benefics.includes(planet);
+  const isFunctionalMalefic = functionalStatus.malefics.includes(planet);
+  
   // 1. Natural benefic boost for Jupiter and Venus (×1.10)
   if (planet === 'Jupiter' || planet === 'Venus') {
     boost *= 1.10;
     reasons.push(`${planet} natural benefic (×1.10)`);
   }
   
-  // 2. Second Lord boost (×1.25) - for Wealth goal
+  // 2. Second Lord boost (×1.20) - for Wealth goal
   if (goal === 'Wealth' && wealthLords.second === planet) {
-    boost *= 1.25;
-    reasons.push(`2nd Lord for ${lagnaClean} (×1.25)`);
-  }
-  
-  // 3. Eleventh Lord boost (×1.20) - for Wealth goal
-  if (goal === 'Wealth' && wealthLords.eleventh === planet) {
     boost *= 1.20;
-    reasons.push(`11th Lord for ${lagnaClean} (×1.20)`);
+    reasons.push(`2nd Lord for ${lagnaClean} (×1.20)`);
   }
   
-  // 4. Yogakaraka boost (×1.30)
-  if (yogakaraka === planet) {
-    boost *= 1.30;
-    reasons.push(`Yogakaraka for ${lagnaClean} (×1.30)`);
-  }
-  
-  // 5. Mahadasha boost (×1.15) - skip if Rahu or Ketu
-  if (mahadasha && mahadasha !== 'Rahu' && mahadasha !== 'Ketu' && mahadasha === planet) {
+  // 3. Eleventh Lord boost (×1.15) - for Wealth goal
+  if (goal === 'Wealth' && wealthLords.eleventh === planet) {
     boost *= 1.15;
-    reasons.push(`Current Mahadasha (×1.15)`);
+    reasons.push(`11th Lord for ${lagnaClean} (×1.15)`);
+  }
+  
+  // 4. Yogakaraka boost (×1.35) - most beneficial planet for this lagna
+  if (yogakaraka === planet) {
+    boost *= 1.35;
+    reasons.push(`Yogakaraka for ${lagnaClean} (×1.35)`);
+  }
+  
+  // 5. Mahadasha boost/penalty - depends on if planet is benefic or malefic
+  if (mahadasha && mahadasha !== 'Rahu' && mahadasha !== 'Ketu' && mahadasha === planet) {
+    // Check if Mahadasha lord is benefic or malefic for this lagna
+    const isMahadashaBenefic = functionalStatus.benefics.includes(mahadasha);
+    const isMahadashaMalefic = functionalStatus.malefics.includes(mahadasha);
+    
+    if (isMahadashaBenefic) {
+      boost *= 1.15;
+      reasons.push(`Benefic Mahadasha (×1.15)`);
+    } else if (isMahadashaMalefic) {
+      boost *= 0.85;
+      reasons.push(`Malefic Mahadasha (×0.85)`);
+    }
+  }
+  
+  // 6. General functional malefic penalty (×0.90) - even if not Mahadasha
+  if (isFunctionalMalefic) {
+    boost *= 0.90;
+    reasons.push(`Functional malefic for ${lagnaClean} (×0.90)`);
   }
   
   return {
@@ -1288,7 +1383,9 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     reasons,
     wealthLords,
     yogakaraka,
-    mahadasha
+    mahadasha,
+    isFunctionalBenefic,
+    isFunctionalMalefic
   };
 }
 
@@ -1311,15 +1408,10 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   if (astroLines) {
     const linesData = astroLines.lines || astroLines;
     const mainPlanets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
-    const goalPlanets = {
-      'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
-      'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
-      'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
-      'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
-      'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
-      'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon']
-    };
-    const preferredPlanets = goalPlanets[goal] || goalPlanets['Complete'];
+    
+    // Get user's Lagna for personalized goal planets (adds Yogakaraka)
+    const userLagnaForGoal = (birthData.lagna || birthData.lagnaSign || 'Scorpio').split(' ')[0].replace(/[()]/g, '');
+    const preferredPlanets = getPersonalGoalPlanets(goal, userLagnaForGoal);
     
     if (Array.isArray(linesData)) {
       // FIXED: Only consider goal-relevant planets for nearestLine display
@@ -1343,14 +1435,21 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
     }
   }
   
-  // Apply personalized planet boost to line score
+  // Apply personalized planet boost to line score (works for all goals)
   let boostedLineScore = lineProximityScore;
   let hasBoost = false;
-  if (nearestPlanet && goal === 'Wealth') {
+  if (nearestPlanet) {
     planetBoostInfo = calculatePlanetBoost(nearestPlanet, birthData, goal);
-    if (planetBoostInfo.boost > 1.0) {
+    // Apply boost (>1.0) or penalty (<1.0)
+    if (planetBoostInfo.boost !== 1.0) {
       hasBoost = true;
-      boostedLineScore = Math.min(35, Math.round(lineProximityScore * planetBoostInfo.boost));
+      if (planetBoostInfo.boost > 1.0) {
+        // Boost: can go up to 35 max
+        boostedLineScore = Math.min(35, Math.round(lineProximityScore * planetBoostInfo.boost));
+      } else {
+        // Penalty: reduce score (min 5)
+        boostedLineScore = Math.max(5, Math.round(lineProximityScore * planetBoostInfo.boost));
+      }
     }
   }
   
