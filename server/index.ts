@@ -979,7 +979,7 @@ async function startServer() {
         const nakRashi = vedic.nakshatraRashi || {};
         const lagnaVastu = vedic.lagnaVastu || {};
         const dashaTiming = vedic.dashaTiming || {};
-        const penalty = cred.penalty || {};
+        const dirAdj = cred.directionAdjustment || {};
         
         return {
           rank: index + 1,
@@ -993,13 +993,15 @@ async function startServer() {
             orbStrength: lineProx.orbStrength || 'N/A',
             lineScore: lineProx.score || 0,
             paranScore: parans.score || 0,
-            westernTotal: western.total || 0,
+            westernOriginal: western.originalTotal || western.total || 0,
+            westernAdjusted: western.adjustedTotal || western.total || 0,
+            dirMultiplier: western.directionMultiplier || 1.0,
             nakshatraScore: nakRashi.score || 0,
             lagnaVastuScore: lagnaVastu.score || 0,
             dashaScore: dashaTiming.score || 0,
             vedicTotal: vedic.total || 0,
-            directionPenalty: penalty.amount || 0,
-            penaltyReason: penalty.reason || null
+            directionType: dirAdj.type || 'favorable',
+            directionReason: dirAdj.reason || null
           }
         };
       });

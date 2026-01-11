@@ -940,12 +940,16 @@ function calculateCityDirection(birthLat, birthLng, cityLat, cityLng) {
   return 'Unknown';
 }
 
-// Apply penalty for direction misalignment with nakshatra/lagna favorable directions
+// Apply PROPORTIONAL direction adjustment to Western score only
+// Vedic score already includes nakshatra direction factors, so we avoid double-penalizing
 function applyDirectionPenalty(credibilityResult, birthData, cityDirection) {
-  const total = credibilityResult.total;
-  const breakdown = credibilityResult.breakdown;
+  const breakdown = credibilityResult.breakdown || {};
   
-  // Get favorable directions from nakshatra and lagna
+  // Get Western and Vedic totals with fallbacks
+  const westernTotal = breakdown.western?.total || (credibilityResult.total ? Math.floor(credibilityResult.total / 2) : 25);
+  const vedicTotal = breakdown.vedic?.total || (credibilityResult.total ? Math.ceil(credibilityResult.total / 2) : 25);
+  
+  // Get favorable directions from nakshatra
   const nakshatraDirections = {
     'Ashwini': 'East', 'Bharani': 'West', 'Krittika': 'North', 'Rohini': 'East',
     'Mrigashira': 'South', 'Ardra': 'West', 'Punarvasu': 'North', 'Pushya': 'East',
@@ -956,52 +960,93 @@ function applyDirectionPenalty(credibilityResult, birthData, cityDirection) {
     'Purva Bhadrapada': 'West', 'Uttara Bhadrapada': 'North', 'Revati': 'West'
   };
   
-  const oppositeDirections = {
-    'North': 'South', 'South': 'North',
-    'East': 'West', 'West': 'East',
-    'Northeast': 'Southwest', 'Southwest': 'Northeast',
-    'Northwest': 'Southeast', 'Southeast': 'Northwest'
-  };
-  
   const userNakshatra = birthData.nakshatra || 'Magha';
   const favorableDir = nakshatraDirections[userNakshatra] || 'East';
-  const oppositeDir = oppositeDirections[favorableDir];
   
-  let penalty = 0;
-  let bonus = 0;
-  let penaltyReason = null;
-  
-  // Heavy penalty if city is in opposite direction (-25 points)
-  if (cityDirection === oppositeDir) {
-    penalty = 25;
-    penaltyReason = `Opposite to favorable ${favorableDir} direction`;
-  }
-  // Moderate penalty for adjacent-opposite directions (-12 points)
-  else if (cityDirection.toLowerCase().includes(oppositeDir.toLowerCase().replace('east', '').replace('west', '').replace('north', '').replace('south', ''))) {
-    if (cityDirection !== favorableDir && !cityDirection.toLowerCase().includes(favorableDir.toLowerCase())) {
-      penalty = 12;
-      penaltyReason = `Misaligned with favorable ${favorableDir} direction`;
+  // Explicit direction classification for each favorable direction
+  // Maps city direction → multiplier for each possible favorable direction
+  const directionClassifications = {
+    'East': {
+      'East': { mult: 1.0, type: 'favorable' },
+      'Northeast': { mult: 1.0, type: 'favorable_adjacent' },
+      'Southeast': { mult: 1.0, type: 'favorable_adjacent' },
+      'North': { mult: 0.90, type: 'neutral' },
+      'South': { mult: 0.90, type: 'neutral' },
+      'West': { mult: 0.75, type: 'unfavorable' },
+      'Northwest': { mult: 0.85, type: 'partial_unfavorable' },
+      'Southwest': { mult: 0.85, type: 'partial_unfavorable' },
+      'Origin': { mult: 1.0, type: 'origin' }
+    },
+    'West': {
+      'West': { mult: 1.0, type: 'favorable' },
+      'Northwest': { mult: 1.0, type: 'favorable_adjacent' },
+      'Southwest': { mult: 1.0, type: 'favorable_adjacent' },
+      'North': { mult: 0.90, type: 'neutral' },
+      'South': { mult: 0.90, type: 'neutral' },
+      'East': { mult: 0.75, type: 'unfavorable' },
+      'Northeast': { mult: 0.85, type: 'partial_unfavorable' },
+      'Southeast': { mult: 0.85, type: 'partial_unfavorable' },
+      'Origin': { mult: 1.0, type: 'origin' }
+    },
+    'North': {
+      'North': { mult: 1.0, type: 'favorable' },
+      'Northeast': { mult: 1.0, type: 'favorable_adjacent' },
+      'Northwest': { mult: 1.0, type: 'favorable_adjacent' },
+      'East': { mult: 0.90, type: 'neutral' },
+      'West': { mult: 0.90, type: 'neutral' },
+      'South': { mult: 0.75, type: 'unfavorable' },
+      'Southeast': { mult: 0.85, type: 'partial_unfavorable' },
+      'Southwest': { mult: 0.85, type: 'partial_unfavorable' },
+      'Origin': { mult: 1.0, type: 'origin' }
+    },
+    'South': {
+      'South': { mult: 1.0, type: 'favorable' },
+      'Southeast': { mult: 1.0, type: 'favorable_adjacent' },
+      'Southwest': { mult: 1.0, type: 'favorable_adjacent' },
+      'East': { mult: 0.90, type: 'neutral' },
+      'West': { mult: 0.90, type: 'neutral' },
+      'North': { mult: 0.75, type: 'unfavorable' },
+      'Northeast': { mult: 0.85, type: 'partial_unfavorable' },
+      'Northwest': { mult: 0.85, type: 'partial_unfavorable' },
+      'Origin': { mult: 1.0, type: 'origin' }
     }
-  }
-  // Strong bonus if city is in favorable direction (+25 points)
-  else if (cityDirection === favorableDir) {
-    bonus = 25;
-  }
-  // Moderate bonus if city contains favorable direction (+18 points)
-  else if (cityDirection.toLowerCase().includes(favorableDir.toLowerCase())) {
-    bonus = 18;
-  }
+  };
   
-  // Allow wider range: min 38% for very poor cities, max 92% for excellent cities
-  const penalizedTotal = Math.max(38, Math.min(92, total - penalty + bonus));
+  // Get classification for this direction
+  const classMap = directionClassifications[favorableDir] || directionClassifications['East'];
+  const classification = classMap[cityDirection] || { mult: 0.90, type: 'unknown' };
+  
+  const multiplier = classification.mult;
+  const directionType = classification.type;
+  const adjustmentReason = multiplier < 1.0 
+    ? `${directionType} direction relative to favorable ${favorableDir} (×${multiplier})`
+    : null;
+  
+  // Apply multiplier to Western score only (use floating precision)
+  const adjustedWestern = westernTotal * multiplier;
+  const adjustedTotal = adjustedWestern + vedicTotal;
+  
+  // Clamp to reasonable range: 40-92%, round at final step
+  const finalTotal = Math.round(Math.max(40, Math.min(92, adjustedTotal)));
   
   return {
-    total: penalizedTotal,
+    total: finalTotal,
     breakdown: {
       ...breakdown,
-      penalty: penalty > 0 ? { amount: penalty, reason: penaltyReason } : null
+      western: {
+        ...(breakdown.western || {}),
+        originalTotal: westernTotal,
+        adjustedTotal: Math.round(adjustedWestern),
+        directionMultiplier: multiplier
+      },
+      directionAdjustment: {
+        type: directionType,
+        multiplier: multiplier,
+        reason: adjustmentReason,
+        favorableDirection: favorableDir
+      }
     },
-    originalTotal: total
+    originalTotal: credibilityResult.total
   };
 }
 
