@@ -485,9 +485,20 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
       ? `${city.direction} = challenging for ${baseData.NAKSHATRA || 'your nakshatra'}`
       : 'Neutral direction';
   
-  const westernTotal = Math.min(50, western.total || 25);
-  const vedicTotal = Math.min(50, vedic.total || 25);
-  const calculatedTotal = westernTotal + vedicTotal + directionBonus;
+  // Use pre-scaled values from credibilityData - they already add up to city.score
+  // Don't apply Math.min caps as pdfAssembler already scaled them correctly
+  const westernTotal = western.total || Math.round(score * 0.5);
+  const vedicTotal = vedic.total || (score - westernTotal);
+  
+  // Sub-scores should also come from credibilityData (already scaled)
+  const lineProximityScore = lineProx.score || Math.round(westernTotal * 0.6);
+  const paranScore = western.parans?.score || (westernTotal - lineProximityScore);
+  const nakshatraRashiScore = vedic.nakshatraRashi?.score || Math.round(vedicTotal * 0.4);
+  const lagnaVastuScore = vedic.lagnaVastu?.score || Math.round(vedicTotal * 0.3);
+  const dashaScore = vedic.dashaTiming?.score || (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
+  
+  // Calculated total should match city.score (the header score)
+  const calculatedTotal = westernTotal + vedicTotal;
   
   return {
     ...baseData,
@@ -519,17 +530,17 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     PARAN_TAGS: paranTagsHtml,
     
     WESTERN_SCORE: westernTotal,
-    LINE_PROXIMITY_SCORE: Math.min(25, lineProx.score || 15),
-    PARAN_SCORE: Math.min(25, western.parans?.score || 10),
+    LINE_PROXIMITY_SCORE: lineProximityScore,
+    PARAN_SCORE: paranScore,
     VEDIC_SCORE: vedicTotal,
-    NAKSHATRA_RASHI_SCORE: Math.min(20, vedic.nakshatraRashi?.score || 15),
-    LAGNA_VASTU_SCORE: Math.min(15, vedic.lagnaVastu?.score || 10),
-    DASHA_SCORE: Math.min(15, vedic.dashaTiming?.score || 10),
+    NAKSHATRA_RASHI_SCORE: nakshatraRashiScore,
+    LAGNA_VASTU_SCORE: lagnaVastuScore,
+    DASHA_SCORE: dashaScore,
     
     DIRECTION_BONUS: directionBonus,
     DIRECTION_BONUS_DISPLAY: directionBonus >= 0 ? `+${directionBonus}` : `${directionBonus}`,
     DIRECTION_EXPLANATION: directionExplanation,
-    SCORE_TOTAL_CALC: `${westernTotal} + ${vedicTotal} + ${directionBonus >= 0 ? directionBonus : `(${directionBonus})`} = ${calculatedTotal}%`
+    SCORE_TOTAL_CALC: `${westernTotal} + ${vedicTotal} = ${calculatedTotal}%`
   };
 }
 
