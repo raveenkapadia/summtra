@@ -478,33 +478,56 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     `<span class="paran-tag">${p.planets?.join(' ☌ ') || p.key} - ${p.interpretation || ''}</span>`
   ).join('') || '<span class="paran-tag">No strong parans</span>';
   
-  // Direction info is for display only - the direction adjustment is already baked into 
-  // city.score via applyDirectionPenalty() multiplier in astrologyApi.js
+  // Direction info
   const cityDirection = city.direction || 'N/A';
-  const directionExplanation = `Direction from birthplace: ${cityDirection} (factored into Western score)`;
+  const dirAdj = cred.breakdown?.directionAdjustment || {};
   
   // Check if credibilityData has valid breakdown data
   const hasValidBreakdown = cred.breakdown && (western.total !== undefined || vedic.total !== undefined);
   
-  // Use pre-scaled values from credibilityData directly - pdfAssembler already scaled them
-  // to ensure westernTotal + vedicTotal = city.score (direction is ALREADY factored into score)
-  // If no breakdown data, split score 50/50 for display
-  const westernTotal = hasValidBreakdown ? (western.total ?? Math.round(score / 2)) : Math.round(score / 2);
-  const vedicTotal = hasValidBreakdown ? (vedic.total ?? (score - westernTotal)) : (score - westernTotal);
+  // Get original Western total (pre-penalty) for sub-score breakdown
+  const westernOriginal = hasValidBreakdown ? (western.total ?? Math.round(score / 2)) : Math.round(score / 2);
+  const vedicTotal = hasValidBreakdown ? (vedic.total ?? (score - westernOriginal)) : (score - westernOriginal);
   
-  // Sub-scores from credibilityData (already scaled by pdfAssembler)
-  // If breakdown missing, distribute within category totals proportionally
-  const lineProximityScore = hasValidBreakdown ? (lineProx.score ?? Math.round(westernTotal * 0.6)) : Math.round(westernTotal * 0.6);
-  const paranScore = hasValidBreakdown ? (western.parans?.score ?? (westernTotal - lineProximityScore)) : (westernTotal - lineProximityScore);
+  // Get adjusted Western total (post-penalty) for final calculation
+  const westernAdjusted = hasValidBreakdown ? (western.adjustedTotal ?? westernOriginal) : westernOriginal;
+  
+  // Direction penalty info
+  const hasPenalty = dirAdj.hasPenalty || (westernAdjusted < westernOriginal);
+  const penaltyAmount = hasPenalty ? (westernOriginal - westernAdjusted) : 0;
+  const multiplier = dirAdj.multiplier || 1.0;
+  const penaltyPercentage = hasPenalty ? Math.round((1 - multiplier) * 100) : 0;
+  
+  // Sub-scores from credibilityData (capped for display)
+  const lineProximityScore = hasValidBreakdown ? (lineProx.score ?? Math.round(westernOriginal * 0.6)) : Math.round(westernOriginal * 0.6);
+  const paranScore = hasValidBreakdown ? (western.parans?.score ?? (westernOriginal - lineProximityScore)) : (westernOriginal - lineProximityScore);
   const nakshatraRashiScore = hasValidBreakdown ? (vedic.nakshatraRashi?.score ?? Math.round(vedicTotal * 0.4)) : Math.round(vedicTotal * 0.4);
   const lagnaVastuScore = hasValidBreakdown ? (vedic.lagnaVastu?.score ?? Math.round(vedicTotal * 0.3)) : Math.round(vedicTotal * 0.3);
   const dashaScore = hasValidBreakdown ? (vedic.dashaTiming?.score ?? (vedicTotal - nakshatraRashiScore - lagnaVastuScore)) : (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
   
-  // Calculated total should match city.score (direction already factored in via multiplier)
-  const calculatedTotal = westernTotal + vedicTotal;
+  // Build direction adjustment row HTML
+  let directionAdjustmentRow = '';
+  if (hasPenalty) {
+    directionAdjustmentRow = `
+      <div class="score-item" style="background: rgba(220, 38, 38, 0.08); border-radius: 4px; padding: 4px 8px;">
+        <span>📍 Direction Adj. (${cityDirection} -${penaltyPercentage}%)</span>
+        <span style="color: #DC2626;">-${penaltyAmount}</span>
+      </div>`;
+  } else {
+    directionAdjustmentRow = `
+      <div class="score-item" style="font-style: italic; background: rgba(212, 175, 55, 0.15); border-radius: 4px; padding: 4px 8px;">
+        <span>📍 Direction: ${cityDirection} (favorable)</span>
+        <span style="color: #059669;">+0</span>
+      </div>`;
+  }
   
-  // Build the calculation display string (no separate direction bonus - it's in the score)
-  const calcString = `${westernTotal} + ${vedicTotal} = ${calculatedTotal}%`;
+  // Build the calculation display string showing direction adjustment
+  let calcString;
+  if (hasPenalty) {
+    calcString = `${westernOriginal} - ${penaltyAmount} + ${vedicTotal} = ${score}%`;
+  } else {
+    calcString = `${westernOriginal} + ${vedicTotal} = ${score}%`;
+  }
   
   return {
     ...baseData,
@@ -535,7 +558,7 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     
     PARAN_TAGS: paranTagsHtml,
     
-    WESTERN_SCORE: westernTotal,
+    WESTERN_SCORE: westernOriginal,
     LINE_PROXIMITY_SCORE: lineProximityScore,
     PARAN_SCORE: paranScore,
     VEDIC_SCORE: vedicTotal,
@@ -543,9 +566,7 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     LAGNA_VASTU_SCORE: lagnaVastuScore,
     DASHA_SCORE: dashaScore,
     
-    DIRECTION_BONUS: 0,
-    DIRECTION_BONUS_DISPLAY: cityDirection,
-    DIRECTION_EXPLANATION: directionExplanation,
+    DIRECTION_ADJUSTMENT_ROW: directionAdjustmentRow,
     SCORE_TOTAL_CALC: calcString
   };
 }

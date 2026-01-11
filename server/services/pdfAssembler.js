@@ -414,13 +414,30 @@ export class PDFAssembler {
       const cred = city.credibility;
       const western = cred.western || {};
       const vedic = cred.vedic || {};
+      const dirAdj = cred.directionAdjustment || {};
+      
+      // Get line proximity - cap display at 25 (internal boosted score may exceed for calculations)
+      const rawLineProximity = western.lineProximity?.boostedScore || western.lineProximity?.score || 0;
+      const displayLineProximity = Math.min(25, rawLineProximity);
+      
+      // Get paran score - cap display at 25
+      const rawParanScore = western.parans?.score || 0;
+      const displayParanScore = Math.min(25, rawParanScore);
+      
+      // Direction adjustment info
+      const hasDirectionPenalty = dirAdj.multiplier && dirAdj.multiplier < 1.0;
+      const directionMultiplier = dirAdj.multiplier || 1.0;
+      const originalWestern = western.originalTotal || western.total || 0;
+      const adjustedWestern = western.adjustedTotal || western.total || 0;
+      const penaltyAmount = hasDirectionPenalty ? Math.round(originalWestern - adjustedWestern) : 0;
       
       return {
         breakdown: {
           western: {
-            total: western.total || 0,
+            total: originalWestern, // Show original pre-penalty for sub-breakdown
+            adjustedTotal: adjustedWestern, // Post-penalty for final calculation
             lineProximity: {
-              score: western.lineProximity?.boostedScore || western.lineProximity?.score || 0,
+              score: displayLineProximity, // Capped at 25 for display
               nearestLine: western.lineProximity?.nearestLine || 'N/A',
               distanceKm: Math.round(western.lineProximity?.distanceKm || 0),
               direction: city.direction || 'N/A',
@@ -428,15 +445,22 @@ export class PDFAssembler {
               orbStrength: western.lineProximity?.orbStrength || 'None'
             },
             parans: {
-              score: western.parans?.score || 0,
+              score: displayParanScore, // Capped at 25 for display
               details: western.parans?.details || []
             }
           },
           vedic: {
             total: vedic.total || 0,
-            nakshatraRashi: { score: vedic.nakshatraRashi?.score || 0 },
-            lagnaVastu: { score: vedic.lagnaVastu?.score || 0 },
-            dashaTiming: { score: vedic.dashaTiming?.score || 0 }
+            nakshatraRashi: { score: Math.min(20, vedic.nakshatraRashi?.score || 0) },
+            lagnaVastu: { score: Math.min(15, vedic.lagnaVastu?.score || 0) },
+            dashaTiming: { score: Math.min(15, vedic.dashaTiming?.score || 0) }
+          },
+          directionAdjustment: {
+            hasPenalty: hasDirectionPenalty,
+            multiplier: directionMultiplier,
+            penaltyAmount: penaltyAmount,
+            type: dirAdj.type || 'neutral',
+            favorableDirection: dirAdj.favorableDirection || 'N/A'
           }
         }
       };
