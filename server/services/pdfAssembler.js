@@ -1054,10 +1054,12 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
                      scope === 'International' ? INTERNATIONAL_CITIES : 
                      [...INDIAN_CITIES, ...INTERNATIONAL_CITIES];
       
-      const scoresResult = await astrologyApi.scoreCitiesFromPowerZones(apiBirthData, cities);
+      // Pass planetaryLines data and goal for transparent 50/50 scoring
+      const astroLinesData = linesResult.success ? linesResult.data : null;
+      const scoresResult = await astrologyApi.getScoresForAllCities(apiBirthData, cities, astroLinesData, goal);
       if (scoresResult.success && scoresResult.data) {
         scoredCities = scoresResult.data;
-        console.log(`   ✅ Scored ${scoredCities.length} cities using astrocartography lines`);
+        console.log(`   ✅ Scored ${scoredCities.length} cities using transparent 50/50 methodology`);
       }
     } catch (error) {
       console.error('   ⚠️ API fetch failed, using fallback data:', error.message);
@@ -1070,12 +1072,13 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     region: getRegionForCity(city),
     latitude: city.lat || city.latitude,
     longitude: city.lng || city.longitude,
-    score: city.score || 70,
-    direction: getDirectionFromCoords(parseFloat(testBirthData.latitude), parseFloat(testBirthData.longitude), city.lat || city.latitude, city.lng || city.longitude),
-    nakshatraMatch: city.score >= 80,
-    verdict: city.score >= 85 ? 'Highly Favorable' : city.score >= 75 ? 'Favorable' : city.score >= 65 ? 'Moderate' : 'Challenging',
+    score: city.score || 60,
+    direction: city.direction || getDirectionFromCoords(parseFloat(testBirthData.latitude), parseFloat(testBirthData.longitude), city.lat || city.latitude, city.lng || city.longitude),
+    nakshatraMatch: city.score >= 70,
+    verdict: city.score >= 70 ? 'Highly Favorable' : city.score >= 60 ? 'Favorable' : city.score >= 52 ? 'Moderate' : 'Challenging',
     lines: (city.lines || []).map(l => typeof l === 'string' ? { planet: l.split('-')[0], line_type: l.split('-')[1] || 'AC' } : l),
-    avoidReasons: city.score < 60 ? ['Low compatibility score', 'Challenging planetary influences'] : undefined
+    avoidReasons: city.score < 52 ? ['Low compatibility score', 'Challenging planetary influences'] : undefined,
+    credibility: city.credibility || null
   })).sort((a, b) => b.score - a.score) : generateTestCities(scope);
   
   if (useAI && process.env.ANTHROPIC_API_KEY) {

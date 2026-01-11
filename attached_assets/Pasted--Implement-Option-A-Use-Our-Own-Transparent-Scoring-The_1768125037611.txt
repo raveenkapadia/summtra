@@ -1,0 +1,165 @@
+## ✅ Implement Option A: Use Our Own Transparent Scoring
+
+The disconnect between API astrodyne scores and our credibility breakdown is a trust issue. Let's fix this by calculating scores ourselves using our documented 50-50 methodology.
+
+### Changes Required:
+
+#### 1. Replace API Score with Calculated Score
+```javascript
+// BEFORE (current - problematic)
+const finalScore = apiResponse.astrodyneScore; // e.g., 95
+const breakdown = calculateBreakdown(); // Shows 75 total but displays 95%
+
+// AFTER (transparent)
+const breakdown = calculateBreakdown();
+const finalScore = breakdown.western.total + breakdown.vedic.total; // 25 + 50 = 75
+```
+
+#### 2. Scoring Logic (confirm this matches PDF display)
+```javascript
+function calculateCityScore(city, birthData, goal) {
+  
+  // === WESTERN ASTROCARTOGRAPHY (50 points max) ===
+  
+  // Line Proximity (25 points max)
+  // Based on distance to nearest relevant planetary line
+  let lineProximityScore = 0;
+  const nearestLineDistance = getNearestLineDistance(city, birthData);
+  
+  if (nearestLineDistance <= 100) lineProximityScore = 25;      // Direct hit
+  else if (nearestLineDistance <= 350) lineProximityScore = 22; // Strong orb
+  else if (nearestLineDistance <= 700) lineProximityScore = 18; // Moderate orb
+  else if (nearestLineDistance <= 1000) lineProximityScore = 15; // Weak orb
+  else lineProximityScore = 10; // Minimal influence (baseline)
+  
+  // Paran Lines (25 points max)
+  // Based on latitude-based planetary alignments
+  const activeParans = getParanLinesAtLatitude(city.lat, birthData);
+  const relevantParans = filterParansForGoal(activeParans, goal);
+  let paranScore = Math.min(25, 10 + (relevantParans.length * 5)); // 10 base + 5 per paran
+  
+  const westernTotal = lineProximityScore + paranScore;
+  
+  // === VEDIC ASTROLOGY (50 points max) ===
+  
+  // Nakshatra + Rashi Compatibility (20 points max)
+  const nakshatraDirection = getFavorableDirection(birthData.nakshatra);
+  const cityDirection = getDirection(birthData.birthPlace, city);
+  const directionMatch = isDirectionCompatible(nakshatraDirection, cityDirection);
+  let nakshatraScore = directionMatch ? 20 : 10;
+  
+  // Lagna-Vastu Alignment (15 points max)
+  const lagnaFavorableDirections = getVastuDirections(birthData.lagna);
+  const vastuMatch = lagnaFavorableDirections.includes(cityDirection);
+  let lagnaVastuScore = vastuMatch ? 15 : 8;
+  
+  // Dasha Timing (15 points max)
+  const currentDasha = birthData.dasha.mahadasha;
+  const dashaRelevantLines = getDashaLines(currentDasha); // e.g., Mercury dasha → Mercury lines
+  const hasDashaLine = cityHasLineInfluence(city, dashaRelevantLines);
+  let dashaScore = hasDashaLine ? 15 : 10;
+  
+  const vedicTotal = nakshatraScore + lagnaVastuScore + dashaScore;
+  
+  // === FINAL SCORE ===
+  const totalScore = westernTotal + vedicTotal;
+  const percentage = totalScore; // Already out of 100
+  
+  return {
+    western: {
+      lineProximity: { score: lineProximityScore, max: 25 },
+      paranLines: { score: paranScore, max: 25 },
+      total: westernTotal
+    },
+    vedic: {
+      nakshatraRashi: { score: nakshatraScore, max: 20 },
+      lagnaVastu: { score: lagnaVastuScore, max: 15 },
+      dashaTiming: { score: dashaScore, max: 15 },
+      total: vedicTotal
+    },
+    finalPercentage: percentage // THIS is what we display
+  };
+}
+```
+
+---
+
+### 3. Expected Score Ranges After Fix
+
+With transparent calculation, Indian cities should realistically score:
+
+| Scenario | Western | Vedic | Total |
+|----------|---------|-------|-------|
+| Best case (good paran + all Vedic aligned) | 35/50 | 50/50 | **85%** |
+| Good case (some paran + mostly aligned) | 30/50 | 45/50 | **75%** |
+| Average case (minimal orb + partial Vedic) | 25/50 | 40/50 | **65%** |
+| Avoid city (no influence + misaligned) | 15/50 | 25/50 | **40%** |
+
+This creates **meaningful differentiation** between cities instead of everything being 89-95%.
+
+---
+
+### 4. Update Score Display Labels
+
+In the PDF, update the labels to be mathematically clear:
+
+**BEFORE:**
+```
+☉ WESTERN 25/50
+ VEDIC 50/50
+
+MATCH SCORE: 95%  ← Doesn't match!
+```
+
+**AFTER:**
+```
+☉ WESTERN 25/50
+ VEDIC 50/50
+─────────────────
+TOTAL: 75/100 = 75%  ← Math checks out ✓
+```
+
+---
+
+### 5. Recalibrate "Avoid" Cities
+
+With the new scoring, "Avoid" cities should have genuinely low scores:
+
+- Current: Mumbai shows 65% (still sounds decent)
+- After fix: Mumbai might show 40-50% (clearly unfavorable)
+
+Ensure the Vedic factors actually penalize misaligned cities:
+```javascript
+// If direction is OPPOSITE to favorable, penalize more
+if (isOppositeDirection(favorableDir, cityDir)) {
+  nakshatraScore = 5;  // Heavy penalty
+  lagnaVastuScore = 3; // Heavy penalty
+}
+```
+
+---
+
+### 6. Validation After Implementation
+
+Generate the same test report (Raveen Kapadia) and verify:
+
+| City | Old Score | New Score | Math Checks? |
+|------|-----------|-----------|--------------|
+| Goa | 95% | ~75% | ☐ |
+| Chennai | 94% | ~76% | ☐ |
+| Mumbai (avoid) | 65% | ~45% | ☐ |
+
+The new scores should:
+✅ Match the displayed breakdown exactly
+✅ Show meaningful range (40-85% instead of 65-95%)
+✅ Make "Avoid" cities clearly unfavorable
+
+---
+
+### Deliverables:
+1. ✅ Replace API astrodyne score with our calculated score
+2. ✅ Ensure finalPercentage = Western + Vedic totals
+3. ✅ Recalibrate scoring so Avoid cities show <50%
+4. ✅ Generate new test PDF to verify math
+
+Let me know if you need clarification on any scoring logic!

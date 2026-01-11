@@ -855,79 +855,154 @@ function assignLinesToCities(scoredCities, astroLines) {
 
 // ============================================
 // NEW: GET SCORES FOR ALL 86 CITIES
-// Uses astrodynes endpoint to score any cities we pass
+// Uses our transparent 50/50 Western + Vedic methodology
 // ============================================
-async function getScoresForAllCities(birthData, cities) {
-  console.log(`📡 Scoring ALL ${cities.length} cities using astrodynes endpoint...`);
+async function getScoresForAllCities(birthData, cities, astroLines = null, goal = 'Career') {
+  console.log(`📡 Scoring ${cities.length} cities using transparent 50/50 methodology...`);
   
-  // Use the proper subject format that the API expects
-  const formattedData = formatBirthDataForAPI(birthData);
+  // Calculate direction from birth place to each city
+  const birthLat = parseFloat(birthData.latitude);
+  const birthLng = parseFloat(birthData.longitude);
   
-  const result = await apiCall('POST', '/api/v3/astrocartography/astrodynes', {
-    ...formattedData,
-    locations: cities.map(city => ({
-      name: city.name,
-      latitude: city.lat,
-      longitude: city.lng
-    }))
-  });
-  
-  if (result.success) {
-    // Debug: Log full API response structure
-    console.log(`   [DEBUG] Raw astrodynes response type: ${typeof result.data}`);
-    console.log(`   [DEBUG] Raw astrodynes response keys:`, result.data ? Object.keys(result.data) : 'null');
-    console.log(`   [DEBUG] Raw astrodynes sample:`, JSON.stringify(result.data).substring(0, 500));
+  const scoredCities = cities.map((city, index) => {
+    const cityLat = city.lat || city.latitude;
+    const cityLng = city.lng || city.longitude;
     
-    // Handle various response structures
-    let scores = [];
-    if (Array.isArray(result.data?.locations)) {
-      scores = result.data.locations;
-    } else if (Array.isArray(result.data)) {
-      scores = result.data;
-    } else if (result.data?.results && Array.isArray(result.data.results)) {
-      scores = result.data.results;
-    } else if (result.data?.cities && Array.isArray(result.data.cities)) {
-      scores = result.data.cities;
-    } else if (result.data?.scores && Array.isArray(result.data.scores)) {
-      scores = result.data.scores;
-    }
+    // Calculate city direction from birthplace
+    const direction = calculateCityDirection(birthLat, birthLng, cityLat, cityLng);
     
-    console.log(`   ✅ Astrodynes scores received for ${scores.length} cities`);
+    // Create city data object with direction
+    const cityData = {
+      ...city,
+      lat: cityLat,
+      lng: cityLng,
+      direction
+    };
     
-    // Debug: Log raw API response structure for first few cities
-    if (scores.length > 0) {
-      console.log(`   [DEBUG] Raw API score fields for first city:`, JSON.stringify(scores[0], null, 2).substring(0, 500));
-      const sampleScores = scores.slice(0, 5).map((s, i) => ({
-        city: cities[i]?.name,
-        total_score: s.total_score,
-        score: s.score,
-        power: s.power,
-        extracted: s.total_score || s.score || s.power || 50
-      }));
-      console.log(`   [DEBUG] First 5 city scores:`, JSON.stringify(sampleScores));
-    }
+    // Calculate transparent score using our credibility methodology
+    const credibilityResult = calculateCredibilityScore(cityData, birthData, astroLines, goal);
+    
+    // Apply direction penalty for opposite directions (reduces misaligned cities)
+    const penalizedScore = applyDirectionPenalty(credibilityResult, birthData, direction);
     
     return {
-      success: true,
-      data: scores.map((score, index) => {
-        const cityInfo = cities[index];
-        return {
-          name: cityInfo.name,
-          state: cityInfo.state || null,
-          country: cityInfo.country,
-          lat: cityInfo.lat,
-          lng: cityInfo.lng,
-          score: score.total_score || score.score || score.power || 50,
-          lines: score.planetary_lines || score.lines || [],
-          aspects: score.aspects || [],
-          isIndian: cityInfo.country === 'India'
-        };
-      })
+      name: city.name,
+      state: city.state || null,
+      country: city.country,
+      lat: cityLat,
+      lng: cityLng,
+      direction,
+      score: penalizedScore.total,
+      credibility: penalizedScore.breakdown,
+      lines: [],
+      isIndian: city.country === 'India'
     };
+  });
+  
+  // Log score distribution for validation
+  const scoreRange = scoredCities.map(c => c.score);
+  const minScore = Math.min(...scoreRange);
+  const maxScore = Math.max(...scoreRange);
+  console.log(`   ✅ Scored ${scoredCities.length} cities (range: ${minScore}-${maxScore})`);
+  
+  // Log top 3 and bottom 3 cities for validation
+  const sorted = [...scoredCities].sort((a, b) => b.score - a.score);
+  const top3 = sorted.slice(0, 3).map(c => `${c.name}(${c.direction}): ${c.score}%`);
+  const bottom3 = sorted.slice(-3).map(c => `${c.name}(${c.direction}): ${c.score}%`);
+  console.log(`   📊 Top 3: ${top3.join(', ')}`);
+  console.log(`   📊 Bottom 3: ${bottom3.join(', ')}`);
+  
+  return {
+    success: true,
+    data: scoredCities
+  };
+}
+
+// Calculate 8-point compass direction from birth to city
+function calculateCityDirection(birthLat, birthLng, cityLat, cityLng) {
+  const latDiff = cityLat - birthLat;
+  const lngDiff = cityLng - birthLng;
+  
+  // Check for origin (same location)
+  const distKm = haversineDistanceKm(birthLat, birthLng, cityLat, cityLng);
+  if (distKm < 50) return 'Origin';
+  
+  const angle = Math.atan2(lngDiff, latDiff) * 180 / Math.PI;
+  
+  if (angle >= -22.5 && angle < 22.5) return 'North';
+  if (angle >= 22.5 && angle < 67.5) return 'Northeast';
+  if (angle >= 67.5 && angle < 112.5) return 'East';
+  if (angle >= 112.5 && angle < 157.5) return 'Southeast';
+  if (angle >= 157.5 || angle < -157.5) return 'South';
+  if (angle >= -157.5 && angle < -112.5) return 'Southwest';
+  if (angle >= -112.5 && angle < -67.5) return 'West';
+  if (angle >= -67.5 && angle < -22.5) return 'Northwest';
+  return 'Unknown';
+}
+
+// Apply penalty for direction misalignment with nakshatra/lagna favorable directions
+function applyDirectionPenalty(credibilityResult, birthData, cityDirection) {
+  const total = credibilityResult.total;
+  const breakdown = credibilityResult.breakdown;
+  
+  // Get favorable directions from nakshatra and lagna
+  const nakshatraDirections = {
+    'Ashwini': 'East', 'Bharani': 'West', 'Krittika': 'North', 'Rohini': 'East',
+    'Mrigashira': 'South', 'Ardra': 'West', 'Punarvasu': 'North', 'Pushya': 'East',
+    'Ashlesha': 'South', 'Magha': 'East', 'Purva Phalguni': 'South', 'Uttara Phalguni': 'East',
+    'Hasta': 'East', 'Chitra': 'West', 'Swati': 'North', 'Vishakha': 'East',
+    'Anuradha': 'South', 'Jyeshtha': 'West', 'Mula': 'South', 'Purva Ashadha': 'South',
+    'Uttara Ashadha': 'North', 'Shravana': 'West', 'Dhanishta': 'North', 'Shatabhisha': 'South',
+    'Purva Bhadrapada': 'West', 'Uttara Bhadrapada': 'North', 'Revati': 'West'
+  };
+  
+  const oppositeDirections = {
+    'North': 'South', 'South': 'North',
+    'East': 'West', 'West': 'East',
+    'Northeast': 'Southwest', 'Southwest': 'Northeast',
+    'Northwest': 'Southeast', 'Southeast': 'Northwest'
+  };
+  
+  const userNakshatra = birthData.nakshatra || 'Magha';
+  const favorableDir = nakshatraDirections[userNakshatra] || 'East';
+  const oppositeDir = oppositeDirections[favorableDir];
+  
+  let penalty = 0;
+  let bonus = 0;
+  let penaltyReason = null;
+  
+  // Heavy penalty if city is in opposite direction (-25 points)
+  if (cityDirection === oppositeDir) {
+    penalty = 25;
+    penaltyReason = `Opposite to favorable ${favorableDir} direction`;
+  }
+  // Moderate penalty for adjacent-opposite directions (-12 points)
+  else if (cityDirection.toLowerCase().includes(oppositeDir.toLowerCase().replace('east', '').replace('west', '').replace('north', '').replace('south', ''))) {
+    if (cityDirection !== favorableDir && !cityDirection.toLowerCase().includes(favorableDir.toLowerCase())) {
+      penalty = 12;
+      penaltyReason = `Misaligned with favorable ${favorableDir} direction`;
+    }
+  }
+  // Strong bonus if city is in favorable direction (+25 points)
+  else if (cityDirection === favorableDir) {
+    bonus = 25;
+  }
+  // Moderate bonus if city contains favorable direction (+18 points)
+  else if (cityDirection.toLowerCase().includes(favorableDir.toLowerCase())) {
+    bonus = 18;
   }
   
-  console.log('   ⚠️ Astrodynes API call failed, returning fallback scores');
-  return { success: false, error: result.error };
+  // Allow wider range: min 38% for very poor cities, max 92% for excellent cities
+  const penalizedTotal = Math.max(38, Math.min(92, total - penalty + bonus));
+  
+  return {
+    total: penalizedTotal,
+    breakdown: {
+      ...breakdown,
+      penalty: penalty > 0 ? { amount: penalty, reason: penaltyReason } : null
+    },
+    originalTotal: total
+  };
 }
 
 // ============================================
@@ -995,14 +1070,16 @@ function calculateLineDistanceKm(cityLat, cityLng, linePoints) {
 }
 
 // Get orb strength category based on distance in km
+// Extended orb ranges - astrocartography lines influence areas within 1500km
+// Wide score range for meaningful differentiation
 function getOrbStrength(distanceKm) {
-  if (distanceKm === null) return { label: 'None', score: 0, bars: 0 };
-  if (distanceKm < 100) return { label: 'Direct', score: 25, bars: 10 };
-  if (distanceKm < 200) return { label: 'Very Strong', score: 22, bars: 9 };
-  if (distanceKm < 350) return { label: 'Strong', score: 18, bars: 7 };
-  if (distanceKm < 500) return { label: 'Moderate', score: 14, bars: 5 };
-  if (distanceKm < 700) return { label: 'Weak', score: 10, bars: 3 };
-  return { label: 'Minimal', score: 5, bars: 1 };
+  if (distanceKm === null) return { label: 'None', score: 10, bars: 1 };
+  if (distanceKm < 150) return { label: 'Direct', score: 25, bars: 10 };
+  if (distanceKm < 400) return { label: 'Very Strong', score: 23, bars: 9 };
+  if (distanceKm < 700) return { label: 'Strong', score: 20, bars: 7 };
+  if (distanceKm < 1100) return { label: 'Moderate', score: 17, bars: 5 };
+  if (distanceKm < 1600) return { label: 'Weak', score: 13, bars: 3 };
+  return { label: 'Minimal', score: 10, bars: 1 };
 }
 
 // Generate visual bar representation
@@ -1044,9 +1121,10 @@ function calculateParansForCity(birthData, cityLatitude, goal = 'Complete') {
       const paranKey = `${planet1}-${planet2}`;
       
       // Deterministic but varied activation based on latitude and birth data
+      // Using lower threshold (0.1) for more generous paran activation
       const activation = Math.sin(birthDateSum * 0.1 + i * 0.5 + j * 0.3 + latFactor * 10);
       
-      if (activation > 0.3) {
+      if (activation > 0.1) {
         const interpretation = PARAN_INTERPRETATIONS[paranKey];
         if (interpretation) {
           parans.push({
@@ -1069,10 +1147,10 @@ function calculateParansForCity(birthData, cityLatitude, goal = 'Complete') {
 
 // Calculate paran score (25 points max)
 function calculateParanScore(parans) {
-  if (!parans || parans.length === 0) return 8;
+  if (!parans || parans.length === 0) return 12;
   if (parans.length >= 3) return 25;
-  if (parans.length === 2) return 20;
-  return 15;
+  if (parans.length === 2) return 22;
+  return 18;
 }
 
 // CREDIBILITY SCORING: Calculate 50/50 Western + Vedic breakdown
@@ -1083,7 +1161,8 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   // ========== WESTERN ASTROCARTOGRAPHY (50 points) ==========
   
   // 1. Line Proximity Score (25 points max)
-  let lineProximityScore = 5;
+  // Base score is 13 for cities with no nearby lines - balanced floor
+  let lineProximityScore = 13;
   let nearestLine = null;
   let nearestDistanceKm = null;
   let orbStrength = { label: 'None', bars: 0 };
@@ -1145,7 +1224,7 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   const userNakshatra = birthData.nakshatra || 'Magha';
   const favorableDirection = nakshatraDirections[userNakshatra] || 'East';
   const directionMatch = cityDirection.includes(favorableDirection) || favorableDirection.includes(cityDirection);
-  const nakshatraRashiScore = directionMatch ? 18 : 10;
+  const nakshatraRashiScore = directionMatch ? 20 : 12;
   
   // 4. Lagna-Vastu Score (15 points max)
   const lagnaDirections = {
@@ -1161,13 +1240,13 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   const lagnaClean = userLagna.split(' ')[0].replace(/[()]/g, '');
   const lagnaFavorable = lagnaDirections[lagnaClean] || 'West';
   const vastuMatch = cityDirection.includes(lagnaFavorable);
-  const lagnaVastuScore = vastuMatch ? 14 : 8;
+  const lagnaVastuScore = vastuMatch ? 15 : 10;
   
   // 5. Dasha Timing Score (15 points max)
   const currentDasha = birthData.currentDashaLord || 'Jupiter';
   const dashaLineMatch = nearestLine && nearestLine.startsWith(currentDasha);
   const dashaParanMatch = parans.some(p => p.planets.includes(currentDasha));
-  const dashaScore = (dashaLineMatch || dashaParanMatch) ? 15 : 8;
+  const dashaScore = (dashaLineMatch || dashaParanMatch) ? 15 : 10;
   
   const vedicTotal = Math.min(50, nakshatraRashiScore + lagnaVastuScore + dashaScore);
   

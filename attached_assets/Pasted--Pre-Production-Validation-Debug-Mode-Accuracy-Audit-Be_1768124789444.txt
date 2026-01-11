@@ -1,0 +1,141 @@
+## 🔍 Pre-Production Validation - Debug Mode & Accuracy Audit
+
+Before going to production, we need to validate all calculations are accurate. Please add a DEBUG/VALIDATION mode that exposes the raw calculations.
+
+### Task 1: Create Validation Endpoint
+
+Create a `/api/validate-report` endpoint that returns raw calculation data (not PDF) for a given birth chart:
+```javascript
+// Example response structure:
+{
+  "input": {
+    "name": "Raveen Kapadia",
+    "birthDate": "1982-11-15",
+    "birthTime": "08:20",
+    "birthPlace": "Ahmedabad, Gujarat, India",
+    "birthCoords": { "lat": 23.0225, "lng": 72.5714 }
+  },
+  
+  "planetaryLines": {
+    "Sun-MC": { "longitude": 85.5, "passesThrough": ["Myanmar", "China"] },
+    "Sun-AC": { "longitude": 45.2, "passesThrough": ["Europe", "Africa"] },
+    "Moon-MC": { ... },
+    // ... all lines with their actual longitudes
+  },
+  
+  "vedicCalculations": {
+    "moonSign": { "rashi": "Libra", "degree": 15.5, "calculationMethod": "Lahiri Ayanamsa" },
+    "nakshatra": { "name": "Vishakha", "pada": 1, "degree": 200.5 },
+    "lagna": { "sign": "Scorpio", "degree": 5.2 },
+    "ayanamsa": { "type": "Lahiri", "value": 23.456 },
+    "dasha": {
+      "mahadasha": "Mercury",
+      "mahadashaStart": "2020-03-15",
+      "mahadashaEnd": "2037-03-15",
+      "antardasha": "Saturn",
+      "antardashaStart": "2023-11-15",
+      "antardashaEnd": "2026-06-15"
+    }
+  },
+  
+  "cityCalculations": [
+    {
+      "city": "Goa",
+      "coords": { "lat": 15.2993, "lng": 74.1240 },
+      "distanceFromBirth": 502,
+      "directionFromBirth": "South",
+      "directionAngle": 185.3,
+      
+      "nearestLines": [
+        { "line": "Venus-AC", "distance": 2202, "orbInfluence": 0.0 },
+        { "line": "Moon-AC", "distance": 1850, "orbInfluence": 0.0 }
+      ],
+      
+      "scoring": {
+        "western": {
+          "lineProximity": { "score": 15, "max": 25, "calculation": "No lines within 700km orb" },
+          "paranLines": { "score": 25, "max": 25, "activeParans": ["Sun-Mercury", "Mars-Jupiter"] }
+        },
+        "vedic": {
+          "nakshatraRashi": { "score": 20, "max": 20, "reason": "South direction favorable for Vishakha" },
+          "lagnaVastu": { "score": 15, "max": 15, "reason": "Scorpio lagna benefits from South" },
+          "dashaTiming": { "score": 15, "max": 15, "reason": "Mercury dasha activates communication cities" }
+        },
+        "totalRaw": 90,
+        "totalMax": 100,
+        "finalPercentage": 90,
+        "displayedPercentage": 95  // <-- WHY IS THIS DIFFERENT?
+      }
+    }
+    // ... all cities
+  ]
+}
+```
+
+---
+
+### Task 2: Fix Scoring Discrepancy ⚠️
+
+I noticed a potential math issue:
+
+**Goa's Score Breakdown (from PDF):**
+- Western: 25/50 (Line Proximity 15/25 + Paran 25/25)
+- Vedic: 50/50
+
+**Expected Total:** 25 + 50 = 75 out of 100 = **75%**
+**Displayed in PDF:** **95%**
+
+Please audit the scoring calculation and either:
+a) Fix the calculation if there's a bug
+b) Explain what additional factors create the 95% if the math is correct
+
+---
+
+### Task 3: Add Console Logging for One Test Run
+
+When generating a report, log to console:
+```
+=== VALIDATION LOG: Raveen Kapadia ===
+
+PLANETARY LINES (from astro API):
+- Sun-MC longitude: XX.XX°E
+- Sun-AC longitude: XX.XX°E
+- Moon-MC longitude: XX.XX°E
+... (all lines)
+
+VEDIC CALCULATIONS:
+- Moon position: XX° in [Sign]
+- Nakshatra: [Name] Pada [X] (raw degree: XX.XX)
+- Lagna: [Sign] (raw degree: XX.XX)
+- Ayanamsa used: Lahiri = XX.XXXX
+
+CITY: Goa
+- Distance from Ahmedabad: XXX km (calculated via Haversine)
+- Direction angle: XXX° = "South"
+- Nearest planetary line: [Line] at XXX km
+- Orb influence: X% (700km = 100%, 1400km = 50%, >1400km = 0%)
+
+SCORING BREAKDOWN:
+- Line Proximity: XX/25 (calculation: ...)
+- Paran Lines: XX/25 (active parans: ...)
+- Nakshatra: XX/20 (favorable dir: X, city dir: Y, match: true/false)
+- Lagna-Vastu: XX/15 (calculation: ...)
+- Dasha: XX/15 (current dasha: X, relevant lines: Y)
+- TOTAL: XX/100 = XX%
+
+=== END VALIDATION LOG ===
+```
+
+---
+
+### Task 4: Document Data Sources
+
+Please confirm which APIs/libraries are being used for:
+
+| Calculation | Source/Library | Notes |
+|-------------|----------------|-------|
+| Planetary line positions | ? | Which astro API? |
+| Vedic chart (Rashi/Nakshatra/Lagna) | ? | Which library? Ayanamsa? |
+| Dasha calculations | ? | Which system? |
+| Distance calculations | ? | Haversine formula? |
+| City coordinates | ? | Which database? |
