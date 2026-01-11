@@ -108,7 +108,7 @@ Preferred communication style: Simple, everyday language.
 
 Located in `server/services/`, each service handles a specific concern:
 
-1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines. Uses `getScoresForAllCities()` with astrodynes endpoint to score ALL 86 cities (31 India + 55 International) instead of limited power zones
+1. **astrologyApi.js** - Calls RapidAPI astrology endpoints for natal charts and astrocartography lines. Uses transparent `calculateCredibilityScore()` with direction penalty/bonus to score ALL 86 cities (31 India + 55 International) with 50/50 Western+Vedic methodology. Exports `/api/validate-report` endpoint for debugging score breakdowns.
 2. **vedicApi.js** - Integrates with AstrologyAPI.com for Vedic astrology data (Rashi, Nakshatra, Lagna, Dasha periods). Provides `getVedicProfile()`, `getDashaInsight()`, `checkNakshatraDirectionMatch()`, and `getDirectionFromBirthPlace()` functions
 3. **claudeService.js** - Generates personalized interpretations using Anthropic's Claude API with goal-specific customization (Education, Career, Love, Relocation, Wealth, Complete)
 4. **pdfGenerator.js** - Uses Puppeteer to convert HTML templates to PDF reports
@@ -154,16 +154,21 @@ The report includes a comprehensive credibility/transparency layer to build user
    - Each band has distinct paran combinations + goal-specific modifiers
    - Goal paran additions: Career (Sun-Jupiter), Wealth (Jupiter-Venus), Love (Venus-Mars), etc.
 
-4. **Data-Driven 50/50 Western + Vedic Scoring**
-   - **Western Score** (scaled from raw data):
-     - Line Proximity: Haversine distance to nearest planetary line (max 25 raw points)
-     - Paran Lines: Count of active parans for city latitude (max 25 raw points)
-   - **Vedic Score** (scaled from birth data):
-     - Nakshatra+Rashi Affinity: Element affinity + directional matching (max 20 raw points)
-     - Lagna-Vastu: Lagna element correlation with city score (max 15 raw points)
-     - Dasha Timing: Dasha lord affinity table per goal (max 15 raw points)
-   - Raw totals proportionally scaled to match city's published score
-   - Displayed on city pages with visual breakdown
+4. **Transparent 50/50 Western + Vedic Scoring**
+   - **Western Score** (50 points max):
+     - Line Proximity: Haversine distance to nearest planetary line (10-25 points, based on orb strength)
+     - Paran Lines: Count of active parans for city latitude (8-25 points)
+   - **Vedic Score** (50 points max):
+     - Nakshatra+Rashi Affinity: Direction matching with favorable nakshatra direction (10-20 points)
+     - Lagna-Vastu: Lagna element correlation with city direction (8-15 points)
+     - Dasha Timing: Current dasha lord alignment with planetary lines (8-15 points)
+   - **Direction Penalty/Bonus System**:
+     - Cities in favorable direction (nakshatra-based): +25 points bonus
+     - Cities in opposite direction: -25 points penalty
+     - Partial alignment: +18/-12 points
+   - **Score Distribution**: Calibrated for 48-72% range with 24-point spread
+   - **Verdict Thresholds**: Highly Favorable (≥70%), Favorable (≥60%), Moderate (≥52%), Challenging (<52%)
+   - Displayed on city pages with full calculation breakdown
 
 5. **Birthplace Direction Logic**
    - Shows cardinal direction from birthplace to city (N/S/E/W/NE/NW/SE/SW)
