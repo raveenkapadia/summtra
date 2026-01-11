@@ -408,61 +408,62 @@ export class PDFAssembler {
   }
   
   calculateCredibilityData(city, lines, goal, birthData = null) {
+    // FIX: Use city.credibility from Analysis Engine directly instead of recalculating
+    // The Analysis Engine already computed correct capped values (Western ≤50, Vedic ≤50)
+    if (city.credibility) {
+      const cred = city.credibility;
+      const western = cred.western || {};
+      const vedic = cred.vedic || {};
+      
+      return {
+        breakdown: {
+          western: {
+            total: western.total || 0,
+            lineProximity: {
+              score: western.lineProximity?.boostedScore || western.lineProximity?.score || 0,
+              nearestLine: western.lineProximity?.nearestLine || 'N/A',
+              distanceKm: Math.round(western.lineProximity?.distanceKm || 0),
+              direction: city.direction || 'N/A',
+              orbBars: western.lineProximity?.orbBars || '░░░░░░░░░░',
+              orbStrength: western.lineProximity?.orbStrength || 'None'
+            },
+            parans: {
+              score: western.parans?.score || 0,
+              details: western.parans?.details || []
+            }
+          },
+          vedic: {
+            total: vedic.total || 0,
+            nakshatraRashi: { score: vedic.nakshatraRashi?.score || 0 },
+            lagnaVastu: { score: vedic.lagnaVastu?.score || 0 },
+            dashaTiming: { score: vedic.dashaTiming?.score || 0 }
+          }
+        }
+      };
+    }
+    
+    // FALLBACK: Only recalculate if city.credibility is missing (shouldn't happen)
+    console.warn(`⚠️ city.credibility missing for ${city.name}, using fallback calculation`);
+    
     const cityLat = city.latitude || city.lat || 0;
     const cityLng = city.longitude || city.lng || 0;
     const totalScore = city.score || 75;
     
-    // FIXED: Pass goal to findNearestLine to filter by goal-relevant planets
     const nearestLine = this.findNearestLine(cityLat, cityLng, lines, goal);
     const distanceKm = nearestLine.distanceKm;
     const orbData = this.getOrbData(distanceKm);
     const paranLines = this.calculateParanLines(cityLat, goal);
     
-    const rawLineProximity = Math.max(0, Math.round(25 * (1 - distanceKm / 700)));
-    const rawParanScore = Math.min(25, Math.round(5 * paranLines.length));
-    const rawWesternTotal = rawLineProximity + rawParanScore;
+    // Use simple 50/50 split for fallback
+    const westernTotal = Math.min(50, Math.round(totalScore / 2));
+    const vedicTotal = Math.min(50, totalScore - westernTotal);
     
-    const birthNakshatra = birthData?.nakshatra || '';
-    const birthRashi = birthData?.rashi || '';
-    const birthLagna = birthData?.lagna || '';
-    const currentDasha = birthData?.currentDashaLord || '';
-    
-    const nakshatraMatch = birthNakshatra ? this.getNakshatraAffinityScore(birthNakshatra, city, goal) : 12;
-    const rashiMatch = birthRashi ? this.getRashiDirectionScore(birthRashi, cityLat, cityLng) : 10;
-    const lagnaScore = birthLagna ? this.getLagnaVastuScore(birthLagna, city) : 10;
-    const dashaScore = currentDasha ? this.getDashaTimingScore(currentDasha, goal) : 10;
-    
-    const rawNakshatraRashi = Math.min(20, nakshatraMatch + rashiMatch);
-    const rawLagnaVastu = Math.min(15, lagnaScore);
-    const rawDashaTiming = Math.min(15, dashaScore);
-    const rawVedicTotal = rawNakshatraRashi + rawLagnaVastu + rawDashaTiming;
-    
-    const rawTotal = rawWesternTotal + rawVedicTotal;
-    const scaleFactor = rawTotal > 0 ? totalScore / rawTotal : 0.5;
-    
-    const westernTotal = Math.round(rawWesternTotal * scaleFactor);
-    const vedicTotal = totalScore - westernTotal;
-    
-    const lineProximityScore = Math.round(rawLineProximity * scaleFactor);
+    const lineProximityScore = Math.round(westernTotal * 0.6);
     const paranScore = westernTotal - lineProximityScore;
     
-    const vedicScaleFactor = rawVedicTotal > 0 ? vedicTotal / rawVedicTotal : 1/3;
-    const scaledNakshatraRashi = Math.round(rawNakshatraRashi * vedicScaleFactor);
-    const scaledLagnaVastu = Math.round(rawLagnaVastu * vedicScaleFactor);
-    const scaledDashaTiming = vedicTotal - scaledNakshatraRashi - scaledLagnaVastu;
-    
-    const birthLat2 = birthData?.latitude ? parseFloat(birthData.latitude) : null;
-    const birthLng2 = birthData?.longitude ? parseFloat(birthData.longitude) : null;
-    let direction = nearestLine.direction;
-    
-    if (birthLat2 && birthLng2) {
-      const distFromBirth = this.haversineDistance(birthLat2, birthLng2, cityLat, cityLng);
-      if (distFromBirth < 50) {
-        direction = 'Origin';
-      } else {
-        direction = this.getCardinalDirection(birthLat2, birthLng2, cityLat, cityLng);
-      }
-    }
+    const nakshatraRashiScore = Math.round(vedicTotal * 0.4);
+    const lagnaVastuScore = Math.round(vedicTotal * 0.3);
+    const dashaScore = vedicTotal - nakshatraRashiScore - lagnaVastuScore;
     
     return {
       breakdown: {
@@ -472,7 +473,7 @@ export class PDFAssembler {
             score: lineProximityScore,
             nearestLine: nearestLine.name,
             distanceKm: Math.round(distanceKm),
-            direction: direction,
+            direction: city.direction || 'N/A',
             orbBars: orbData.bars,
             orbStrength: orbData.strength
           },
@@ -483,9 +484,9 @@ export class PDFAssembler {
         },
         vedic: {
           total: vedicTotal,
-          nakshatraRashi: { score: scaledNakshatraRashi },
-          lagnaVastu: { score: scaledLagnaVastu },
-          dashaTiming: { score: scaledDashaTiming }
+          nakshatraRashi: { score: nakshatraRashiScore },
+          lagnaVastu: { score: lagnaVastuScore },
+          dashaTiming: { score: dashaScore }
         }
       }
     };
