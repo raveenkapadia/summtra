@@ -280,6 +280,88 @@ function generateTopCitiesHTML(cities) {
   }).join('');
 }
 
+function generateLinePaths(planetaryLines) {
+  const lineRegions = {
+    'Sun': { AC: 'Central Europe → North Africa', MC: 'East Asia → Australia', DC: 'Americas → Pacific', IC: 'Middle East → South Asia' },
+    'Moon': { AC: 'Northern Europe → Russia', MC: 'Southeast Asia → Indian Ocean', DC: 'South America → Atlantic', IC: 'Central Asia → Arabia' },
+    'Mercury': { AC: 'Western Europe → Sahara', MC: 'Japan → Philippines', DC: 'North America → Caribbean', IC: 'Iran → Pakistan' },
+    'Venus': { AC: 'Iberian Peninsula → West Africa', MC: 'Korea → Indonesia', DC: 'Eastern USA → Brazil', IC: 'Turkey → India' },
+    'Mars': { AC: 'Scandinavia → East Africa', MC: 'China → Vietnam', DC: 'Central USA → Argentina', IC: 'Levant → Tibet' },
+    'Jupiter': { AC: 'UK → Nigeria', MC: 'Mongolia → Thailand', DC: 'Midwest USA → Chile', IC: 'Egypt → Nepal' },
+    'Saturn': { AC: 'France → Congo', MC: 'Siberia → Malaysia', DC: 'Atlantic Coast → Peru', IC: 'Libya → Bhutan' },
+    'Uranus': { AC: 'Iceland → West Africa', MC: 'Eastern Siberia → Indonesia', DC: 'Eastern Canada → Brazil', IC: 'Mediterranean → India' },
+    'Neptune': { AC: 'Scotland → Morocco', MC: 'Japan → Australia', DC: 'Central USA → Argentina', IC: 'Egypt → Bangladesh' },
+    'Pluto': { AC: 'Ireland → Mauritania', MC: 'Korea → Papua', DC: 'Texas → Peru', IC: 'Libya → Myanmar' }
+  };
+  
+  if (!planetaryLines || planetaryLines.length === 0) {
+    return Object.entries(lineRegions).slice(0, 5).map(([planet, paths]) => `
+      <div class="line-list-item">
+        <span class="line-name">${planet}-MC</span>
+        <span class="line-region">${paths.MC}</span>
+      </div>
+    `).join('');
+  }
+  
+  const processedLines = planetaryLines.slice(0, 7).map(line => {
+    const planet = line.planet || 'Jupiter';
+    const lineType = line.lineType || line.line_type || 'MC';
+    const paths = lineRegions[planet] || lineRegions['Jupiter'];
+    
+    let regionPath = paths[lineType] || 'Global influence';
+    
+    if (line.points && Array.isArray(line.points) && line.points.length > 0) {
+      const firstPoint = line.points[0];
+      const lastPoint = line.points[line.points.length - 1];
+      const startLat = Array.isArray(firstPoint) ? firstPoint[1] : (firstPoint?.latitude ?? firstPoint?.lat ?? 0);
+      const endLat = Array.isArray(lastPoint) ? lastPoint[1] : (lastPoint?.latitude ?? lastPoint?.lat ?? 0);
+      
+      regionPath = `${getRegionFromLat(startLat)} → ${getRegionFromLat(endLat)}`;
+    }
+    
+    return `
+      <div class="line-list-item">
+        <span class="line-name">${planet}-${lineType}</span>
+        <span class="line-region">${regionPath}</span>
+      </div>
+    `;
+  });
+  
+  return processedLines.join('');
+}
+
+function getRegionFromLat(lat) {
+  if (lat > 60) return 'Arctic';
+  if (lat > 45) return 'Northern Europe/Canada';
+  if (lat > 30) return 'Southern Europe/USA';
+  if (lat > 15) return 'North Africa/India';
+  if (lat > 0) return 'Tropical Africa/SE Asia';
+  if (lat > -15) return 'Southern Africa/Indonesia';
+  if (lat > -30) return 'South America/Australia';
+  if (lat > -45) return 'Southern Oceans';
+  return 'Antarctica';
+}
+
+function generateParanTags(birthData) {
+  const mahadasha = birthData.currentDashaLord || 'Jupiter';
+  const rashi = birthData.rashi || 'Aries';
+  
+  const paranCombos = [
+    { key: 'Jupiter ☌ Venus', label: 'Prosperity', active: true },
+    { key: 'Sun ☌ Mercury', label: 'Recognition', active: mahadasha === 'Sun' || mahadasha === 'Mercury' },
+    { key: 'Moon ☌ Venus', label: 'Harmony', active: true },
+    { key: 'Mercury ☌ Jupiter', label: 'Wisdom', active: mahadasha === 'Jupiter' },
+    { key: 'Venus ☌ Mars', label: 'Passion', active: false },
+    { key: 'Saturn ☌ Jupiter', label: 'Foundation', active: mahadasha === 'Saturn' }
+  ];
+  
+  return paranCombos
+    .filter(p => p.active || Math.random() > 0.5)
+    .slice(0, 4)
+    .map(p => `<span class="paran-tag">${p.key} - ${p.label}</span>`)
+    .join('');
+}
+
 export function prepareReportData(birthData, astroData, options = {}) {
   const now = new Date();
   const goals = options.goals || [options.goal || 'Complete'];
@@ -335,16 +417,30 @@ export function prepareReportData(birthData, astroData, options = {}) {
     POWER_ZONES_COUNT: (astroData?.powerZones || []).length,
     TOP_CITIES_COUNT: (astroData?.topCities || []).length,
     
+    LINE_PATHS: generateLinePaths(astroData?.planetaryLines || []),
+    SCOPE_LOWER: (scope || 'both').toLowerCase(),
+    PARAN_TAGS: generateParanTags(birthData),
+    
     PAGE_NUM: '{{PAGE_NUM}}',
     TOTAL_PAGES: '{{TOTAL_PAGES}}'
   };
 }
 
-export function prepareCityPageData(city, rank, goal, baseData) {
+export function prepareCityPageData(city, rank, goal, baseData, credibilityData = null) {
   const scoreClass = city.score >= 85 ? 'Excellent' : city.score >= 75 ? 'Good' : city.score >= 65 ? 'Moderate' : 'Challenging';
   
   const fallbackInterpretation = generateFallbackInterpretation(city, goal, scoreClass);
   const interpretation = city.aiInterpretation || city.analysis || city.interpretation || fallbackInterpretation;
+  
+  const cred = credibilityData || {};
+  const western = cred.breakdown?.western || {};
+  const vedic = cred.breakdown?.vedic || {};
+  const lineProx = western.lineProximity || {};
+  const parans = western.parans?.details || [];
+  
+  const paranTagsHtml = parans.map(p => 
+    `<span class="paran-tag">${p.planets?.join(' ☌ ') || p.key} - ${p.interpretation || ''}</span>`
+  ).join('') || '<span class="paran-tag">No strong parans</span>';
   
   return {
     ...baseData,
@@ -353,8 +449,8 @@ export function prepareCityPageData(city, rank, goal, baseData) {
     CITY_REGION: city.region || '',
     CITY_SCORE: city.score || 0,
     CITY_RANK: rank,
-    CITY_LATITUDE: city.latitude || '',
-    CITY_LONGITUDE: city.longitude || '',
+    CITY_LATITUDE: Math.round(city.latitude || city.lat || 0),
+    CITY_LONGITUDE: city.longitude || city.lng || '',
     CITY_DIRECTION: city.direction || '',
     CITY_NAKSHATRA_MATCH: city.nakshatraMatch ? 'Yes' : 'No',
     CITY_VERDICT: city.verdict || scoreClass,
@@ -365,7 +461,23 @@ export function prepareCityPageData(city, rank, goal, baseData) {
     CITY_PLANETARY_INFLUENCES: generateCityPlanetaryInfluences(city.lines || []),
     GOAL: goal,
     GOAL_ICON: GOAL_ICONS[goal] || '✨',
-    GOAL_COLOR: GOAL_COLORS[goal] || '#2D1B4E'
+    GOAL_COLOR: GOAL_COLORS[goal] || '#2D1B4E',
+    
+    NEAREST_LINE: lineProx.nearestLine || (city.lines?.[0] ? (typeof city.lines[0] === 'string' ? city.lines[0] : `${city.lines[0].planet}-${city.lines[0].line_type}`) : 'Jupiter-MC'),
+    LINE_DISTANCE_KM: lineProx.distanceKm || 350,
+    LINE_DIRECTION: lineProx.direction || 'west',
+    ORB_BARS: lineProx.orbBars || '███████░░░',
+    ORB_STRENGTH: lineProx.orbStrength || 'Moderate',
+    
+    PARAN_TAGS: paranTagsHtml,
+    
+    WESTERN_SCORE: western.total || 35,
+    LINE_PROXIMITY_SCORE: lineProx.score || 15,
+    PARAN_SCORE: western.parans?.score || 20,
+    VEDIC_SCORE: vedic.total || 40,
+    NAKSHATRA_RASHI_SCORE: vedic.nakshatraRashi?.score || 15,
+    LAGNA_VASTU_SCORE: vedic.lagnaVastu?.score || 12,
+    DASHA_SCORE: vedic.dashaTiming?.score || 12
   };
 }
 

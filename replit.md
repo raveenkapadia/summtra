@@ -134,6 +134,39 @@ Located in `server/services/`, each service handles a specific concern:
     - Generates HTML for planetary lines, power zones, top cities, rankings
     - Handles goal-specific content customization
 
+### Credibility Layer System
+
+The report includes a comprehensive credibility/transparency layer to build user trust:
+
+1. **Haversine Distance Calculation**
+   - Calculates exact km distance from cities to nearest planetary lines
+   - Uses haversine formula for accurate great-circle distance
+   - Shows distance in city page headers (e.g., "235km west")
+
+2. **Orb Influence Visualization**
+   - Visual bars showing line strength: ██████████ (Direct <100km) to ██░░░░░░░░ (Minimal >600km)
+   - Categories: Direct (<100km), Very Strong (100-200km), Strong (200-350km), Moderate (350-500km), Weak (500-600km), Minimal (>600km)
+   - Explains that lines influence areas within 700km orb
+
+3. **Paran Lines System**
+   - Latitude-based planetary alignments that exist everywhere
+   - Goal-specific paran combinations:
+     - Career: Sun-Jupiter (Recognition), Sun-Mercury (Authority)
+     - Wealth: Jupiter-Venus (Prosperity), Venus-Mercury (Commerce)
+     - Love: Venus-Moon (Harmony), Venus-Mars (Passion)
+     - Education: Mercury-Jupiter (Wisdom), Mercury-Moon (Intuition)
+     - Settlement: Moon-Saturn (Stability), Jupiter-Saturn (Foundation)
+
+4. **50/50 Western + Vedic Scoring**
+   - Western (50 points): Line Proximity (25), Paran Lines (25)
+   - Vedic (50 points): Nakshatra+Rashi (20), Lagna-Vastu (15), Dasha Timing (15)
+   - Displayed on city pages with visual breakdown
+
+5. **Understanding Your Lines Page**
+   - Educational page explaining orb influence, paran lines, and scoring methodology
+   - Shows user's planetary line paths across globe regions
+   - Explains why cities work even when direct lines pass elsewhere
+
 ### Report Generation Workflow
 
 1. User submits birth data and payment

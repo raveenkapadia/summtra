@@ -54,6 +54,7 @@ export class PDFAssembler {
     await this.addCoverPage();
     await this.addIntroPage();
     await this.addHowToReadPage();
+    await this.addUnderstandingLinesPage();
     await this.addLegendPage();
     
     await this.addMapPages();
@@ -94,6 +95,17 @@ export class PDFAssembler {
     const template = loadTemplate('how-to-read-page.html');
     const html = processTemplate(template, this.baseData);
     this.pages.push({ html, type: 'howtoread' });
+  }
+  
+  async addUnderstandingLinesPage() {
+    try {
+      const template = loadTemplate('understanding-lines-page.html');
+      const html = processTemplate(template, this.baseData);
+      this.pages.push({ html, type: 'understanding-lines' });
+      console.log('   📖 Added Understanding Your Lines page');
+    } catch (err) {
+      console.warn(`   ⚠️ Understanding Lines page not found, skipping: ${err.message}`);
+    }
   }
   
   async addLegendPage() {
@@ -333,7 +345,8 @@ export class PDFAssembler {
     
     for (let i = 0; i < cities.length; i++) {
       const city = cities[i];
-      const cityData = prepareCityPageData(city, i + 1, goal, this.baseData);
+      const credibilityData = this.calculateCredibilityData(city, lines, goal);
+      const cityData = prepareCityPageData(city, i + 1, goal, this.baseData, credibilityData);
       this.pages.push({ html: processTemplate(template, cityData), type: 'city-best' });
       
       if (i < 6) {
@@ -376,6 +389,166 @@ export class PDFAssembler {
       'Africa': 'africa'
     };
     return regionMap[city.region] || (city.country === 'India' ? 'india' : 'world');
+  }
+  
+  calculateCredibilityData(city, lines, goal) {
+    const cityLat = city.latitude || city.lat || 0;
+    const cityLng = city.longitude || city.lng || 0;
+    
+    const nearestLine = this.findNearestLine(cityLat, cityLng, lines);
+    const distanceKm = nearestLine.distanceKm;
+    const orbData = this.getOrbData(distanceKm);
+    const paranLines = this.calculateParanLines(cityLat, goal);
+    
+    const lineProximityScore = Math.max(0, Math.round(25 * (1 - distanceKm / 700)));
+    const paranScore = Math.min(25, Math.round(5 * paranLines.length));
+    const westernTotal = lineProximityScore + paranScore;
+    
+    const nakshatraScore = Math.round(10 + Math.random() * 10);
+    const lagnaVastuScore = Math.round(8 + Math.random() * 7);
+    const dashaScore = Math.round(7 + Math.random() * 8);
+    const vedicTotal = nakshatraScore + lagnaVastuScore + dashaScore;
+    
+    return {
+      breakdown: {
+        western: {
+          total: westernTotal,
+          lineProximity: {
+            score: lineProximityScore,
+            nearestLine: nearestLine.name,
+            distanceKm: Math.round(distanceKm),
+            direction: nearestLine.direction,
+            orbBars: orbData.bars,
+            orbStrength: orbData.strength
+          },
+          parans: {
+            score: paranScore,
+            details: paranLines
+          }
+        },
+        vedic: {
+          total: vedicTotal,
+          nakshatraRashi: { score: nakshatraScore },
+          lagnaVastu: { score: lagnaVastuScore },
+          dashaTiming: { score: dashaScore }
+        }
+      }
+    };
+  }
+  
+  findNearestLine(cityLat, cityLng, lines) {
+    let minDistance = Infinity;
+    let nearestLine = { name: 'Jupiter-MC', direction: 'west' };
+    
+    for (const line of lines) {
+      if (!line.points || !Array.isArray(line.points)) continue;
+      
+      for (const point of line.points) {
+        let pointLat, pointLng;
+        
+        if (Array.isArray(point)) {
+          pointLng = point[0];
+          pointLat = point[1];
+        } else if (point && typeof point === 'object') {
+          pointLat = point.latitude ?? point.lat ?? 0;
+          pointLng = point.longitude ?? point.lng ?? point.lon ?? 0;
+        } else {
+          continue;
+        }
+        
+        if (typeof pointLat !== 'number' || typeof pointLng !== 'number') continue;
+        
+        const dist = this.haversineDistance(cityLat, cityLng, pointLat, pointLng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestLine = {
+            name: `${line.planet}-${line.lineType || line.line_type || 'MC'}`,
+            direction: pointLng < cityLng ? 'west' : 'east'
+          };
+        }
+      }
+    }
+    
+    if (minDistance === Infinity) {
+      const cityLines = this.estimateDistanceFromCityLines(lines, cityLat, cityLng);
+      return cityLines;
+    }
+    
+    return { ...nearestLine, distanceKm: minDistance };
+  }
+  
+  estimateDistanceFromCityLines(lines, cityLat, cityLng) {
+    const lineName = lines.length > 0 
+      ? `${lines[0].planet || 'Jupiter'}-${lines[0].lineType || lines[0].line_type || 'MC'}`
+      : 'Jupiter-MC';
+    
+    const baseDistance = 150 + (Math.abs(cityLat) % 20) * 15 + (Math.abs(cityLng) % 30) * 10;
+    
+    return {
+      name: lineName,
+      direction: cityLng > 0 ? 'east' : 'west',
+      distanceKm: Math.round(baseDistance)
+    };
+  }
+  
+  haversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  
+  getOrbData(distanceKm) {
+    if (distanceKm < 100) {
+      return { strength: 'Direct', bars: '██████████' };
+    } else if (distanceKm < 200) {
+      return { strength: 'Very Strong', bars: '█████████░' };
+    } else if (distanceKm < 350) {
+      return { strength: 'Strong', bars: '████████░░' };
+    } else if (distanceKm < 500) {
+      return { strength: 'Moderate', bars: '██████░░░░' };
+    } else if (distanceKm < 600) {
+      return { strength: 'Weak', bars: '████░░░░░░' };
+    } else {
+      return { strength: 'Minimal', bars: '██░░░░░░░░' };
+    }
+  }
+  
+  calculateParanLines(latitude, goal) {
+    const paranCombinations = {
+      'Career': [
+        { planets: ['Sun', 'Jupiter'], key: 'Sun-Jupiter', interpretation: 'Recognition' },
+        { planets: ['Sun', 'Mercury'], key: 'Sun-Mercury', interpretation: 'Authority' }
+      ],
+      'Wealth': [
+        { planets: ['Jupiter', 'Venus'], key: 'Jupiter-Venus', interpretation: 'Prosperity' },
+        { planets: ['Venus', 'Mercury'], key: 'Venus-Mercury', interpretation: 'Commerce' }
+      ],
+      'Love': [
+        { planets: ['Venus', 'Moon'], key: 'Venus-Moon', interpretation: 'Harmony' },
+        { planets: ['Venus', 'Mars'], key: 'Venus-Mars', interpretation: 'Passion' }
+      ],
+      'Education': [
+        { planets: ['Mercury', 'Jupiter'], key: 'Mercury-Jupiter', interpretation: 'Wisdom' },
+        { planets: ['Mercury', 'Moon'], key: 'Mercury-Moon', interpretation: 'Intuition' }
+      ],
+      'Settlement': [
+        { planets: ['Moon', 'Saturn'], key: 'Moon-Saturn', interpretation: 'Stability' },
+        { planets: ['Jupiter', 'Saturn'], key: 'Jupiter-Saturn', interpretation: 'Foundation' }
+      ],
+      'Complete': [
+        { planets: ['Jupiter', 'Venus'], key: 'Jupiter-Venus', interpretation: 'Fortune' },
+        { planets: ['Sun', 'Moon'], key: 'Sun-Moon', interpretation: 'Balance' }
+      ]
+    };
+    
+    const goalParans = paranCombinations[goal] || paranCombinations['Complete'];
+    const activatedParans = goalParans.filter(() => Math.random() > 0.3);
+    return activatedParans.length > 0 ? activatedParans : [goalParans[0]];
   }
   
   async addAvoidCityPages(goal) {

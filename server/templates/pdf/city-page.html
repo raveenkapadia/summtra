@@ -449,6 +449,107 @@
         .moon-dot { background: #C0C0C0; }
         .mars-dot { background: #DC143C; }
         .rahu-dot { background: #8B5CF6; }
+        
+        /* Orb Section Styles */
+        .orb-section {
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(45, 27, 78, 0.15);
+        }
+        .orb-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 4px 8px;
+            margin-bottom: 8px;
+        }
+        .orb-line-name {
+            font-weight: 600;
+            color: var(--royal-purple);
+            font-size: 12px;
+        }
+        .orb-distance {
+            font-size: 10px;
+            color: #666;
+            text-align: right;
+        }
+        .orb-bar {
+            font-family: monospace;
+            font-size: 11px;
+            letter-spacing: -1px;
+            color: var(--gold);
+        }
+        .orb-strength {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--success);
+            text-align: right;
+        }
+        .orb-note {
+            font-size: 9px;
+            color: #888;
+            font-style: italic;
+        }
+        
+        /* Paran Section Styles */
+        .paran-section {
+            margin-top: 8px;
+        }
+        .paran-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .paran-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .paran-tag {
+            padding: 3px 8px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            border-radius: 10px;
+            font-size: 9px;
+            color: var(--deep-purple);
+            font-weight: 500;
+        }
+        
+        /* Score Breakdown Styles */
+        .score-breakdown {
+            font-size: 11px;
+        }
+        .score-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(45, 27, 78, 0.06);
+            padding: 6px 8px;
+            margin: 8px 0 4px 0;
+            border-radius: 4px;
+        }
+        .score-category:first-child {
+            margin-top: 0;
+        }
+        .category-label {
+            font-weight: 600;
+            color: var(--deep-purple);
+        }
+        .category-score {
+            font-weight: 700;
+            color: var(--royal-purple);
+        }
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px 4px 16px;
+            font-size: 10px;
+            color: #555;
+        }
+        .score-item span:last-child {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
     </style>
 </head>
 <body>
@@ -485,51 +586,61 @@
         <div class="content-area">
             <!-- Two Columns -->
             <div class="two-columns">
-                <!-- Planetary Lines Card -->
+                <!-- Planetary Line Influence Card -->
                 <div class="info-card">
                     <div class="card-header">
                         <div class="card-icon">☍</div>
-                        <div class="card-title">Planetary Lines Present</div>
+                        <div class="card-title">Planetary Line Influence</div>
                     </div>
-                    <div class="lines-list">
-                        {{CITY_PLANETARY_INFLUENCES}}
+                    <div class="orb-section">
+                        <div class="orb-item">
+                            <div class="orb-line-name">{{NEAREST_LINE}}</div>
+                            <div class="orb-distance">{{LINE_DISTANCE_KM}}km {{LINE_DIRECTION}}</div>
+                            <div class="orb-bar">{{ORB_BARS}}</div>
+                            <div class="orb-strength">{{ORB_STRENGTH}} Orb</div>
+                        </div>
+                        <div class="orb-note">Lines influence areas within 700km (orb of influence)</div>
+                    </div>
+                    <div class="paran-section">
+                        <div class="paran-label">PARAN LINES at {{CITY_LATITUDE}}°N</div>
+                        <div class="paran-list">{{PARAN_TAGS}}</div>
                     </div>
                 </div>
                 
-                <!-- Compatibility Card -->
+                <!-- Score Breakdown Card -->
                 <div class="info-card">
                     <div class="card-header">
-                        <div class="card-icon">◈</div>
-                        <div class="card-title">Compatibility Analysis</div>
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Score Breakdown</div>
                     </div>
-                    <div class="status-grid">
-                        <div class="status-item">
-                            <span class="status-label">Direction from Birthplace</span>
-                            <span class="status-value">
-                                <span class="status-icon status-success">✓</span>
-                                {{CITY_DIRECTION}}
-                            </span>
+                    <div class="score-breakdown">
+                        <div class="score-category">
+                            <div class="category-label">☉ WESTERN</div>
+                            <div class="category-score">{{WESTERN_SCORE}}/50</div>
                         </div>
-                        <div class="status-item">
-                            <span class="status-label">Vastu Compatibility</span>
-                            <span class="status-value">
-                                <span class="status-icon status-success">✓</span>
-                                Favorable
-                            </span>
+                        <div class="score-item">
+                            <span>Line Proximity</span>
+                            <span>{{LINE_PROXIMITY_SCORE}}/25</span>
                         </div>
-                        <div class="status-item">
-                            <span class="status-label">Nakshatra Direction</span>
-                            <span class="status-value">
-                                <span class="status-icon status-success">✓</span>
-                                Aligned
-                            </span>
+                        <div class="score-item">
+                            <span>Paran Lines</span>
+                            <span>{{PARAN_SCORE}}/25</span>
                         </div>
-                        <div class="status-item">
-                            <span class="status-label">Dasha Timing</span>
-                            <span class="status-value">
-                                <span class="status-icon status-warning">!</span>
-                                Future Favorable
-                            </span>
+                        <div class="score-category">
+                            <div class="category-label">ॐ VEDIC</div>
+                            <div class="category-score">{{VEDIC_SCORE}}/50</div>
+                        </div>
+                        <div class="score-item">
+                            <span>Nakshatra + Rashi</span>
+                            <span>{{NAKSHATRA_RASHI_SCORE}}/20</span>
+                        </div>
+                        <div class="score-item">
+                            <span>Lagna-Vastu</span>
+                            <span>{{LAGNA_VASTU_SCORE}}/15</span>
+                        </div>
+                        <div class="score-item">
+                            <span>Dasha Timing</span>
+                            <span>{{DASHA_SCORE}}/15</span>
                         </div>
                     </div>
                 </div>

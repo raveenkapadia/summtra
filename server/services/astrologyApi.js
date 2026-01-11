@@ -930,6 +930,336 @@ async function getScoresForAllCities(birthData, cities) {
   return { success: false, error: result.error };
 }
 
+// ============================================
+// CREDIBILITY LAYER: Distance & Paran Calculations
+// ============================================
+
+// Haversine formula to calculate distance between two points in km
+function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Calculate distance in km from city to nearest point on a planetary line
+function calculateLineDistanceKm(cityLat, cityLng, linePoints) {
+  if (!linePoints || linePoints.length < 2) return null;
+  
+  let minDistance = Infinity;
+  let nearestLat = null;
+  let nearestLng = null;
+  
+  // Find the line's longitude at the city's latitude (interpolation)
+  const sorted = [...linePoints].sort((a, b) => (a.latitude || a.lat) - (b.latitude || b.lat));
+  
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const p1 = sorted[i];
+    const p2 = sorted[i + 1];
+    const lat1 = p1.latitude ?? p1.lat;
+    const lat2 = p2.latitude ?? p2.lat;
+    const lng1 = p1.longitude ?? p1.lng ?? p1.lon;
+    const lng2 = p2.longitude ?? p2.lng ?? p2.lon;
+    
+    if (lat1 <= cityLat && cityLat <= lat2) {
+      const t = (cityLat - lat1) / (lat2 - lat1);
+      const lineLng = lng1 + t * (lng2 - lng1);
+      const dist = haversineDistanceKm(cityLat, cityLng, cityLat, lineLng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestLat = cityLat;
+        nearestLng = lineLng;
+      }
+    }
+  }
+  
+  // Also check each point on the line for closest approach
+  for (const point of linePoints) {
+    const pLat = point.latitude ?? point.lat;
+    const pLng = point.longitude ?? point.lng ?? point.lon;
+    if (pLat === undefined || pLng === undefined) continue;
+    
+    const dist = haversineDistanceKm(cityLat, cityLng, pLat, pLng);
+    if (dist < minDistance) {
+      minDistance = dist;
+      nearestLat = pLat;
+      nearestLng = pLng;
+    }
+  }
+  
+  return minDistance === Infinity ? null : { distance: Math.round(minDistance), nearestLat, nearestLng };
+}
+
+// Get orb strength category based on distance in km
+function getOrbStrength(distanceKm) {
+  if (distanceKm === null) return { label: 'None', score: 0, bars: 0 };
+  if (distanceKm < 100) return { label: 'Direct', score: 25, bars: 10 };
+  if (distanceKm < 200) return { label: 'Very Strong', score: 22, bars: 9 };
+  if (distanceKm < 350) return { label: 'Strong', score: 18, bars: 7 };
+  if (distanceKm < 500) return { label: 'Moderate', score: 14, bars: 5 };
+  if (distanceKm < 700) return { label: 'Weak', score: 10, bars: 3 };
+  return { label: 'Minimal', score: 5, bars: 1 };
+}
+
+// Generate visual bar representation
+function generateOrbBars(bars) {
+  const filled = '█'.repeat(bars);
+  const empty = '░'.repeat(10 - bars);
+  return filled + empty;
+}
+
+// PARAN LINES: Calculate latitude-based planetary alignments
+// Parans represent when two planets share angular positions at a specific latitude
+const PARAN_INTERPRETATIONS = {
+  'Jupiter-Venus': { Career: 'Prosperity & growth', Love: 'Romance & harmony', Wealth: 'Abundance', Education: 'Wisdom & creativity', Settlement: 'Comfortable home' },
+  'Sun-Mercury': { Career: 'Recognition & deals', Love: 'Communication', Wealth: 'Business acumen', Education: 'Learning & expression', Settlement: 'Clear thinking' },
+  'Jupiter-Saturn': { Career: 'Long-term success', Love: 'Commitment', Wealth: 'Stable growth', Education: 'Discipline & wisdom', Settlement: 'Solid foundation' },
+  'Mars-Jupiter': { Career: 'Bold initiatives', Love: 'Passion', Wealth: 'Risk-taking success', Education: 'Competition edge', Settlement: 'Active lifestyle' },
+  'Moon-Venus': { Career: 'Intuitive success', Love: 'Deep harmony', Wealth: 'Comfort', Education: 'Creative insight', Settlement: 'Peaceful home' },
+  'Sun-Jupiter': { Career: 'Leadership', Love: 'Generosity', Wealth: 'Expansion', Education: 'Optimism', Settlement: 'Prosperity' },
+  'Mercury-Venus': { Career: 'Negotiation', Love: 'Charm', Wealth: 'Trade success', Education: 'Artistic learning', Settlement: 'Pleasant environment' },
+  'Moon-Jupiter': { Career: 'Popular appeal', Love: 'Emotional growth', Wealth: 'Good fortune', Education: 'Receptive learning', Settlement: 'Family blessings' }
+};
+
+// Calculate parans for a city based on birth data and latitude
+function calculateParansForCity(birthData, cityLatitude, goal = 'Complete') {
+  const planets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+  const parans = [];
+  
+  // Simplified paran calculation based on birth chart planetary positions
+  // In a full implementation, this would calculate which planets are angular at the given latitude
+  // Here we use a deterministic approach based on birth date and city latitude
+  
+  const birthDateSum = (birthData.date || '1990-01-01').split('-').reduce((a, b) => a + parseInt(b), 0);
+  const latFactor = Math.abs(cityLatitude) / 90;
+  
+  for (let i = 0; i < planets.length; i++) {
+    for (let j = i + 1; j < planets.length; j++) {
+      const planet1 = planets[i];
+      const planet2 = planets[j];
+      const paranKey = `${planet1}-${planet2}`;
+      
+      // Deterministic but varied activation based on latitude and birth data
+      const activation = Math.sin(birthDateSum * 0.1 + i * 0.5 + j * 0.3 + latFactor * 10);
+      
+      if (activation > 0.3) {
+        const interpretation = PARAN_INTERPRETATIONS[paranKey];
+        if (interpretation) {
+          parans.push({
+            planets: [planet1, planet2],
+            key: paranKey,
+            strength: activation > 0.7 ? 'Strong' : activation > 0.5 ? 'Moderate' : 'Mild',
+            interpretation: interpretation[goal] || interpretation.Career || 'Planetary harmony'
+          });
+        }
+      }
+    }
+  }
+  
+  // Sort by strength and return top 3
+  return parans.sort((a, b) => {
+    const strengthOrder = { 'Strong': 3, 'Moderate': 2, 'Mild': 1 };
+    return strengthOrder[b.strength] - strengthOrder[a.strength];
+  }).slice(0, 3);
+}
+
+// Calculate paran score (25 points max)
+function calculateParanScore(parans) {
+  if (!parans || parans.length === 0) return 8;
+  if (parans.length >= 3) return 25;
+  if (parans.length === 2) return 20;
+  return 15;
+}
+
+// CREDIBILITY SCORING: Calculate 50/50 Western + Vedic breakdown
+function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Career') {
+  const cityLat = cityData.lat || cityData.latitude;
+  const cityLng = cityData.lng || cityData.longitude;
+  
+  // ========== WESTERN ASTROCARTOGRAPHY (50 points) ==========
+  
+  // 1. Line Proximity Score (25 points max)
+  let lineProximityScore = 5;
+  let nearestLine = null;
+  let nearestDistanceKm = null;
+  let orbStrength = { label: 'None', bars: 0 };
+  
+  if (astroLines) {
+    const linesData = astroLines.lines || astroLines;
+    const mainPlanets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+    const goalPlanets = {
+      'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+      'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+      'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
+      'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+      'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+      'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon']
+    };
+    const preferredPlanets = goalPlanets[goal] || goalPlanets['Complete'];
+    
+    if (Array.isArray(linesData)) {
+      for (const line of linesData) {
+        if (!mainPlanets.includes(line.planet)) continue;
+        
+        const result = calculateLineDistanceKm(cityLat, cityLng, line.points);
+        if (result && (nearestDistanceKm === null || result.distance < nearestDistanceKm)) {
+          nearestDistanceKm = result.distance;
+          nearestLine = `${line.planet}-${line.line_type || line.type || line.angle}`;
+          
+          // Boost score for preferred planets
+          const planetBonus = preferredPlanets.includes(line.planet) ? 1.2 : 1.0;
+          const baseOrb = getOrbStrength(result.distance);
+          lineProximityScore = Math.round(baseOrb.score * planetBonus);
+          orbStrength = baseOrb;
+        }
+      }
+    }
+  }
+  
+  // 2. Paran Lines Score (25 points max)
+  const parans = calculateParansForCity(birthData, cityLat, goal);
+  const paranScore = calculateParanScore(parans);
+  
+  const westernTotal = Math.min(50, lineProximityScore + paranScore);
+  
+  // ========== VEDIC ASTROLOGY (50 points) ==========
+  
+  // 3. Nakshatra + Rashi Score (20 points max)
+  const directions = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
+  const cityDirection = cityData.direction || directions[Math.floor(Math.abs(cityLng) % 8)];
+  
+  const nakshatraDirections = {
+    'Ashwini': 'East', 'Bharani': 'West', 'Krittika': 'North', 'Rohini': 'East',
+    'Mrigashira': 'South', 'Ardra': 'West', 'Punarvasu': 'North', 'Pushya': 'East',
+    'Ashlesha': 'South', 'Magha': 'East', 'Purva Phalguni': 'South', 'Uttara Phalguni': 'East',
+    'Hasta': 'East', 'Chitra': 'West', 'Swati': 'North', 'Vishakha': 'East',
+    'Anuradha': 'South', 'Jyeshtha': 'West', 'Mula': 'South', 'Purva Ashadha': 'South',
+    'Uttara Ashadha': 'North', 'Shravana': 'West', 'Dhanishta': 'North', 'Shatabhisha': 'South',
+    'Purva Bhadrapada': 'West', 'Uttara Bhadrapada': 'North', 'Revati': 'West'
+  };
+  
+  const userNakshatra = birthData.nakshatra || 'Magha';
+  const favorableDirection = nakshatraDirections[userNakshatra] || 'East';
+  const directionMatch = cityDirection.includes(favorableDirection) || favorableDirection.includes(cityDirection);
+  const nakshatraRashiScore = directionMatch ? 18 : 10;
+  
+  // 4. Lagna-Vastu Score (15 points max)
+  const lagnaDirections = {
+    'Aries': 'East', 'Mesha': 'East', 'Taurus': 'South', 'Vrishabha': 'South',
+    'Gemini': 'West', 'Mithuna': 'West', 'Cancer': 'North', 'Karka': 'North',
+    'Leo': 'East', 'Simha': 'East', 'Virgo': 'South', 'Kanya': 'South',
+    'Libra': 'West', 'Tula': 'West', 'Scorpio': 'North', 'Vrishchika': 'North',
+    'Sagittarius': 'East', 'Dhanu': 'East', 'Capricorn': 'South', 'Makara': 'South',
+    'Aquarius': 'West', 'Kumbha': 'West', 'Pisces': 'North', 'Meena': 'North'
+  };
+  
+  const userLagna = birthData.lagna || birthData.lagnaSign || 'Tula';
+  const lagnaClean = userLagna.split(' ')[0].replace(/[()]/g, '');
+  const lagnaFavorable = lagnaDirections[lagnaClean] || 'West';
+  const vastuMatch = cityDirection.includes(lagnaFavorable);
+  const lagnaVastuScore = vastuMatch ? 14 : 8;
+  
+  // 5. Dasha Timing Score (15 points max)
+  const currentDasha = birthData.currentDashaLord || 'Jupiter';
+  const dashaLineMatch = nearestLine && nearestLine.startsWith(currentDasha);
+  const dashaParanMatch = parans.some(p => p.planets.includes(currentDasha));
+  const dashaScore = (dashaLineMatch || dashaParanMatch) ? 15 : 8;
+  
+  const vedicTotal = Math.min(50, nakshatraRashiScore + lagnaVastuScore + dashaScore);
+  
+  // ========== TOTAL SCORE ==========
+  const totalScore = westernTotal + vedicTotal;
+  
+  return {
+    total: Math.min(100, totalScore),
+    breakdown: {
+      western: {
+        total: westernTotal,
+        lineProximity: {
+          score: lineProximityScore,
+          max: 25,
+          nearestLine,
+          distanceKm: nearestDistanceKm,
+          orbStrength: orbStrength.label,
+          orbBars: generateOrbBars(orbStrength.bars),
+          direction: nearestDistanceKm ? (nearestLine && nearestLine.includes('MC') ? 'south' : 'west') : null
+        },
+        parans: {
+          score: paranScore,
+          max: 25,
+          details: parans
+        }
+      },
+      vedic: {
+        total: vedicTotal,
+        nakshatraRashi: {
+          score: nakshatraRashiScore,
+          max: 20,
+          direction: favorableDirection,
+          match: directionMatch
+        },
+        lagnaVastu: {
+          score: lagnaVastuScore,
+          max: 15,
+          favorable: lagnaFavorable,
+          match: vastuMatch
+        },
+        dashaTiming: {
+          score: dashaScore,
+          max: 15,
+          planet: currentDasha,
+          active: dashaLineMatch || dashaParanMatch
+        }
+      }
+    }
+  };
+}
+
+// Get line descriptions for "where your lines pass" page
+function getLineGlobalPaths(astroLines) {
+  const regions = [];
+  const mainPlanets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+  
+  if (!astroLines) return regions;
+  
+  const linesData = astroLines.lines || astroLines;
+  if (!Array.isArray(linesData)) return regions;
+  
+  for (const line of linesData) {
+    if (!mainPlanets.includes(line.planet)) continue;
+    
+    const lineType = line.line_type || line.type || line.angle;
+    if (!['MC', 'AC'].includes(lineType)) continue; // Focus on major lines
+    
+    const points = line.points || [];
+    if (points.length < 2) continue;
+    
+    // Determine regions the line passes through based on longitude ranges
+    const lngs = points.map(p => p.longitude ?? p.lng).filter(l => l !== undefined);
+    const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+    
+    let region = 'Unknown region';
+    if (avgLng >= -30 && avgLng <= 60) region = 'Europe → Africa → Middle East';
+    else if (avgLng > 60 && avgLng <= 120) region = 'Central Asia → India → Southeast Asia';
+    else if (avgLng > 120 || avgLng < -120) region = 'East Asia → Pacific → Australia';
+    else if (avgLng >= -120 && avgLng < -30) region = 'Americas';
+    
+    regions.push({
+      line: `${line.planet}-${lineType}`,
+      planet: line.planet,
+      type: lineType,
+      region,
+      avgLongitude: Math.round(avgLng)
+    });
+  }
+  
+  return regions.slice(0, 5);
+}
+
 module.exports = {
   // Individual endpoints
   getAstrocartographyLines,
@@ -949,6 +1279,15 @@ module.exports = {
   // Line assignment helpers
   findLinesNearCity,
   assignLinesToCities,
+  
+  // Credibility layer functions
+  haversineDistanceKm,
+  calculateLineDistanceKm,
+  getOrbStrength,
+  generateOrbBars,
+  calculateParansForCity,
+  calculateCredibilityScore,
+  getLineGlobalPaths,
   
   // Main function
   fetchAllAstrologyData
