@@ -1181,18 +1181,20 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
     const preferredPlanets = goalPlanets[goal] || goalPlanets['Complete'];
     
     if (Array.isArray(linesData)) {
+      // FIXED: Only consider goal-relevant planets for nearestLine display
+      // This ensures Wealth shows Jupiter/Venus, Career shows Sun/Saturn, etc.
       for (const line of linesData) {
-        if (!mainPlanets.includes(line.planet)) continue;
+        // Only consider goal-relevant planets (not all mainPlanets)
+        if (!preferredPlanets.includes(line.planet)) continue;
         
         const result = calculateLineDistanceKm(cityLat, cityLng, line.points);
         if (result && (nearestDistanceKm === null || result.distance < nearestDistanceKm)) {
           nearestDistanceKm = result.distance;
           nearestLine = `${line.planet}-${line.line_type || line.type || line.angle}`;
           
-          // Boost score for preferred planets (capped at max 25)
-          const planetBonus = preferredPlanets.includes(line.planet) ? 1.2 : 1.0;
+          // All goal planets get full weight (no bonus needed since we filtered)
           const baseOrb = getOrbStrength(result.distance);
-          lineProximityScore = Math.min(25, Math.round(baseOrb.score * planetBonus));
+          lineProximityScore = Math.min(25, Math.round(baseOrb.score * 1.2));
           orbStrength = baseOrb;
         }
       }

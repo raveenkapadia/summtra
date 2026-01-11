@@ -412,7 +412,8 @@ export class PDFAssembler {
     const cityLng = city.longitude || city.lng || 0;
     const totalScore = city.score || 75;
     
-    const nearestLine = this.findNearestLine(cityLat, cityLng, lines);
+    // FIXED: Pass goal to findNearestLine to filter by goal-relevant planets
+    const nearestLine = this.findNearestLine(cityLat, cityLng, lines, goal);
     const distanceKm = nearestLine.distanceKm;
     const orbData = this.getOrbData(distanceKm);
     const paranLines = this.calculateParanLines(cityLat, goal);
@@ -577,12 +578,29 @@ export class PDFAssembler {
     return 'Unknown';
   }
   
-  findNearestLine(cityLat, cityLng, lines) {
+  findNearestLine(cityLat, cityLng, lines, goal = 'Complete') {
     let minDistance = Infinity;
-    let nearestLine = { name: 'Jupiter-MC', direction: 'west' };
+    
+    // FIXED: Only consider goal-relevant planets for display
+    // This ensures Wealth shows Jupiter/Venus, Career shows Sun/Saturn, etc.
+    const goalPlanets = {
+      'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+      'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+      'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
+      'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+      'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+      'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon']
+    };
+    const preferredPlanets = goalPlanets[goal] || goalPlanets['Complete'];
+    
+    // Default to first preferred planet for this goal
+    let nearestLine = { name: `${preferredPlanets[0]}-MC`, direction: 'west' };
     
     for (const line of lines) {
       if (!line.points || !Array.isArray(line.points)) continue;
+      
+      // Only consider goal-relevant planets
+      if (!preferredPlanets.includes(line.planet)) continue;
       
       for (const point of line.points) {
         let pointLat, pointLng;
@@ -611,17 +629,33 @@ export class PDFAssembler {
     }
     
     if (minDistance === Infinity) {
-      const cityLines = this.estimateDistanceFromCityLines(lines, cityLat, cityLng);
+      const cityLines = this.estimateDistanceFromCityLines(lines, cityLat, cityLng, goal);
       return cityLines;
     }
     
     return { ...nearestLine, distanceKm: minDistance };
   }
   
-  estimateDistanceFromCityLines(lines, cityLat, cityLng) {
-    const lineName = lines.length > 0 
-      ? `${lines[0].planet || 'Jupiter'}-${lines[0].lineType || lines[0].line_type || 'MC'}`
-      : 'Jupiter-MC';
+  estimateDistanceFromCityLines(lines, cityLat, cityLng, goal = 'Complete') {
+    // FIXED: Use goal-relevant planet for fallback
+    const goalPlanets = {
+      'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
+      'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
+      'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
+      'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
+      'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
+      'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon']
+    };
+    const preferredPlanets = goalPlanets[goal] || goalPlanets['Complete'];
+    
+    // Find first goal-relevant planet from lines, or use default
+    let lineName = `${preferredPlanets[0]}-MC`;
+    for (const line of lines) {
+      if (preferredPlanets.includes(line.planet)) {
+        lineName = `${line.planet}-${line.lineType || line.line_type || 'MC'}`;
+        break;
+      }
+    }
     
     const baseDistance = 150 + (Math.abs(cityLat) % 20) * 15 + (Math.abs(cityLng) % 30) * 10;
     
