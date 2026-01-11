@@ -20,6 +20,7 @@ import {
 const AstroMapRenderer = require('../map-renderer.js');
 const claudeService = require('./claudeService.js');
 const astrologyApi = require('./astrologyApi.js');
+const vedicApi = require('./vedicApi.js');
 const { INDIAN_CITIES, INTERNATIONAL_CITIES } = require('./geocodingService.js');
 
 const GOALS_ORDER = ['Career', 'Wealth', 'Love', 'Education', 'Settlement'];
@@ -908,6 +909,41 @@ function convertBirthDataForAPI(birthData) {
   };
 }
 
+function convertBirthDataForVedicAPI(birthData) {
+  let day, month, year;
+  const dateStr = birthData.birthDate;
+  
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts[0].length === 4) {
+      [year, month, day] = parts.map(Number);
+    } else {
+      [day, month, year] = parts.map(Number);
+    }
+  } else if (dateStr.includes('/')) {
+    [day, month, year] = dateStr.split('/').map(Number);
+  } else {
+    year = 1990; month = 1; day = 1;
+  }
+  
+  let hour = 12, minute = 0;
+  const timeMatch = birthData.birthTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1]);
+    minute = parseInt(timeMatch[2]);
+    const period = timeMatch[3]?.toUpperCase();
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+  }
+  
+  return {
+    birthDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+    birthTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    latitude: birthData.latitude,
+    longitude: birthData.longitude
+  };
+}
+
 const PLANET_COLORS = {
   'Sun': '#FF8C00', 'Moon': '#C0C0C0', 'Mercury': '#4ECDC4', 'Venus': '#FF69B4',
   'Mars': '#FF4444', 'Jupiter': '#FFD700', 'Saturn': '#8B7355', 'Uranus': '#00CED1',
@@ -943,7 +979,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     ])
   };
   
-  const testBirthData = customBirthData ? {
+  let testBirthData = customBirthData ? {
     ...defaultBirthData,
     name: customBirthData.name || 'User',
     birthDate: customBirthData.birthDate,
@@ -952,6 +988,33 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     latitude: customBirthData.latitude,
     longitude: customBirthData.longitude
   } : defaultBirthData;
+  
+  if (customBirthData && process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
+    console.log('   🔮 Fetching Vedic profile from AstrologyAPI...');
+    try {
+      const vedicBirthData = convertBirthDataForVedicAPI(testBirthData);
+      const vedicProfile = await vedicApi.getVedicProfile(vedicBirthData);
+      
+      if (vedicProfile) {
+        testBirthData = {
+          ...testBirthData,
+          rashi: vedicProfile.rashi || testBirthData.rashi,
+          rashiLord: vedicProfile.rashiLord || testBirthData.rashiLord,
+          nakshatra: vedicProfile.nakshatra || testBirthData.nakshatra,
+          nakshatraLord: vedicProfile.nakshatraLord || testBirthData.nakshatraLord,
+          nakshatraPada: vedicProfile.nakshatraPada || testBirthData.nakshatraPada,
+          lagna: vedicProfile.lagna || testBirthData.lagna,
+          lagnaLord: vedicProfile.lagnaLord || testBirthData.lagnaLord,
+          sunSign: vedicProfile.sunSign || testBirthData.sunSign,
+          currentDashaLord: vedicProfile.currentDashaLord || testBirthData.currentDashaLord,
+          currentDashaEnd: vedicProfile.currentDashaEnd || testBirthData.currentDashaEnd
+        };
+        console.log(`   ✅ Vedic Profile: Rashi=${testBirthData.rashi}, Lagna=${testBirthData.lagna}, Nakshatra=${testBirthData.nakshatra}, Dasha=${testBirthData.currentDashaLord}`);
+      }
+    } catch (error) {
+      console.warn('   ⚠️ Vedic API fetch failed, using defaults:', error.message);
+    }
+  }
   
   let planetaryLines = [];
   let scoredCities = [];
