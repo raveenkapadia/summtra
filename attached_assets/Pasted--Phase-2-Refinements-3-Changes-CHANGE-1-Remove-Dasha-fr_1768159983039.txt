@@ -1,0 +1,240 @@
+## Phase 2 Refinements: 3 Changes
+
+---
+
+### CHANGE 1: Remove Dasha from Planet Boost (FIX)
+
+**Why:** Dasha = WHEN results manifest, not WHERE to go. 
+Dasha is already counted in Vedic Score (timing factor). 
+Current ×0.85 penalty is destroying 11th Lord boost.
+
+**Current Code (REMOVE THIS):**
+```javascript
+// REMOVE these lines from planet boost calculation
+if (isBeneficMahadasha) {
+  boost *= 1.15;
+} else if (isMaleficMahadasha) {
+  boost *= 0.85;
+}
+```
+
+**New Planet Boost Calculation:**
+```javascript
+function calculatePlanetBoost(planet, userLagna, goal) {
+  let boost = 1.0;
+  
+  // Natural benefic
+  if (['Jupiter', 'Venus'].includes(planet)) {
+    boost *= 1.10;
+  }
+  
+  // 2nd Lord (for Wealth goal)
+  if (goal === 'Wealth' && planet === get2ndLord(userLagna)) {
+    boost *= 1.20;
+  }
+  
+  // 11th Lord (for Wealth goal)
+  if (goal === 'Wealth' && planet === get11thLord(userLagna)) {
+    boost *= 1.15;
+  }
+  
+  // Yogakaraka
+  if (planet === getYogakaraka(userLagna)) {
+    boost *= 1.35;
+  }
+  
+  // Functional Malefic penalty
+  if (isFunctionalMalefic(planet, userLagna)) {
+    boost *= 0.90;
+  }
+  
+  // NO Mahadasha boost/penalty here
+  // Dasha timing is already in Vedic Score
+  
+  return boost;
+}
+```
+
+**Expected Result After Change:**
+
+| Planet | Before | After | Change |
+|--------|--------|-------|--------|
+| Mercury | ×0.88 | ×1.035 | +17% (11th Lord benefit now shows) |
+| Jupiter | ×1.32 | ×1.32 | No change |
+| Venus | ×0.99 | ×0.99 | No change |
+
+---
+
+### CHANGE 2: Add Exaltation/Debilitation Modifier (NEW)
+
+**Why:** A planet's natal strength affects how much benefit you get from its lines.
+Exalted Jupiter gives stronger results than debilitated Jupiter.
+
+**Lookup Table:**
+
+| Planet | Exalted In | Debilitated In |
+|--------|------------|----------------|
+| Sun | Aries | Libra |
+| Moon | Taurus | Scorpio |
+| Mars | Capricorn | Cancer |
+| Mercury | Virgo | Pisces |
+| Jupiter | Cancer | Capricorn |
+| Venus | Pisces | Virgo |
+| Saturn | Libra | Aries |
+
+**Implementation:**
+```javascript
+const EXALTATION = {
+  'Sun': { exalted: 'Aries', debilitated: 'Libra' },
+  'Moon': { exalted: 'Taurus', debilitated: 'Scorpio' },
+  'Mars': { exalted: 'Capricorn', debilitated: 'Cancer' },
+  'Mercury': { exalted: 'Virgo', debilitated: 'Pisces' },
+  'Jupiter': { exalted: 'Cancer', debilitated: 'Capricorn' },
+  'Venus': { exalted: 'Pisces', debilitated: 'Virgo' },
+  'Saturn': { exalted: 'Libra', debilitated: 'Aries' }
+};
+
+function getExaltationModifier(planet, planetSign) {
+  const status = EXALTATION[planet];
+  if (!status) return 1.0; // Rahu/Ketu - no change
+  
+  if (planetSign === status.exalted) {
+    return 1.15; // +15% boost
+  } else if (planetSign === status.debilitated) {
+    return 0.85; // -15% penalty
+  }
+  return 1.0; // Normal
+}
+
+// Add to planet boost calculation:
+boost *= getExaltationModifier(planet, userPlanetPositions[planet]);
+```
+
+**Data Required from Vedic API:**
+- Planet positions (which sign each planet is in)
+- Example: `{ Jupiter: 'Cancer', Venus: 'Virgo', ... }`
+
+**Expected Impact:**
+- User with exalted Jupiter → Jupiter lines get +15%
+- User with debilitated Saturn → Saturn lines get -15%
+
+---
+
+### CHANGE 3: Add Combustion Check (NEW)
+
+**Why:** When a planet is too close to the Sun, it becomes "combust" and loses power.
+Combust planet lines give weaker results.
+
+**Combustion Orbs (degrees from Sun):**
+
+| Planet | Combust If Within |
+|--------|-------------------|
+| Moon | 12° |
+| Mars | 17° |
+| Mercury | 14° (or 12° if retrograde) |
+| Jupiter | 11° |
+| Venus | 10° (or 8° if retrograde) |
+| Saturn | 15° |
+
+**Implementation:**
+```javascript
+const COMBUSTION_ORBS = {
+  'Moon': 12,
+  'Mars': 17,
+  'Mercury': 14,
+  'Jupiter': 11,
+  'Venus': 10,
+  'Saturn': 15
+};
+
+function isCombust(planet, sunLongitude, planetLongitude) {
+  if (!COMBUSTION_ORBS[planet]) return false; // Sun, Rahu, Ketu can't be combust
+  
+  const orb = COMBUSTION_ORBS[planet];
+  const distance = Math.abs(sunLongitude - planetLongitude);
+  const normalizedDistance = distance > 180 ? 360 - distance : distance;
+  
+  return normalizedDistance <= orb;
+}
+
+function getCombustionModifier(planet, sunLongitude, planetLongitude) {
+  if (isCombust(planet, sunLongitude, planetLongitude)) {
+    return 0.85; // -15% penalty for combust planets
+  }
+  return 1.0;
+}
+
+// Add to planet boost calculation:
+boost *= getCombustionModifier(planet, sunLongitude, userPlanetPositions[planet].longitude);
+```
+
+**Data Required from Vedic API:**
+- Planetary longitudes (degrees 0-360)
+- Example: `{ Sun: 234.5, Jupiter: 112.3, Venus: 240.1, ... }`
+
+**Expected Impact:**
+- User with combust Venus → Venus lines get -15%
+- Shows in report: "⚠️ Your Venus is combust - Venus lines may give reduced results"
+
+---
+
+## Summary: 3 Changes
+
+| Change | Type | Impact |
+|--------|------|--------|
+| 1. Remove Dasha from planet boost | FIX | Mercury goes from ×0.88 to ×1.035 |
+| 2. Add Exaltation/Debilitation | NEW | ±15% based on planet natal strength |
+| 3. Add Combustion check | NEW | -15% for combust planets |
+
+---
+
+## Test After Implementation
+
+**User:** Raveen Kapadia
+**DOB:** Nov 15, 1982, 8:20 AM, Ahmedabad
+**Goal:** Wealth
+
+**Show updated planet boosts:**
+
+| Planet | 2nd/11th | Yogakaraka | F.Malefic | Exalt/Deb | Combust | Final |
+|--------|----------|------------|-----------|-----------|---------|-------|
+| Mercury | ×1.15 (11th) | ×1.0 | ×0.90 | ? | ? | ? |
+| Jupiter | ×1.20 (2nd) | ×1.0 | ×1.0 | ? | ? | ? |
+| Venus | ×1.0 | ×1.0 | ×0.90 | ? | ? | ? |
+| Sun | ×1.0 | ×1.0 | ×1.0 | ? | ? | ? |
+
+**Also show:**
+- Is any planet exalted/debilitated?
+- Is any planet combust?
+
+---
+
+## Display in Report
+
+### In "Your Planetary Profile" section:
+```
+⭐ STRONGEST PLANETS FOR YOU:
+
+1. Jupiter (★★★★★)
+   • Rules: 2nd House (Wealth)
+   • Status: Exalted in Cancer (+15%)
+   • Boost: ×1.38
+   
+2. Mercury (★★★☆☆)
+   • Rules: 11th House (Gains) + 8th House (Challenges)
+   • Status: Normal
+   • Boost: ×1.035 (11th Lord offset by malefic)
+
+⚠️ REDUCED STRENGTH:
+
+- Venus - COMBUST (within 8° of Sun)
+  Venus lines may give reduced results for luxury/relationships.
+```
+
+---
+
+## Questions
+
+1. Can you get planet signs from Vedic API? (for exaltation check)
+2. Can you get planet longitudes from Vedic API? (for combustion check)
+3. Confirm: Remove Mahadasha boost/penalty from planet calculation?
