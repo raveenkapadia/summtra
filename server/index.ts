@@ -621,14 +621,15 @@ async function startServer() {
         });
       }
       
-      // Check for custom birth data in query params
-      const customBirthData = req.query.date ? {
+      // Check for custom birth data in query params (accept both naming conventions)
+      const hasCustomData = req.query.date || req.query.birthDate;
+      const customBirthData = hasCustomData ? {
         name: (req.query.name as string) || 'User',
-        birthDate: req.query.date as string,
-        birthTime: req.query.time as string || '12:00 PM',
-        birthPlace: req.query.place as string || 'Mumbai, India',
-        latitude: req.query.lat as string || '19.076',
-        longitude: req.query.lng as string || '72.8777'
+        birthDate: (req.query.birthDate as string) || (req.query.date as string),
+        birthTime: (req.query.birthTime as string) || (req.query.time as string) || '12:00 PM',
+        birthPlace: (req.query.birthPlace as string) || (req.query.place as string) || 'Mumbai, India',
+        latitude: (req.query.latitude as string) || (req.query.lat as string) || '19.076',
+        longitude: (req.query.longitude as string) || (req.query.lng as string) || '72.8777'
       } : null;
       
       const useAI = req.query.ai === 'true' || req.query.ai === '1';
