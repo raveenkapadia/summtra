@@ -1171,14 +1171,35 @@ function getRegionForCity(city) {
 }
 
 function getDirectionFromCoords(birthLat, birthLng, cityLat, cityLng) {
+  // Check for Origin (birthplace or very close - within 50km)
+  const toRad = deg => deg * Math.PI / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(cityLat - birthLat);
+  const dLng = toRad(cityLng - birthLng);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(toRad(birthLat)) * Math.cos(toRad(cityLat)) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  
+  if (distance < 50) {
+    return 'Origin';
+  }
+  
+  // Use 8-point compass directions
   const latDiff = cityLat - birthLat;
   const lngDiff = cityLng - birthLng;
+  const angle = Math.atan2(lngDiff, latDiff) * 180 / Math.PI;
   
-  if (Math.abs(latDiff) > Math.abs(lngDiff)) {
-    return latDiff > 0 ? 'North' : 'South';
-  } else {
-    return lngDiff > 0 ? 'East' : 'West';
-  }
+  if (angle >= -22.5 && angle < 22.5) return 'North';
+  if (angle >= 22.5 && angle < 67.5) return 'Northeast';
+  if (angle >= 67.5 && angle < 112.5) return 'East';
+  if (angle >= 112.5 && angle < 157.5) return 'Southeast';
+  if (angle >= 157.5 || angle < -157.5) return 'South';
+  if (angle >= -157.5 && angle < -112.5) return 'Southwest';
+  if (angle >= -112.5 && angle < -67.5) return 'West';
+  if (angle >= -67.5 && angle < -22.5) return 'Northwest';
+  return 'Unknown';
 }
 
 function generateTestCities(scope) {

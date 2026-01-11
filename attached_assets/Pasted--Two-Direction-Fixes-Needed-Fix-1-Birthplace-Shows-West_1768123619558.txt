@@ -1,0 +1,77 @@
+## 🔧 Two Direction Fixes Needed
+
+### Fix 1: Birthplace Shows "West" Instead of "Origin" in Ranking Table
+
+**Problem:** Ahmedabad is the user's birthplace, but the ranking table shows "West" as the direction. The city detail page correctly shows "Origin", but the ranking table doesn't apply this logic.
+
+**Location:** City Rankings Table (Top 12 Cities page)
+
+**Current Output:**
+| Ahmedabad | Sun Midheaven, Moon Ascendant | West | 91% |
+
+**Expected Output:**
+| Ahmedabad | Sun Midheaven, Moon Ascendant | Origin | 91% |
+
+**Solution:** Apply the same "Origin" check used in city detail pages to the ranking table:
+```javascript
+// When generating ranking table direction column
+function getDirectionForTable(city, birthPlace) {
+  const distance = calculateDistance(city, birthPlace);
+  if (distance < 50) {
+    return "Origin";  // Birthplace or very close
+  }
+  return calculateDirection(birthPlace, city);
+}
+```
+
+---
+
+### Fix 2: Improve Direction Accuracy (4 → 8 Directions)
+
+**Problem:** Hyderabad shows "East" from Ahmedabad, but it's actually **Southeast** (both south AND east of Ahmedabad).
+
+**Current:** Using only 4 cardinal directions (North, South, East, West)
+
+**Issue Examples:**
+- Hyderabad: Shows "East" → Should be "Southeast"
+- Rishikesh: Shows "North" → Could be "Northeast"
+
+**Solution:** Use 8 compass directions for more accuracy:
+```javascript
+function calculateDirection(from, to) {
+  const latDiff = to.latitude - from.latitude;   // + = North, - = South
+  const lngDiff = to.longitude - from.longitude; // + = East, - = West
+  
+  const angle = Math.atan2(lngDiff, latDiff) * (180 / Math.PI);
+  
+  // Convert angle to 8-point compass
+  if (angle >= -22.5 && angle < 22.5) return "North";
+  if (angle >= 22.5 && angle < 67.5) return "Northeast";
+  if (angle >= 67.5 && angle < 112.5) return "East";
+  if (angle >= 112.5 && angle < 157.5) return "Southeast";
+  if (angle >= 157.5 || angle < -157.5) return "South";
+  if (angle >= -157.5 && angle < -112.5) return "Southwest";
+  if (angle >= -112.5 && angle < -67.5) return "West";
+  if (angle >= -67.5 && angle < -22.5) return "Northwest";
+  
+  return "Unknown";
+}
+```
+
+**Expected Results After Fix:**
+
+| City | Before | After |
+|------|--------|-------|
+| Ahmedabad | West | **Origin** |
+| Hyderabad | East | **Southeast** |
+| Chennai | South | South or Southeast |
+| Rishikesh | North | North or Northeast |
+| Kolkata | East | East or Northeast |
+
+---
+
+Please apply both fixes to:
+1. City Rankings Table (direction column)
+2. City Detail Pages (direction display)
+
+Then regenerate the India-Career report for verification.
