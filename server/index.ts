@@ -965,15 +965,44 @@ async function startServer() {
       const scoresResult = await astrologyApi.getScoresForAllCities(enrichedBirthData, cities, astroLines, goal);
       const scoredCities = scoresResult.success ? scoresResult.data : [];
       
-      // Generate detailed breakdown for each city
-      const cityCalculations = scoredCities.slice(0, 10).map((city: any) => ({
-        city: city.name,
-        country: city.country,
-        coords: { lat: city.lat, lng: city.lng },
-        direction: city.direction,
-        finalScore: city.score,
-        credibility: city.credibility || 'Not available'
-      }));
+      // Sort cities by score descending
+      const sortedCities = [...scoredCities].sort((a: any, b: any) => b.score - a.score);
+      
+      // Generate detailed breakdown for ALL cities with rank
+      const allCityBreakdowns = sortedCities.map((city: any, index: number) => {
+        // credibility IS the breakdown (not credibility.breakdown)
+        const cred = city.credibility || {};
+        const western = cred.western || {};
+        const vedic = cred.vedic || {};
+        const lineProx = western.lineProximity || {};
+        const parans = western.parans || {};
+        const nakRashi = vedic.nakshatraRashi || {};
+        const lagnaVastu = vedic.lagnaVastu || {};
+        const dashaTiming = vedic.dashaTiming || {};
+        const penalty = cred.penalty || {};
+        
+        return {
+          rank: index + 1,
+          city: city.name,
+          country: city.country,
+          direction: city.direction,
+          totalScore: city.score,
+          breakdown: {
+            nearestLine: lineProx.nearestLine || 'N/A',
+            distanceKm: lineProx.distanceKm ? Math.round(lineProx.distanceKm) : 'N/A',
+            orbStrength: lineProx.orbStrength || 'N/A',
+            lineScore: lineProx.score || 0,
+            paranScore: parans.score || 0,
+            westernTotal: western.total || 0,
+            nakshatraScore: nakRashi.score || 0,
+            lagnaVastuScore: lagnaVastu.score || 0,
+            dashaScore: dashaTiming.score || 0,
+            vedicTotal: vedic.total || 0,
+            directionPenalty: penalty.amount || 0,
+            penaltyReason: penalty.reason || null
+          }
+        };
+      });
       
       // Calculate score distribution
       const scores = scoredCities.map((c: any) => c.score);
@@ -983,6 +1012,11 @@ async function startServer() {
         avg: Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length),
         count: scores.length
       };
+      
+      // Find Gulf cities specifically
+      const gulfCities = allCityBreakdowns.filter((c: any) => 
+        ['Dubai', 'Doha', 'Abu Dhabi', 'Riyadh'].includes(c.city)
+      );
       
       res.json({
         success: true,
@@ -999,6 +1033,7 @@ async function startServer() {
           nakshatra: vedicProfile?.nakshatra || 'N/A',
           lagna: vedicProfile?.lagna || 'N/A',
           currentDasha: vedicProfile?.currentDashaLord || 'N/A',
+          favorableDirection: vedicProfile?.favorableDirection || 'East',
           ayanamsa: 'Lahiri'
         },
         planetaryLines: astroLines ? {
@@ -1009,7 +1044,10 @@ async function startServer() {
           })) : []
         } : 'Not available',
         scoreStats,
-        cityCalculations
+        top20: allCityBreakdowns.slice(0, 20),
+        gulfCities,
+        bottom10: allCityBreakdowns.slice(-10),
+        allCities: allCityBreakdowns
       });
       
     } catch (error: any) {
