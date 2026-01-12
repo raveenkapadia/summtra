@@ -912,6 +912,33 @@ async function getScoresForAllCities(birthData, cities, astroLines = null, goal 
   console.log(`   📊 Top 3: ${top3.join(', ')}`);
   console.log(`   📊 Bottom 3: ${bottom3.join(', ')}`);
   
+  // DEBUG: Full ranking table for all cities
+  console.log(`\n📊 =============== FULL CITY RANKINGS (${goal}) ===============`);
+  console.log('Rank | City                 | Country          | Dir       | W-Raw | W-Adj | Vedic | Mult  | Total');
+  console.log('-----|----------------------|------------------|-----------|-------|-------|-------|-------|------');
+  sorted.forEach((city, idx) => {
+    const cred = city.credibility || {};
+    const western = cred.western || {};
+    const vedic = cred.vedic || {};
+    const rawWestern = western.rawTotal || western.total || 0;
+    const adjWestern = western.adjustedTotal || western.total || rawWestern;
+    const vedicTotal = vedic.total || 0;
+    const multiplier = western.directionMultiplier || 1.0;
+    
+    const rank = String(idx + 1).padStart(4);
+    const cityName = city.name.substring(0, 20).padEnd(20);
+    const country = (city.country || '').substring(0, 16).padEnd(16);
+    const dir = (city.direction || '').padEnd(9);
+    const wRaw = String(rawWestern).padStart(5);
+    const wAdj = String(adjWestern).padStart(5);
+    const ved = String(vedicTotal).padStart(5);
+    const mult = multiplier.toFixed(2).padStart(5);
+    const total = String(city.score).padStart(5);
+    
+    console.log(`${rank} | ${cityName} | ${country} | ${dir} | ${wRaw} | ${wAdj} | ${ved} | ${mult} | ${total}`);
+  });
+  console.log('===============================================================\n');
+  
   return {
     success: true,
     data: scoredCities
