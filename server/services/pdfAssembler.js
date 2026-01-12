@@ -550,7 +550,10 @@ export class PDFAssembler {
             total: originalWestern, // Show original pre-penalty for sub-breakdown
             adjustedTotal: adjustedWestern, // Post-penalty for final calculation
             lineProximity: {
-              score: displayLineProximity, // Capped at 25 for display
+              score: western.lineProximity?.score || displayLineProximity, // Base score (0-25)
+              boostedScore: western.lineProximity?.boostedScore || displayLineProximity, // After planet boost (0-35)
+              boost: western.lineProximity?.boost || 1.0, // Planet boost multiplier
+              boostReasons: western.lineProximity?.boostReasons || [], // Reasons for boost
               nearestLine: western.lineProximity?.nearestLine || 'N/A',
               distanceKm: Math.round(western.lineProximity?.distanceKm || 0),
               direction: city.direction || 'N/A',
