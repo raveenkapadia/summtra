@@ -1630,10 +1630,27 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   const lagnaVastuScore = vastuMatch ? 15 : 10;
   
   // 5. Dasha Timing Score (15 points max)
+  // This measures "is this a good time for your goal" based on Dasha-Goal affinity
+  // NOT whether the city has your Dasha lord's line (that's already in Line Proximity)
   const currentDasha = birthData.currentDashaLord || 'Jupiter';
-  const dashaLineMatch = nearestLine && nearestLine.startsWith(currentDasha);
-  const dashaParanMatch = parans.some(p => p.planets.includes(currentDasha));
-  const dashaScore = (dashaLineMatch || dashaParanMatch) ? 15 : 10;
+  
+  // Dasha-Goal affinity table: how well each Dasha lord supports each goal
+  const dashaGoalAffinity = {
+    'Sun': { Career: 15, Wealth: 10, Love: 8, Education: 12, Settlement: 8, Complete: 10 },
+    'Moon': { Career: 8, Wealth: 8, Love: 14, Education: 10, Settlement: 14, Complete: 10 },
+    'Mars': { Career: 12, Wealth: 10, Love: 10, Education: 8, Settlement: 8, Complete: 10 },
+    'Mercury': { Career: 12, Wealth: 14, Love: 8, Education: 15, Settlement: 10, Complete: 12 },
+    'Jupiter': { Career: 14, Wealth: 15, Love: 10, Education: 14, Settlement: 12, Complete: 13 },
+    'Venus': { Career: 8, Wealth: 12, Love: 15, Education: 8, Settlement: 12, Complete: 11 },
+    'Saturn': { Career: 10, Wealth: 8, Love: 6, Education: 10, Settlement: 14, Complete: 10 },
+    'Rahu': { Career: 12, Wealth: 12, Love: 8, Education: 10, Settlement: 8, Complete: 10 },
+    'Ketu': { Career: 8, Wealth: 6, Love: 8, Education: 12, Settlement: 10, Complete: 9 }
+  };
+  
+  // Get Dasha-Goal affinity score (same for all cities - it's a timing factor, not location)
+  const goalKey = goal.charAt(0).toUpperCase() + goal.slice(1).toLowerCase();
+  const dashaAffinity = dashaGoalAffinity[currentDasha] || dashaGoalAffinity['Jupiter'];
+  const dashaScore = dashaAffinity[goalKey] || dashaAffinity['Complete'] || 10;
   
   const vedicTotal = Math.min(50, nakshatraRashiScore + lagnaVastuScore + dashaScore);
   
@@ -1691,7 +1708,8 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
           score: dashaScore,
           max: 15,
           planet: currentDasha,
-          active: dashaLineMatch || dashaParanMatch
+          goal: goalKey,
+          affinity: dashaScore >= 14 ? 'Excellent' : dashaScore >= 10 ? 'Good' : 'Moderate'
         }
       }
     }
