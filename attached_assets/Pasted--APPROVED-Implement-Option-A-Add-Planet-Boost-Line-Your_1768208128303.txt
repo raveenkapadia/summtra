@@ -1,0 +1,96 @@
+## ✅ APPROVED: Implement Option A - Add Planet Boost Line
+
+Your investigation is correct. The scoring logic is intentional and should remain unchanged. We just need to display it transparently.
+
+---
+
+### Implementation Request
+
+**Add conditional "Planet Boost" row to score breakdown when boost ≠ 1.0**
+
+---
+
+### Display Format
+
+**When Planet Boost exists:**
+```
+☉ WESTERN                         50/50
+   Line Proximity                 25/25
+   → Planet Boost (Jupiter)       +10
+   Paran Lines                    20/25
+```
+
+**When NO Planet Boost (boost = 1.0):**
+```
+☉ WESTERN                         43/50
+   Line Proximity                 23/25
+   Paran Lines                    20/25
+```
+
+---
+
+### Calculation Display
+
+The row should show:
+- Planet name in parentheses
+- Bonus points: `boostedScore - baseScore`
+
+**Examples:**
+
+| City | Planet | Base | Boosted | Display |
+|------|--------|------|---------|---------|
+| San Francisco | Jupiter-DS | 25 | 35 | → Planet Boost (Jupiter) +10 |
+| Doha | Jupiter-AC | 25 | 35 | → Planet Boost (Jupiter) +10 |
+| Dubai | Venus-AC | 25 | 27 | → Planet Boost (Venus) +2 |
+| Seoul | Mercury-MC | 23 | 23 | (no row - boost = 1.0) |
+
+---
+
+### Template Changes
+
+1. **`templateProcessor.js`**
+   - Generate `PLANET_BOOST_ROW` variable
+   - Format: `→ Planet Boost ({PLANET_NAME}) +{BOOST_POINTS}`
+   - Only generate when boost > 1.0
+
+2. **`city-page.html`**
+   - Add `{{PLANET_BOOST_ROW}}` between Line Proximity and Paran Lines
+   - Conditional: only render if not empty
+
+---
+
+### Optional Enhancement
+
+Consider adding a small tooltip or footnote explaining WHY this planet gets boosted:
+```
+→ Planet Boost (Jupiter) +10
+   Yogakaraka for Scorpio Lagna
+```
+
+Or keep it simple with just the planet name and points.
+
+---
+
+### Verification Points
+
+After implementation, check:
+
+1. **San Francisco:** Shows `→ Planet Boost (Jupiter) +10`
+2. **Doha:** Shows `→ Planet Boost (Jupiter) +10`  
+3. **Dubai:** Shows `→ Planet Boost (Venus) +2` (or similar)
+4. **Seoul:** NO planet boost row (Mercury has no special boost)
+5. **Math adds up:** Line Prox + Boost + Paran = Western Total
+
+---
+
+### Do NOT Change
+
+- ❌ Do not change the scoring algorithm
+- ❌ Do not change the boost multipliers
+- ❌ Do not change final scores
+
+Only add the display row for transparency.
+
+---
+
+Please implement and regenerate test PDF for verification.
