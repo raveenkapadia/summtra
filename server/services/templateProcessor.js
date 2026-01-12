@@ -498,12 +498,44 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
   const multiplier = dirAdj.multiplier || 1.0;
   const penaltyPercentage = hasPenalty ? Math.round((1 - multiplier) * 100) : 0;
   
-  // Sub-scores from credibilityData (capped for display)
-  const lineProximityScore = hasValidBreakdown ? (lineProx.score ?? Math.round(westernOriginal * 0.6)) : Math.round(westernOriginal * 0.6);
-  const paranScore = hasValidBreakdown ? (western.parans?.score ?? (westernOriginal - lineProximityScore)) : (westernOriginal - lineProximityScore);
+  // Sub-scores from credibilityData - trust API values when available
+  // lineProx.score = base score (0-25), lineProx.boostedScore = after planet multiplier (0-35)
+  const rawBaseScore = hasValidBreakdown ? (lineProx.score ?? 0) : 0;
+  const boostedLineScore = hasValidBreakdown ? (lineProx.boostedScore ?? rawBaseScore) : rawBaseScore;
+  const boostReasons = hasValidBreakdown ? (lineProx.boostReasons || []) : [];
+  
+  // Calculate actual boost points from raw values (not capped)
+  const actualBoostPoints = Math.max(0, Math.round(boostedLineScore - rawBaseScore));
+  
+  // For display: cap line proximity at 25 (the max possible base score)
+  const lineProximityScore = Math.min(25, rawBaseScore);
+  
+  // Paran score from API, with fallback that ensures total adds up
+  // westernOriginal = boostedLineScore + paranScore (capped at 50)
+  const apiParanScore = hasValidBreakdown ? (western.parans?.score ?? null) : null;
+  const paranScore = apiParanScore !== null ? Math.min(25, apiParanScore) : Math.max(0, Math.min(25, westernOriginal - boostedLineScore));
   const nakshatraRashiScore = hasValidBreakdown ? (vedic.nakshatraRashi?.score ?? Math.round(vedicTotal * 0.4)) : Math.round(vedicTotal * 0.4);
   const lagnaVastuScore = hasValidBreakdown ? (vedic.lagnaVastu?.score ?? Math.round(vedicTotal * 0.3)) : Math.round(vedicTotal * 0.3);
   const dashaScore = hasValidBreakdown ? (vedic.dashaTiming?.score ?? (vedicTotal - nakshatraRashiScore - lagnaVastuScore)) : (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
+  
+  // Build planet boost row HTML (only when there's an actual boost)
+  let planetBoostRow = '';
+  if (actualBoostPoints > 0) {
+    // Extract planet name from boostReasons or nearestLine
+    const nearestLine = lineProx.nearestLine || '';
+    let planetName = nearestLine.split('-')[0] || 'Planet';
+    // Try to get from boost reasons for accuracy
+    if (boostReasons.length > 0) {
+      const firstReason = boostReasons[0] || '';
+      const planetMatch = firstReason.match(/^(Jupiter|Venus|Mercury|Sun|Moon|Mars|Saturn)/);
+      if (planetMatch) planetName = planetMatch[1];
+    }
+    planetBoostRow = `
+      <div class="score-item" style="background: rgba(212, 175, 55, 0.15); border-radius: 4px; padding: 4px 8px; font-size: 10px;">
+        <span>→ Planet Boost (${planetName})</span>
+        <span style="color: #D4AF37;">+${actualBoostPoints}</span>
+      </div>`;
+  }
   
   // Build direction adjustment row HTML
   let directionAdjustmentRow = '';
@@ -560,6 +592,7 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     
     WESTERN_SCORE: westernOriginal,
     LINE_PROXIMITY_SCORE: lineProximityScore,
+    PLANET_BOOST_ROW: planetBoostRow,
     PARAN_SCORE: paranScore,
     VEDIC_SCORE: vedicTotal,
     NAKSHATRA_RASHI_SCORE: nakshatraRashiScore,
