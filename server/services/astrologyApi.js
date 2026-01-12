@@ -1142,16 +1142,18 @@ function calculateLineDistanceKm(cityLat, cityLng, linePoints) {
 }
 
 // Get orb strength category based on distance in km
-// Extended orb ranges - astrocartography lines influence areas within 1500km
-// Wide score range for meaningful differentiation
+// Realistic orb ranges - planetary line influence diminishes significantly with distance
+// Cities > 2500km have minimal/no real influence from lines
 function getOrbStrength(distanceKm) {
-  if (distanceKm === null) return { label: 'None', score: 10, bars: 1 };
+  if (distanceKm === null) return { label: 'None', score: 3, bars: 0 };
   if (distanceKm < 150) return { label: 'Direct', score: 25, bars: 10 };
-  if (distanceKm < 400) return { label: 'Very Strong', score: 23, bars: 9 };
-  if (distanceKm < 700) return { label: 'Strong', score: 20, bars: 7 };
-  if (distanceKm < 1100) return { label: 'Moderate', score: 17, bars: 5 };
-  if (distanceKm < 1600) return { label: 'Weak', score: 13, bars: 3 };
-  return { label: 'Minimal', score: 10, bars: 1 };
+  if (distanceKm < 400) return { label: 'Very Strong', score: 22, bars: 9 };
+  if (distanceKm < 700) return { label: 'Strong', score: 18, bars: 7 };
+  if (distanceKm < 1100) return { label: 'Moderate', score: 14, bars: 5 };
+  if (distanceKm < 1600) return { label: 'Weak', score: 10, bars: 3 };
+  if (distanceKm < 2500) return { label: 'Minimal', score: 5, bars: 1 };
+  if (distanceKm < 3500) return { label: 'Trace', score: 2, bars: 0 };
+  return { label: 'None', score: 0, bars: 0 };
 }
 
 // Generate visual bar representation
