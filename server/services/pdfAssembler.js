@@ -1105,7 +1105,15 @@ function convertBirthDataForAPI(birthData) {
     time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
     latitude: parseFloat(birthData.latitude),
     longitude: parseFloat(birthData.longitude),
-    timezone: 'Asia/Kolkata'
+    timezone: 'Asia/Kolkata',
+    // Preserve Vedic properties for scoring calculations
+    currentDashaLord: birthData.currentDashaLord,
+    lagna: birthData.lagna,
+    lagnaSign: birthData.lagnaSign || birthData.lagna,
+    nakshatra: birthData.nakshatra,
+    rashi: birthData.rashi,
+    sunSign: birthData.sunSign,
+    planetPositions: birthData.planetPositions
   };
 }
 
