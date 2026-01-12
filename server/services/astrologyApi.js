@@ -802,53 +802,34 @@ function findLinesNearCity(astroLines, cityLat, cityLng, toleranceDegrees = 15) 
 }
 
 // ============================================
-// NEW: ASSIGN PLANETARY LINES TO ALL SCORED CITIES
-// Always assigns lines - uses API data when available, deterministic fallback otherwise
+// ASSIGN PLANETARY LINES TO ALL SCORED CITIES
+// Only uses actual API data - no fabricated lines
 // ============================================
 function assignLinesToCities(scoredCities, astroLines) {
   const hasAstroLines = astroLines && (astroLines.lines || Array.isArray(astroLines));
   
   if (hasAstroLines) {
-    console.log('   📡 Assigning planetary lines to cities based on longitude proximity...');
+    console.log('   📡 Assigning planetary lines to cities based on actual API data...');
   } else {
-    console.log('   ⚠️ No astroLines data, using deterministic fallback line assignment...');
+    console.log('   ⚠️ No astroLines data available - cities will show no nearby lines');
   }
   
-  // Planet lines to use for fallback/when no API lines found near city
-  const beneficLines = ['Jupiter-MC', 'Venus-AC', 'Sun-MC', 'Mercury-MC'];
-  const mixedLines = ['Moon-AC', 'Mars-MC', 'Saturn-MC', 'Uranus-AC'];
-  const challengingLines = ['Saturn-IC', 'Pluto-MC', 'Neptune-IC', 'Mars-IC'];
-  
-  return scoredCities.map((city, index) => {
+  return scoredCities.map((city) => {
     const cityLng = city.lng || city.longitude;
     const cityLat = city.lat || city.latitude;
     
-    // Try to find actual lines near this city (if we have API data)
-    let lines = hasAstroLines ? findLinesNearCity(astroLines, cityLat, cityLng) : [];
+    // Only use actual lines from API - never fabricate
+    const nearbyLineObjects = hasAstroLines ? findLinesNearCity(astroLines, cityLat, cityLng) : [];
     
-    // If no lines found via API data, assign deterministically based on city index and score
-    // This ensures different cities ALWAYS get different lines
-    if (lines.length === 0) {
-      // Use index-based rotation to ensure variety across all cities
-      const primaryIdx = index % beneficLines.length;
-      const secondaryIdx = (index + 2) % mixedLines.length; // +2 for more variety
-      const tertiaryIdx = (index + 1) % challengingLines.length;
-      
-      // Higher scoring cities get more benefic lines
-      if (city.score >= 80) {
-        lines = [beneficLines[primaryIdx], beneficLines[(primaryIdx + 1) % beneficLines.length]];
-      } else if (city.score >= 60) {
-        lines = [beneficLines[primaryIdx], mixedLines[secondaryIdx]];
-      } else if (city.score >= 40) {
-        lines = [mixedLines[primaryIdx % mixedLines.length], mixedLines[(secondaryIdx + 1) % mixedLines.length]];
-      } else {
-        lines = [mixedLines[secondaryIdx], challengingLines[tertiaryIdx]];
-      }
-    }
+    // Convert to string format for backward compatibility with templates
+    // Keep full objects as lineDetails for scoring/display that needs distance
+    const lines = nearbyLineObjects.map(l => l.line || `${l.planet}-${l.type}`);
     
     return {
       ...city,
-      lines
+      lines,
+      lineDetails: nearbyLineObjects,
+      hasNearbyLines: nearbyLineObjects.length > 0
     };
   });
 }
