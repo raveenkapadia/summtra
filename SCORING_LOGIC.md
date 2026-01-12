@@ -377,42 +377,62 @@ Planet boosts personalize scores based on the user's natal chart. Boosts are mul
 
 ## API Dependencies
 
-### 1. Astrocartography API (RapidAPI - Best Astrology API)
+### 1. RapidAPI (Best Astrology API) - Western Astrocartography
 
-**Endpoint:** Fetches planetary lines for all 15 celestial bodies
+**Endpoints Actually Used:**
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/astrocartography/lines` | Fetches planetary lines for all celestial bodies |
+| `/astrocartography/paran-map` | Fetches paran (planetary crossing) data |
 
 **Data Provided:**
 - 28 planetary lines (7 planets × 4 line types)
 - Line types: AC (Ascendant), DC (Descendant), MC (Midheaven), IC (Imum Coeli)
 - Point arrays with latitude/longitude coordinates
+- Paran crossing locations and involved planets
 
 **Used For:**
 - Line Proximity Score calculation
 - Distance measurements (Haversine formula)
 - Determining which lines pass near each city
+- Paran Score calculation
 
-### 2. AstrologyAPI.com (Vedic Profile)
+**Note:** Other RapidAPI endpoints exist but are NOT used in scoring:
+- `/western_horoscope`, `/numero_table`, `/power-zones`, `/search-optimal`, `/astrodynes`, `/analyze-location`
 
-**Endpoints Used:**
-- `/western_horoscope` - General profile
-- `/numero_table` - Numerological data
-- `/planets` - Planet positions
-- `/current_vdasha_all` - Current Mahadasha/Dasha periods
+### 2. AstrologyAPI.com - Vedic Astrology
+
+**Endpoints Actually Used:**
+
+| Endpoint | Provides |
+|----------|----------|
+| `/planets` | Rashi (Moon.sign), Nakshatra (Moon.nakshatra), Lagna (Ascendant), planet positions |
+| `/current_vdasha` | Current Mahadasha lord |
+| `/major_vdasha` | Fallback for Dasha if current_vdasha fails |
 
 **Data Provided:**
-- Rashi (Moon Sign)
-- Lagna (Ascendant Sign)
-- Nakshatra (Birth Star)
-- Current Dasha Lord
+- Rashi (Moon Sign) - from Moon.sign
+- Lagna (Ascendant Sign) - from Ascendant
+- Nakshatra (Birth Star) - from Moon.nakshatra
+- Current Dasha Lord - from current_vdasha response
 - Planet positions with signs and degrees
 
 **Used For:**
 - Nakshatra-Rashi direction matching
 - Lagna-Vastu direction matching
 - Dasha Timing Score
-- Planet Boost calculations (exaltation, combustion)
+- Planet Boost calculations (lordship, exaltation, combustion)
 
-### 3. Data Integrity Rules
+### 3. Internally Derived Data (Not from API)
+
+| Data Point | Source |
+|------------|--------|
+| Favorable Direction | NAKSHATRA_DIRECTIONS lookup table based on user's Nakshatra |
+| City Direction | Bearing calculation from birthplace to city coordinates |
+| Astrocartography Maps | Generated locally using D3.js from `/lines` data |
+
+### 4. Data Integrity Rules
 
 1. **No Fabricated Data:** Lines are only assigned from actual API data. If no lines exist near a city, it honestly shows no nearby lines.
 
