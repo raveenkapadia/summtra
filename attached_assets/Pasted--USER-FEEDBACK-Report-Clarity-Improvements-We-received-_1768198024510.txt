@@ -1,0 +1,206 @@
+## 🎫 USER FEEDBACK: Report Clarity Improvements
+
+We received feedback from paid users who found parts of the report confusing. These are **NOT algorithm or scoring changes** - we need **better explanations and display improvements** only.
+
+---
+
+### DISPLAY FIX 1: "Consider Instead" Always Shows Seoul
+
+**User says:**
+> "Every single 'City to Avoid' page says 'Consider Instead: Seoul'. For Visakhapatnam, Hyderabad, Pune, Mumbai, Mexico City - all say consider Seoul. This feels like a bug. Shouldn't it suggest nearby alternatives?"
+
+**Required fix:** Show geographically relevant alternatives instead of always showing #1 city.
+
+**Logic suggestion:**
+```javascript
+// Instead of always recommending topCities[0]
+// Find best-scoring city in SAME REGION
+
+Pune (South India) → "Consider Instead: Nagpur or Kolkata"
+Mumbai (West India) → "Consider Instead: Nagpur"  
+Mexico City (Americas) → "Consider Instead: San Francisco"
+Rome (Europe) → "Consider Instead: London"
+```
+
+---
+
+### DISPLAY FIX 2: Show Singapore & Hong Kong Status
+
+**User says:**
+> "Singapore and Hong Kong are the two biggest destinations for Indian professionals. I don't see them in the top 18. Where did they rank?"
+
+**Required fix:** Add a small "Other Notable Cities" section showing popular destinations that didn't make top 18.
+
+**Suggested format (after top 18 rankings):**
+```
+📍 OTHER NOTABLE CITIES
+
+These popular destinations scored as follows:
+
+City            Score    Rank    Key Factor
+Singapore       55%      #35     Distance from lines
+Hong Kong       63%      #22     Moderate line influence
+London          58%      #29     Direction penalty (West)
+```
+
+---
+
+### LANGUAGE FIX 1: Explain Why Familiar Cities Rank Lower
+
+**User says:**
+> "I paid for this report expecting Dubai or Singapore to be #1. Everyone I know who got rich moved to Dubai. Why is Seoul recommended?"
+
+**Required fix:** Add explanatory text in the intro or methodology section:
+
+**Suggested text:**
+```
+⚡ IMPORTANT: PERSONALIZED VS POPULAR
+
+This report shows cities aligned with YOUR unique birth chart - 
+not general popularity. A city like Dubai may be excellent for 
+business generally, but YOUR planetary lines may create stronger 
+opportunities elsewhere.
+
+Your top recommendations reflect where YOUR specific planetary 
+energies are strongest, which may differ from conventional wisdom.
+```
+
+---
+
+### LANGUAGE FIX 2: Explain Direction Adjustment
+
+**User says:**
+> "I don't understand this direction adjustment thing. It says West is -25% penalty. But Dubai is only 2 hours flight away. How can going West be bad when it's so close?"
+
+**Required fix:** Add a "Understanding Direction Factors" explanation:
+
+**Suggested text:**
+```
+🧭 UNDERSTANDING DIRECTION ADJUSTMENTS
+
+Direction adjustments are based on Vastu Shastra principles, 
+not geographic distance. In Vastu, each Lagna (Ascendant) has 
+favorable and challenging directions.
+
+For YOUR Scorpio Lagna:
+  ✓ East/Southeast: Harmonious energy flow (+0%)
+  ⚠ West: Requires more effort to achieve results (-25%)
+
+This means a Western city needs STRONGER planetary line 
+influence to score as high as an Eastern city with moderate 
+line influence.
+
+Example: San Francisco has a DIRECT Jupiter line (83km), 
+but after the -25% West adjustment, it scores 80% - still 
+excellent, but below Seoul's 88%.
+
+Note: Direction penalty does NOT mean failure - it means 
+you may need to work harder for the same results.
+```
+
+---
+
+### LANGUAGE FIX 3: Explain Dubai vs Doha Score Difference
+
+**User says:**
+> "Dubai has Venus-AC at 43km (Direct Orb) but scores 72%. Doha has Jupiter-AC at 44km and scores 78%. Same distance, different scores. Why?"
+
+**Required fix:** The score breakdown already shows the difference (Paran Lines), but add clarifying text:
+
+**Suggested text in city analysis:**
+```
+📊 WHY SCORES VARY FOR SIMILAR DISTANCES
+
+Two cities can have similar line distances but different scores 
+due to:
+
+1. PLANET TYPE: Jupiter lines (Doha) carry more weight for 
+   Wealth goals than Venus lines (Dubai)
+   
+2. PARAN LINES: Additional planetary alignments at that 
+   latitude - Doha has stronger paran support (15/25 vs 15/25)
+   
+3. VEDIC FACTORS: Nakshatra and Rashi compatibility varies
+```
+
+---
+
+### LANGUAGE FIX 4: Soften "Cities to Avoid" Messaging
+
+**User says:**
+> "Your report says Mumbai is 43% and 'Not Recommended for Wealth'. But I already have a successful business in Mumbai! Are you saying I should abandon everything?"
+
+**Required fix:** Soften the language for cities to avoid:
+
+**Current language:**
+```
+"Not Recommended for Wealth"
+```
+
+**Suggested language:**
+```
+"May Require Extra Effort for Wealth"
+
+Note: A lower score doesn't mean failure - many people thrive 
+in challenging locations through hard work and awareness. 
+This score indicates you may face more obstacles here compared 
+to your top-recommended cities.
+
+If you're already established in this city, focus on:
+- Timing major decisions with favorable Dasha periods
+- Leveraging your strengths in the Vedic factors
+- Being aware of potential challenges indicated
+```
+
+---
+
+### LANGUAGE FIX 5: Explain Paran Score Differences
+
+**User says:**
+> "Seoul shows 'Paran Lines 20/25' and Doha shows 'Paran Lines 15/25'. But both show similar paran aspects. How is the paran score calculated?"
+
+**Required fix:** Add brief explanation of paran scoring:
+
+**Suggested text:**
+```
+◈ PARAN LINES EXPLAINED
+
+Paran scores reflect the STRENGTH of planetary alignments 
+at each city's latitude, combined with YOUR proximity to 
+planetary lines.
+
+Higher paran scores indicate:
+- More beneficial planetary combinations at that latitude
+- Stronger resonance with your chart when near planetary lines
+- Cities closer to your active lines get amplified paran benefits
+```
+
+---
+
+## SUMMARY OF CHANGES
+
+| Change | Type | Effort |
+|--------|------|--------|
+| "Consider Instead" → Regional alternatives | Display Fix | Medium |
+| Add "Other Notable Cities" section | Display Fix | Low |
+| Add "Personalized vs Popular" explanation | Language | Low |
+| Add "Understanding Direction" section | Language | Low |
+| Explain planet type impact on scoring | Language | Low |
+| Soften "Cities to Avoid" messaging | Language | Low |
+| Explain Paran scoring | Language | Low |
+
+---
+
+## WHAT THIS DOES NOT CHANGE
+
+❌ No changes to scoring algorithm
+❌ No changes to score weights (Western/Vedic split)
+❌ No changes to direction multipliers
+❌ No changes to line proximity tiers
+❌ No changes to paran calculation formula
+
+All scores will remain exactly the same. We are only improving how we EXPLAIN and DISPLAY the existing scores.
+
+---
+
+Please implement these display and language improvements.
