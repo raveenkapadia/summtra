@@ -234,6 +234,7 @@ export class PDFAssembler {
   async addGoalSection(goal) {
     await this.addGoalDividerPage(goal);
     await this.addCityRankingPages(goal);
+    await this.addNotableCitiesPage(goal);
     await this.addBestCityPages(goal);
     await this.addAvoidCityPages(goal);
   }
@@ -307,6 +308,113 @@ export class PDFAssembler {
     }
     
     console.log(`   📊 Added ${totalPages} ranking pages for ${goal}`);
+  }
+  
+  async addNotableCitiesPage(goal) {
+    const template = loadTemplate('notable-cities-page.html');
+    
+    // Notable cities that users frequently ask about
+    const notableCityNames = ['Singapore', 'Hong Kong', 'London', 'Dubai', 'New York', 'Sydney', 'Toronto', 'Paris'];
+    
+    // Get all ranked cities
+    const allCities = this.astroData?.topCities || [];
+    const bestCities = this.getCitiesForGoal(goal, 'best');
+    const bestCityNames = bestCities.map(c => c.name);
+    
+    // Sort all cities by score for ranking
+    const sortedCities = [...allCities].sort((a, b) => {
+      const scoreA = a.goalScores?.[goal] || a.score || 0;
+      const scoreB = b.goalScores?.[goal] || b.score || 0;
+      return scoreB - scoreA;
+    });
+    
+    // Find notable cities that are NOT in the top best cities
+    const notableCities = [];
+    for (const cityName of notableCityNames) {
+      if (!bestCityNames.includes(cityName)) {
+        const cityIdx = sortedCities.findIndex(c => c.name === cityName);
+        if (cityIdx !== -1) {
+          const city = sortedCities[cityIdx];
+          notableCities.push({
+            ...city,
+            rank: cityIdx + 1,
+            keyFactor: this.getKeyFactor(city, goal)
+          });
+        }
+      }
+    }
+    
+    // Only add page if we have notable cities to show
+    if (notableCities.length === 0) {
+      return;
+    }
+    
+    // Generate table rows
+    const rows = notableCities.map(city => {
+      const score = city.goalScores?.[goal] || city.score || 0;
+      return `
+        <tr>
+          <td>
+            <div class="city-name">${city.name}</div>
+            <div class="city-country">${city.country}</div>
+          </td>
+          <td><span class="rank-badge">#${city.rank}</span></td>
+          <td><span class="score-value">${score}%</span></td>
+          <td class="key-factor">${city.keyFactor}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    // Get direction info based on Lagna
+    const lagna = this.birthData?.lagna || this.birthData?.lagnaSign || 'Aries';
+    const directionInfo = this.getDirectionInfoForLagna(lagna);
+    
+    const pageData = {
+      ...this.baseData,
+      GOAL: goal,
+      NOTABLE_CITIES_ROWS: rows,
+      LAGNA: lagna,
+      FAVORABLE_DIRECTION: directionInfo.favorable,
+      CHALLENGING_DIRECTION: directionInfo.challenging
+    };
+    
+    this.pages.push({ html: processTemplate(template, pageData), type: 'notable' });
+    console.log(`   📍 Added notable cities page (${notableCities.length} cities)`);
+  }
+  
+  getKeyFactor(city, goal) {
+    const score = city.goalScores?.[goal] || city.score || 0;
+    const direction = city.direction || '';
+    
+    if (score < 50) {
+      return 'Low line influence';
+    } else if (direction === 'West' || direction === 'Southwest') {
+      return 'Direction adjustment (-25%)';
+    } else if (city.nearestLineDistance > 2000) {
+      return 'Distance from lines';
+    } else {
+      return 'Moderate line influence';
+    }
+  }
+  
+  getDirectionInfoForLagna(lagna) {
+    // Based on Vedic Vastu principles - lagna lords and their directional strengths
+    // East and North are generally auspicious; chart-specific adjustments apply
+    const directionMap = {
+      'Aries': { favorable: 'East', challenging: 'West' },       // Mars rules, East strong
+      'Taurus': { favorable: 'North', challenging: 'South' },    // Venus rules, North auspicious
+      'Gemini': { favorable: 'North', challenging: 'South' },    // Mercury rules, North beneficial
+      'Cancer': { favorable: 'North', challenging: 'South' },    // Moon rules, North favorable
+      'Leo': { favorable: 'East', challenging: 'West' },         // Sun rules, East strong
+      'Virgo': { favorable: 'North', challenging: 'South' },     // Mercury rules, North beneficial
+      'Libra': { favorable: 'North', challenging: 'South' },     // Venus rules, North auspicious
+      'Scorpio': { favorable: 'East', challenging: 'West' },     // Mars rules, East strong
+      'Sagittarius': { favorable: 'East', challenging: 'West' }, // Jupiter rules, East beneficial
+      'Capricorn': { favorable: 'East', challenging: 'West' },   // Saturn rules, East grounding
+      'Aquarius': { favorable: 'North', challenging: 'South' },  // Saturn rules, North progressive
+      'Pisces': { favorable: 'North', challenging: 'South' }     // Jupiter rules, North spiritual
+    };
+    return directionMap[lagna] || { favorable: 'East', challenging: 'West' };
   }
   
   getCitiesForGoal(goal, type = 'best') {
@@ -775,6 +883,14 @@ export class PDFAssembler {
     let avoidCities = this.getCitiesForGoal(goal, 'avoid');
     const bestCities = this.getCitiesForGoal(goal, 'best');
     
+    // Get all ranked cities for finding regional alternatives
+    const allCities = this.astroData?.topCities || [];
+    const allRankedCities = [...allCities].sort((a, b) => {
+      const scoreA = a.goalScores?.[goal] || a.score || 0;
+      const scoreB = b.goalScores?.[goal] || b.score || 0;
+      return scoreB - scoreA;
+    });
+    
     try {
       const userData = {
         name: this.birthData.name || 'User',
@@ -790,7 +906,7 @@ export class PDFAssembler {
     for (let i = 0; i < avoidCities.length; i++) {
       const city = avoidCities[i];
       
-      const pageData = prepareAvoidCityData(city, goal, bestCities, this.baseData);
+      const pageData = prepareAvoidCityData(city, goal, bestCities, this.baseData, allRankedCities);
       pageData.GOAL_ICON = this.getGoalIcon(goal);
       pageData.AVOID_CITY_CARDS = generateAvoidCityCard(city, i + 1);
       pageData.AVOID_PAGE = i + 1;

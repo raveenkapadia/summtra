@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Other Notable Cities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-purple: #2D1B4E;
+            --royal-purple: #4A1C6B;
+            --gold: #D4AF37;
+            --gold-light: #E8D5A3;
+            --cream: #FDF8F0;
+            --soft-white: #FEFEFE;
+            --text-dark: #1A1A2E;
+            --info-blue: #0369A1;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: var(--cream);
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+        
+        .header-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cream);
+            text-transform: uppercase;
+        }
+        
+        .page-number {
+            font-size: 10px;
+            color: var(--gold-light);
+        }
+        
+        .content {
+            padding: 30px 40px;
+        }
+        
+        .section-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 8px;
+        }
+        
+        .section-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .notable-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        
+        .notable-table thead {
+            background: var(--info-blue);
+        }
+        
+        .notable-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .notable-table th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+        
+        .notable-table th:last-child {
+            border-radius: 0 6px 0 0;
+            text-align: center;
+        }
+        
+        .notable-table tbody tr {
+            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
+        }
+        
+        .notable-table tbody tr:nth-child(even) {
+            background: rgba(3, 105, 161, 0.03);
+        }
+        
+        .notable-table td {
+            padding: 14px 15px;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+        
+        .city-name {
+            font-weight: 500;
+            color: var(--deep-purple);
+        }
+        
+        .city-country {
+            font-size: 10px;
+            color: #888;
+        }
+        
+        .rank-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(3, 105, 161, 0.1);
+            color: var(--info-blue);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .score-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            display: block;
+        }
+        
+        .key-factor {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .explanation-box {
+            background: rgba(3, 105, 161, 0.08);
+            border: 1px solid rgba(3, 105, 161, 0.2);
+            border-radius: 8px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+        }
+        
+        .explanation-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--info-blue);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .explanation-text {
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+        
+        .direction-section {
+            background: var(--soft-white);
+            border: 1px solid rgba(45, 27, 78, 0.1);
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .direction-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .direction-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .direction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: var(--cream);
+            border-radius: 6px;
+        }
+        
+        .direction-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .direction-icon.good {
+            background: #D1FAE5;
+            color: #059669;
+        }
+        
+        .direction-icon.caution {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+        
+        .direction-text {
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        
+        .direction-label {
+            font-weight: 600;
+            color: var(--deep-purple);
+            margin-bottom: 3px;
+        }
+        
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 40px;
+            background: var(--soft-white);
+            border-top: 1px solid rgba(45, 27, 78, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            font-size: 9px;
+            color: #999;
+        }
+        
+        .footer-center {
+            font-size: 9px;
+            color: var(--royal-purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-logo">Ssumitra</div>
+                <div class="header-divider"></div>
+                <div class="header-section">Notable Cities</div>
+            </div>
+            <div class="page-number">Page {{PAGE_NUM}}</div>
+        </div>
+        
+        <div class="content">
+            <div class="section-icon">📍</div>
+            <h2 class="section-title">Other Notable Cities</h2>
+            <p class="section-subtitle">
+                These popular destinations are frequently asked about by our clients. Here's how they ranked for your {{GOAL}} goals based on your unique birth chart.
+            </p>
+            
+            <table class="notable-table">
+                <thead>
+                    <tr>
+                        <th>City</th>
+                        <th>Rank</th>
+                        <th>Score</th>
+                        <th>Key Factor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{NOTABLE_CITIES_ROWS}}
+                </tbody>
+            </table>
+            
+            <div class="explanation-box">
+                <div class="explanation-title">
+                    <span>💡</span> Why These Cities May Rank Differently
+                </div>
+                <div class="explanation-text">
+                    Popular business destinations like Singapore, Dubai, and London are successful for many reasons unrelated to astrology. However, YOUR planetary lines create unique energy patterns that may be stronger elsewhere.
+                    <br><br>
+                    A lower score doesn't mean you can't succeed in these cities — it means your cosmic alignment may require more conscious effort there compared to your top-recommended locations.
+                </div>
+            </div>
+            
+            <div class="direction-section">
+                <div class="direction-title">
+                    <span>🧭</span> Understanding Direction Adjustments
+                </div>
+                <div class="direction-grid">
+                    <div class="direction-item">
+                        <div class="direction-icon good">✓</div>
+                        <div class="direction-text">
+                            <div class="direction-label">{{FAVORABLE_DIRECTION}} Direction</div>
+                            Your {{LAGNA}} Lagna resonates harmoniously with this direction. Cities here receive full scoring potential.
+                        </div>
+                    </div>
+                    <div class="direction-item">
+                        <div class="direction-icon caution">!</div>
+                        <div class="direction-text">
+                            <div class="direction-label">{{CHALLENGING_DIRECTION}} Direction</div>
+                            Requires additional effort based on Vastu principles. Strong planetary lines can overcome this (-25% adjustment).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-footer">
+            <div class="footer-left">© Ssumitra {{YEAR}}</div>
+            <div class="footer-center">{{USER_NAME}} • {{GOAL}} Report</div>
+            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        </div>
+    </div>
+</body>
+</html>
