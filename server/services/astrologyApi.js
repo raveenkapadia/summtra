@@ -1523,8 +1523,8 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   // ========== WESTERN ASTROCARTOGRAPHY (50 points) ==========
   
   // 1. Line Proximity Score (25 points base, boosted up to 35 max)
-  // Base score is 13 for cities with no nearby lines - balanced floor
-  let lineProximityScore = 13;
+  // Base score is 3 for cities with no nearby goal-relevant lines
+  let lineProximityScore = 3;
   let nearestLine = null;
   let nearestDistanceKm = null;
   let orbStrength = { label: 'None', bars: 0 };
