@@ -1219,12 +1219,38 @@ function calculateParansForCity(birthData, cityLatitude, goal = 'Complete') {
   }).slice(0, 3);
 }
 
-// Calculate paran score (25 points max)
-function calculateParanScore(parans) {
-  if (!parans || parans.length === 0) return 12;
-  if (parans.length >= 3) return 25;
-  if (parans.length === 2) return 22;
-  return 18;
+// Calculate paran score (25 points max) - now proximity-dependent
+// Paran influence is theoretical unless city is near a planetary line
+function calculateParanScore(parans, nearestLineDistanceKm = null) {
+  if (!parans || parans.length === 0) return 5;
+  
+  // Base score from paran count
+  let baseScore;
+  if (parans.length >= 3) baseScore = 25;
+  else if (parans.length === 2) baseScore = 20;
+  else baseScore = 15;
+  
+  // Scale down based on distance from nearest planetary line
+  // Parans are only meaningful if there's actual line influence nearby
+  if (nearestLineDistanceKm === null) {
+    return Math.floor(baseScore * 0.25);  // 25% if no line data
+  }
+  if (nearestLineDistanceKm > 3500) {
+    return Math.floor(baseScore * 0.20);  // 20% - essentially no influence
+  }
+  if (nearestLineDistanceKm > 2500) {
+    return Math.floor(baseScore * 0.35);  // 35% - trace influence
+  }
+  if (nearestLineDistanceKm > 1600) {
+    return Math.floor(baseScore * 0.50);  // 50% - minimal influence
+  }
+  if (nearestLineDistanceKm > 1000) {
+    return Math.floor(baseScore * 0.70);  // 70% - moderate influence
+  }
+  if (nearestLineDistanceKm > 500) {
+    return Math.floor(baseScore * 0.85);  // 85% - good influence
+  }
+  return baseScore;  // 100% - strong influence within 500km
 }
 
 // ============================================
@@ -1553,9 +1579,9 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
     }
   }
   
-  // 2. Paran Lines Score (25 points max)
+  // 2. Paran Lines Score (25 points max) - now proximity-dependent
   const parans = calculateParansForCity(birthData, cityLat, goal);
-  const paranScore = calculateParanScore(parans);
+  const paranScore = calculateParanScore(parans, nearestDistanceKm);
   
   // Calculate raw Western total
   const rawWesternTotal = boostedLineScore + paranScore;
