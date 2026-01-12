@@ -524,6 +524,8 @@ export class PDFAssembler {
       const vedic = cred.vedic || {};
       const dirAdj = cred.directionAdjustment || {};
       
+      
+      
       // Get line proximity - cap display at 25 (internal boosted score may exceed for calculations)
       const rawLineProximity = western.lineProximity?.boostedScore || western.lineProximity?.score || 0;
       const displayLineProximity = Math.min(25, rawLineProximity);

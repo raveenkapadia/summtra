@@ -483,7 +483,13 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
   const dirAdj = cred.breakdown?.directionAdjustment || {};
   
   // Check if credibilityData has valid breakdown data
-  const hasValidBreakdown = cred.breakdown && (western.total !== undefined || vedic.total !== undefined);
+  // Include check for lineProximity.score or boostedScore to ensure boost data is included
+  const hasValidBreakdown = cred.breakdown && (
+    western.total !== undefined || 
+    vedic.total !== undefined || 
+    typeof lineProx.score === 'number' || 
+    typeof lineProx.boostedScore === 'number'
+  );
   
   // Get original Western total (pre-penalty) for sub-score breakdown
   const westernOriginal = hasValidBreakdown ? (western.total ?? Math.round(score / 2)) : Math.round(score / 2);
