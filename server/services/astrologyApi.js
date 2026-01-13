@@ -59,7 +59,7 @@ function formatBirthDataForAPI(birthData) {
         minute: minute || 0,
         longitude: birthData.longitude,
         latitude: birthData.latitude,
-        timezone: birthData.timezone || 'Asia/Kolkata'
+        timezone: (typeof birthData.timezone === 'string') ? birthData.timezone : 'Asia/Kolkata'
       }
     }
   };
