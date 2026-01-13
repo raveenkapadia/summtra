@@ -1902,6 +1902,9 @@ module.exports = {
   calculateCredibilityScore,
   getLineGlobalPaths,
   
+  // Goal planets function for template processor
+  getPersonalGoalPlanets,
+  
   // Main function
   fetchAllAstrologyData
 };

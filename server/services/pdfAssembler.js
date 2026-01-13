@@ -460,6 +460,7 @@ export class PDFAssembler {
   
   getCitiesForGoal(goal, type = 'best') {
     const allCities = this.astroData?.topCities || [];
+    const lines = this.astroData?.planetaryLines || [];
     
     let filteredCities = allCities;
     if (this.scope === 'India') {
@@ -467,6 +468,21 @@ export class PDFAssembler {
     } else if (this.scope === 'International') {
       filteredCities = allCities.filter(c => c.country !== 'India');
     }
+    
+    // Attach nearestLine data to each city if not already present
+    filteredCities = filteredCities.map(city => {
+      if (!city.nearestLine && lines.length > 0) {
+        const cityLat = city.latitude || city.lat || 0;
+        const cityLng = city.longitude || city.lng || 0;
+        const nearestLineData = this.findNearestLine(cityLat, cityLng, lines, goal);
+        return {
+          ...city,
+          nearestLine: nearestLineData?.name || null,
+          nearestLineDistance: nearestLineData?.distanceKm || null
+        };
+      }
+      return city;
+    });
     
     const sorted = [...filteredCities].sort((a, b) => {
       const scoreA = a.goalScores?.[goal] || a.score || 0;
@@ -948,6 +964,22 @@ export class PDFAssembler {
       return scoreB - scoreA;
     });
     
+    // CRITICAL FIX: Attach REAL nearest line data to each caution city before AI interpretation
+    const lines = this.astroData?.planetaryLines || [];
+    avoidCities = avoidCities.map(city => {
+      const cityLat = city.latitude || city.lat || 0;
+      const cityLng = city.longitude || city.lng || 0;
+      
+      // Find the ACTUAL nearest line for this city from API data
+      const nearestLineData = this.findNearestLine(cityLat, cityLng, lines, goal);
+      
+      return {
+        ...city,
+        nearestLine: nearestLineData?.name || city.nearestLine,
+        nearestLineDistance: nearestLineData?.distanceKm || city.nearestLineDistance
+      };
+    });
+    
     try {
       const userData = {
         name: this.birthData.name || 'User',
@@ -968,6 +1000,10 @@ export class PDFAssembler {
       pageData.AVOID_CITY_CARDS = generateAvoidCityCard(city, i + 1);
       pageData.AVOID_PAGE = i + 1;
       pageData.AVOID_TOTAL_PAGES = avoidCities.length;
+      
+      // Add challenging line info to template data
+      pageData.CHALLENGING_LINE = city.challengingLine || city.nearestLine || 'Saturn-IC';
+      pageData.CHALLENGING_PLANET = city.challengingPlanet || pageData.CHALLENGING_LINE?.split('-')[0] || 'Saturn';
       
       this.pages.push({ html: processTemplate(template, pageData), type: 'city-avoid' });
     }
@@ -1071,69 +1107,82 @@ export class PDFAssembler {
   async generatePDF(outputPath, maxRetries = 3) {
     console.log(`\n📄 Generating PDF with ${this.pages.length} pages...`);
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      let browser = null;
-      try {
-        console.log(`   Attempt ${attempt}/${maxRetries}...`);
-        
-        browser = await puppeteer.launch({
-          headless: 'new',
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium',
-          args: [
-            '--no-sandbox', 
-            '--disable-setuid-sandbox', 
-            '--disable-dev-shm-usage', 
-            '--disable-gpu',
-            '--single-process',
-            '--no-zygote',
-            '--disable-extensions',
-            '--disable-background-networking',
-            '--disable-sync',
-            '--disable-translate',
-            '--metrics-recording-only',
-            '--no-first-run'
-          ],
-          protocolTimeout: 120000
-        });
-        
-        const page = await browser.newPage();
-        await page.setViewport({ width: 794, height: 1123 });
-        
-        const pdfBuffers = [];
-        
-        for (let i = 0; i < this.pages.length; i++) {
-          const pageData = this.pages[i];
-          console.log(`   Rendering page ${i + 1}/${this.pages.length} (${pageData.type})`);
-          
-          await page.setContent(pageData.html, { waitUntil: 'networkidle0', timeout: 60000 });
-          
-          const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: { top: 0, right: 0, bottom: 0, left: 0 }
+    const pdfBuffers = [];
+    const tempDir = path.join(process.cwd(), 'temp_pages');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+    
+    const BATCH_SIZE = 10;
+    const totalBatches = Math.ceil(this.pages.length / BATCH_SIZE);
+    
+    for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+      const startIdx = batchNum * BATCH_SIZE;
+      const endIdx = Math.min(startIdx + BATCH_SIZE, this.pages.length);
+      
+      console.log(`   Batch ${batchNum + 1}/${totalBatches} (pages ${startIdx + 1}-${endIdx})...`);
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        let browser = null;
+        try {
+          browser = await puppeteer.launch({
+            headless: 'new',
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium',
+            args: [
+              '--no-sandbox', 
+              '--disable-setuid-sandbox', 
+              '--disable-dev-shm-usage', 
+              '--disable-gpu'
+            ],
+            protocolTimeout: 60000
           });
           
-          pdfBuffers.push(pdfBuffer);
+          const page = await browser.newPage();
+          await page.setViewport({ width: 794, height: 1123 });
+          
+          for (let i = startIdx; i < endIdx; i++) {
+            const pageData = this.pages[i];
+            console.log(`   Rendering page ${i + 1}/${this.pages.length} (${pageData.type})`);
+            
+            const tempFile = path.join(tempDir, `page_${i}.html`);
+            fs.writeFileSync(tempFile, pageData.html, 'utf8');
+            
+            await page.goto(`file://${tempFile}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await new Promise(r => setTimeout(r, 200));
+            
+            const pdfBuffer = await page.pdf({
+              format: 'A4',
+              printBackground: true,
+              margin: { top: 0, right: 0, bottom: 0, left: 0 }
+            });
+            
+            pdfBuffers.push(pdfBuffer);
+            fs.unlinkSync(tempFile);
+          }
+          
+          await browser.close();
+          break;
+          
+        } catch (error) {
+          console.error(`   ❌ Batch ${batchNum + 1} attempt ${attempt} failed: ${error.message}`);
+          if (browser) {
+            try { await browser.close(); } catch (e) {}
+          }
+          if (attempt === maxRetries) {
+            try { fs.rmdirSync(tempDir); } catch (e) {}
+            throw error;
+          }
+          console.log(`   Retrying batch in 3 seconds...`);
+          await new Promise(r => setTimeout(r, 3000));
         }
-        
-        const combinedPDF = await this.combinePDFBuffers(pdfBuffers);
-        
-        fs.writeFileSync(outputPath, combinedPDF);
-        console.log(`✅ PDF saved to ${outputPath} (${this.pages.length} pages)`);
-        
-        await browser.close();
-        return outputPath;
-        
-      } catch (error) {
-        console.error(`   ❌ Attempt ${attempt} failed: ${error.message}`);
-        if (browser) {
-          try { await browser.close(); } catch (e) {}
-        }
-        if (attempt === maxRetries) throw error;
-        console.log(`   Retrying in 2 seconds...`);
-        await new Promise(r => setTimeout(r, 2000));
       }
     }
+    
+    try { fs.rmdirSync(tempDir); } catch (e) {}
+    
+    const combinedPDF = await this.combinePDFBuffers(pdfBuffers);
+    fs.writeFileSync(outputPath, combinedPDF);
+    console.log(`✅ PDF saved to ${outputPath} (${this.pages.length} pages)`);
+    
+    return outputPath;
   }
   
   async combinePDFBuffers(buffers) {

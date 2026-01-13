@@ -848,10 +848,38 @@ async function generateAvoidCityInterpretation(city, userData) {
   const country = city.country || '';
   const score = city.score || 45;
   
-  const challengingPlanets = ['Saturn', 'Mars', 'Pluto'];
-  const randomPlanet = challengingPlanets[Math.floor(Math.random() * challengingPlanets.length)];
-  const lineTypes = ['MC', 'IC', 'AC', 'DC'];
-  const randomLine = lineTypes[Math.floor(Math.random() * lineTypes.length)];
+  // Use REAL challenging line data from city scoring if available
+  const challengingLine = city.challengingLine || city.nearestChallengingLine || null;
+  let challengingPlanet = challengingLine?.planet || null;
+  let challengingLineType = challengingLine?.lineType || null;
+  let challengingDistance = challengingLine?.distanceKm || null;
+  
+  // Fallback: Use the city's nearest line if it's from a generally challenging planet
+  if (!challengingPlanet && city.nearestLine) {
+    const [planet, lineType] = (city.nearestLine || '').split('-');
+    const challengingPlanets = ['Saturn', 'Mars', 'Pluto', 'Rahu', 'Ketu'];
+    if (challengingPlanets.includes(planet)) {
+      challengingPlanet = planet;
+      challengingLineType = lineType || 'MC';
+    }
+  }
+  
+  // If still no challenging line, use the actual nearest line (even if benefic)
+  // This is more honest than random data
+  if (!challengingPlanet && city.nearestLine) {
+    const [planet, lineType] = (city.nearestLine || '').split('-');
+    challengingPlanet = planet || 'Saturn';
+    challengingLineType = lineType || 'MC';
+  }
+  
+  // Final fallback if no line data at all
+  if (!challengingPlanet) {
+    challengingPlanet = 'Saturn';
+    challengingLineType = 'IC';
+  }
+  
+  const lineDisplay = `${challengingPlanet}-${challengingLineType}`;
+  const distanceNote = challengingDistance ? ` (${Math.round(challengingDistance)}km away)` : '';
   
   const goalChallenges = {
     'career': 'authority conflicts, workplace obstacles, and slow career progression',
@@ -869,14 +897,14 @@ ZODIAC: ${zodiac.name} (${zodiac.element} sign)
 GOAL: ${goal}
 CITY: ${cityName}, ${country}
 SCORE: ${score}% compatibility (LOW)
-CHALLENGING LINE: ${randomPlanet}-${randomLine}
+NEAREST PLANETARY LINE: ${lineDisplay}${distanceNote}
 
 Write a brief (2-3 sentences) personalized caution interpretation explaining:
-1. Why this location may present challenges for their ${goal} goal
-2. One specific planetary influence creating friction
+1. Why this location may present challenges for their ${goal} goal based on the ${lineDisplay} influence
+2. Specific planetary energy creating friction (${challengingPlanet} energy)
 3. A neutral, non-discouraging tone - not "avoid at all costs" but "proceed with awareness"
 
-Keep it under 50 words. Be specific to this city and goal.`;
+Keep it under 50 words. Be specific to this city, goal, and the actual planetary line.`;
 
   try {
     const response = await anthropic.messages.create({
@@ -885,10 +913,22 @@ Keep it under 50 words. Be specific to this city and goal.`;
       messages: [{ role: 'user', content: prompt }]
     });
     
-    return response.content[0].text.trim();
+    // Store the challenging line info in the response for template use
+    const interpretation = response.content[0].text.trim();
+    return { 
+      text: interpretation, 
+      challengingLine: lineDisplay,
+      challengingPlanet,
+      challengingLineType
+    };
   } catch (error) {
     console.error(`   ⚠️ Failed to generate avoid interpretation for ${cityName}: ${error.message}`);
-    return `${cityName} may present challenges for your ${goal} goals due to ${randomPlanet}-${randomLine} line influences. As a ${zodiac.name}, you might experience ${goalChallenges[goal] || 'general friction'} here. Consider this location with careful planning.`;
+    return {
+      text: `${cityName} may present challenges for your ${goal} goals due to ${lineDisplay} influences. As a ${zodiac.name}, you might experience ${goalChallenges[goal] || 'general friction'} here. Consider this location with careful planning.`,
+      challengingLine: lineDisplay,
+      challengingPlanet,
+      challengingLineType
+    };
   }
 }
 
@@ -906,17 +946,29 @@ async function generateAvoidCityInterpretations(cities, userData) {
     const batchResults = await Promise.allSettled(
       batch.map(async (city) => {
         try {
-          const interpretation = await generateAvoidCityInterpretation(city, userData);
+          const result = await generateAvoidCityInterpretation(city, userData);
+          // Handle both old string format and new object format
+          if (typeof result === 'object' && result.text) {
+            return {
+              ...city,
+              avoidInterpretation: result.text,
+              challengingLine: result.challengingLine,
+              challengingPlanet: result.challengingPlanet,
+              challengingLineType: result.challengingLineType
+            };
+          }
           return {
             ...city,
-            avoidInterpretation: interpretation
+            avoidInterpretation: result
           };
         } catch (error) {
           const zodiac = getZodiacSign(userData.birthDate);
           const goal = userData.reportGoal || 'complete';
+          const fallbackLine = city.nearestLine || 'Saturn-IC';
           return {
             ...city,
-            avoidInterpretation: `${city.name || city.city} may present some challenges for your ${goal} objectives. As a ${zodiac.name}, careful consideration is advised before committing to this location.`
+            avoidInterpretation: `${city.name || city.city} may present some challenges for your ${goal} objectives due to ${fallbackLine} influences. As a ${zodiac.name}, careful consideration is advised.`,
+            challengingLine: fallbackLine
           };
         }
       })
@@ -931,12 +983,14 @@ async function generateAvoidCityInterpretations(cities, userData) {
   
   const interpretedCities = allResults.map((result, index) => {
     if (result.status === 'fulfilled') {
-      console.log(`   ⚠️ ${cities[index].name || cities[index].city}: Caution interpretation generated`);
-      return result.value;
+      const city = result.value;
+      console.log(`   ⚠️ ${city.name || city.city}: Caution interpretation generated (${city.challengingLine || 'N/A'})`);
+      return city;
     } else {
       return {
         ...cities[index],
-        avoidInterpretation: `This location may require extra consideration for your goals.`
+        avoidInterpretation: `This location may require extra consideration for your goals.`,
+        challengingLine: cities[index].nearestLine || 'Saturn-IC'
       };
     }
   });

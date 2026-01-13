@@ -1,5 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const { getNakshatraLord } = require('./vedicApi.js');
+const { getPersonalGoalPlanets } = require('./astrologyApi.js');
 
 const TEMPLATES_DIR = path.join(process.cwd(), 'server/templates/pdf');
 
@@ -128,10 +133,18 @@ export function generateCityRows(cities, startRank = 1) {
     const scoreClass = city.score >= 85 ? 'excellent' : city.score >= 75 ? 'good' : city.score >= 65 ? 'moderate' : 'low';
     const matchIcon = city.nakshatraMatch ? '✓' : '—';
     
-    // Bug 1 Fix: Extract planetary lines for display
-    const cityLines = (city.lines || []).map(l => 
+    // Bug 1 Fix: Extract planetary lines for display - use nearestLine as fallback
+    let cityLines = (city.lines || []).map(l => 
       typeof l === 'string' ? l : `${l.planet}-${l.line_type || 'AC'}`
-    ).slice(0, 2).join(', ') || '—';
+    ).slice(0, 2).join(', ');
+    
+    // If no lines array, use nearestLine from scoring data
+    if (!cityLines && city.nearestLine) {
+      cityLines = city.nearestLine;
+    }
+    
+    // Final fallback
+    if (!cityLines) cityLines = '—';
     
     return `
       <tr class="city-row ${scoreClass}">
@@ -215,17 +228,22 @@ export function generateDashaTimeline(antardashaTimeline) {
 }
 
 export function generateVedicProfile(birthData) {
+  const nakshatra = birthData.nakshatra || 'Calculating...';
   return {
     rashi: birthData.rashi || 'Calculating...',
     rashiLord: birthData.rashiLord || '',
-    nakshatra: birthData.nakshatra || 'Calculating...',
-    nakshatraLord: birthData.nakshatraLord || '',
+    nakshatra: nakshatra,
+    // Bug 3 Fix: Use getNakshatraLord() fallback when API doesn't return nakshatraLord
+    nakshatraLord: birthData.nakshatraLord || getNakshatraLord(nakshatra) || '',
     nakshatraPada: birthData.nakshatraPada || '',
     lagna: birthData.lagna || 'Calculating...',
     lagnaLord: birthData.lagnaLord || '',
     sunSign: birthData.sunSign || '',
     currentDashaLord: birthData.currentDashaLord || '',
-    currentDashaEnd: birthData.currentDashaEnd || ''
+    currentDashaEnd: birthData.currentDashaEnd || '',
+    // Bug 5 Fix: Add Antardasha info
+    currentAntardasha: birthData.currentAntardasha || '',
+    antardashaEnd: birthData.antardashaEnd || birthData.currentDashaEnd || ''
   };
 }
 
@@ -439,7 +457,8 @@ export function prepareReportData(birthData, astroData, options = {}) {
     RASHI: birthData.rashi || '',
     RASHI_LORD: birthData.rashiLord || '',
     NAKSHATRA: birthData.nakshatra || '',
-    NAKSHATRA_LORD: birthData.nakshatraLord || '',
+    // Bug 3 Fix: Use getNakshatraLord() fallback when API doesn't return nakshatraLord
+    NAKSHATRA_LORD: birthData.nakshatraLord || getNakshatraLord(birthData.nakshatra) || '',
     NAKSHATRA_PADA: birthData.nakshatraPada || '',
     LAGNA: birthData.lagna || '',
     LAGNA_LORD: birthData.lagnaLord || '',
@@ -447,7 +466,11 @@ export function prepareReportData(birthData, astroData, options = {}) {
     MAHADASHA: birthData.currentDashaLord || '',
     CURRENT_DASHA_LORD: birthData.currentDashaLord || '',
     CURRENT_DASHA_END: birthData.currentDashaEnd || '',
-    ANTARDASHA: '',
+    // Bug 5 Fix: Add Antardasha end date for period display
+    ANTARDASHA: birthData.currentAntardasha || '',
+    ANTARDASHA_END: birthData.antardashaEnd || birthData.currentDashaEnd || '',
+    // Bug 4 Fix: Add Lagna-specific goal planets
+    GOAL_PLANETS: getPersonalGoalPlanets(goals[0] || 'Wealth', birthData.lagna || 'Scorpio').join(', '),
     DASHA_TIMELINE: generateDashaTimeline(birthData.antardashaTimeline),
     
     PLANETARY_LINES: generatePlanetaryLinesHTML(astroData?.planetaryLines || []),
@@ -599,7 +622,13 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     DASHA_SCORE: dashaScore,
     
     DIRECTION_ADJUSTMENT_ROW: directionAdjustmentRow,
-    SCORE_TOTAL_CALC: calcString
+    SCORE_TOTAL_CALC: calcString,
+    
+    // Bug 4 Fix: Add Lagna-specific goal planets from baseData
+    GOAL_PLANETS: baseData?.GOAL_PLANETS || getPersonalGoalPlanets(goal, baseData?.LAGNA || 'Scorpio').join(', '),
+    // Bug 5 Fix: Add period ends info from baseData
+    ANTARDASHA_END: baseData?.ANTARDASHA_END || baseData?.CURRENT_DASHA_END || '',
+    PERIOD_ENDS: baseData?.ANTARDASHA_END || baseData?.CURRENT_DASHA_END || ''
   };
 }
 
@@ -938,7 +967,8 @@ export function generateVedicTraitsData(birthData, baseData) {
   data.RASHI_MEANING = getRashiMeaning(rashi);
   
   data.NAKSHATRA = birthData.nakshatra || '';
-  data.NAKSHATRA_LORD = birthData.nakshatraLord || '';
+  // Bug 3 Fix: Use getNakshatraLord() fallback when API doesn't return nakshatraLord
+  data.NAKSHATRA_LORD = birthData.nakshatraLord || getNakshatraLord(nakshatra) || '';
   data.NAKSHATRA_MEANING = getNakshatraMeaning(nakshatra);
   data.NAKSHATRA_DEITY = birthData.nakshatraDeity || getNakshatraDeity(nakshatra);
   data.NAKSHATRA_DIRECTION = birthData.nakshatraDirection || 'East';
