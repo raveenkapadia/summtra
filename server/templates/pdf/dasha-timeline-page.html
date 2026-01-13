@@ -529,25 +529,7 @@
                 </div>
                 
                 <div class="timeline-list">
-                    <!-- Past Period -->
-                    <div class="timeline-item past">
-                        <div class="timeline-line">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-connector"></div>
-                        </div>
-                        <div class="timeline-content">
-                            <div class="timeline-card">
-                                <div class="timeline-card-header">
-                                    <span class="timeline-period">{{MAHADASHA}}-Mars</span>
-                                    <span class="timeline-status">✓ Past</span>
-                                </div>
-                                <div class="timeline-dates">Nov 2022 - Nov 2023</div>
-                                <div class="timeline-theme">Energy, Action, Property</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Current Period -->
+                    <!-- Current Period (with Pratyantar) -->
                     <div class="timeline-item current">
                         <div class="timeline-line">
                             <div class="timeline-dot"></div>
@@ -556,16 +538,16 @@
                         <div class="timeline-content">
                             <div class="timeline-card">
                                 <div class="timeline-card-header">
-                                    <span class="timeline-period">{{MAHADASHA}}-{{ANTARDASHA}}</span>
+                                    <span class="timeline-period">{{MAHADASHA}}-{{ANTARDASHA}}-{{PRATYANTAR}}</span>
                                     <span class="timeline-status">● Now</span>
                                 </div>
-                                <div class="timeline-dates">Nov 2023 - Jun 2026</div>
+                                <div class="timeline-dates">Current until {{ANTARDASHA_END}}</div>
                                 <div class="timeline-theme">{{CURRENT_THEME}}</div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Future Period 1 -->
+                    <!-- Next Period -->
                     <div class="timeline-item future">
                         <div class="timeline-line">
                             <div class="timeline-dot"></div>
@@ -574,29 +556,11 @@
                         <div class="timeline-content">
                             <div class="timeline-card">
                                 <div class="timeline-card-header">
-                                    <span class="timeline-period">{{MAHADASHA}}-Jupiter</span>
-                                    <span class="timeline-status">○ Future</span>
+                                    <span class="timeline-period">{{MAHADASHA}}-{{NEXT_ANTARDASHA}}</span>
+                                    <span class="timeline-status">○ Upcoming</span>
                                 </div>
-                                <div class="timeline-dates">Jun 2026 - Sep 2028</div>
-                                <div class="timeline-theme">Expansion, Wisdom, Growth</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Future Period 2 -->
-                    <div class="timeline-item future">
-                        <div class="timeline-line">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-connector"></div>
-                        </div>
-                        <div class="timeline-content">
-                            <div class="timeline-card">
-                                <div class="timeline-card-header">
-                                    <span class="timeline-period">{{MAHADASHA}}-Saturn</span>
-                                    <span class="timeline-status">○ Future</span>
-                                </div>
-                                <div class="timeline-dates">Sep 2028 - Jun 2031</div>
-                                <div class="timeline-theme">Discipline, Structure, Long-term</div>
+                                <div class="timeline-dates">Starting {{ANTARDASHA_END}}</div>
+                                <div class="timeline-theme">{{NEXT_ANTARDASHA_THEME}}</div>
                             </div>
                         </div>
                     </div>
@@ -610,17 +574,17 @@
                 </div>
                 <div class="windows-grid">
                     <div class="window-card">
-                        <div class="window-period">{{MAHADASHA}}-Jupiter Period</div>
-                        <div class="window-dates">Jun 2026 - Sep 2028</div>
+                        <div class="window-period">{{MAHADASHA}}-{{NEXT_ANTARDASHA}} Period</div>
+                        <div class="window-dates">Starting {{ANTARDASHA_END}}</div>
                         <div class="window-best-for">
-                            <strong>Best for:</strong> Career growth, Education, Cities with Jupiter lines
+                            <strong>Best for:</strong> {{NEXT_ANTARDASHA_THEME}}, Cities with {{NEXT_ANTARDASHA}} lines
                         </div>
                     </div>
                     <div class="window-card">
-                        <div class="window-period">{{MAHADASHA}}-Saturn Period</div>
-                        <div class="window-dates">Sep 2028 - Jun 2031</div>
+                        <div class="window-period">Current {{MAHADASHA}}-{{ANTARDASHA}} Period</div>
+                        <div class="window-dates">Until {{ANTARDASHA_END}}</div>
                         <div class="window-best-for">
-                            <strong>Best for:</strong> Permanent settlement, Long-term career, Cities with Saturn lines
+                            <strong>Best for:</strong> {{CURRENT_THEME}}, Cities with {{ANTARDASHA}} lines
                         </div>
                     </div>
                 </div>

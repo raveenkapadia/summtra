@@ -1048,22 +1048,92 @@ export class PDFAssembler {
     
     const formatDate = (dateStr) => {
       if (!dateStr) return 'December 2027';
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      // Format 1: YYYY-MM (e.g., "2026-02")
       if (dateStr.match(/^\d{4}-\d{2}$/)) {
         const [year, month] = dateStr.split('-');
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         return `${months[parseInt(month) - 1]} ${year}`;
       }
+      
+      // Format 2: DD-MM-YYYY HH:MM (e.g., "21-2-2026 10:46") - API format
+      const ddmmyyyyMatch = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+      if (ddmmyyyyMatch) {
+        const [, day, month, year] = ddmmyyyyMatch;
+        return `${months[parseInt(month) - 1]} ${year}`;
+      }
+      
+      // Format 3: D-M-YYYY (e.g., "6-2-2014") - Short API format
+      const shortMatch = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+      if (shortMatch) {
+        const [, day, month, year] = shortMatch;
+        return `${months[parseInt(month) - 1]} ${year}`;
+      }
+      
       return dateStr;
     };
+    
+    // Calculate Mahadasha period from raw API response
+    const calculateMahadashaPeriod = () => {
+      const rawDasha = this.birthData.rawDashaResponse;
+      if (!rawDasha || !rawDasha.major) return null;
+      
+      const startDate = rawDasha.major.start;
+      const endDate = rawDasha.major.end;
+      
+      if (!startDate || !endDate) return null;
+      
+      // Extract years from DD-MM-YYYY HH:MM format
+      const startMatch = startDate.match(/(\d{4})/);
+      const endMatch = endDate.match(/(\d{4})/);
+      
+      if (startMatch && endMatch) {
+        return `${startMatch[1]} - ${endMatch[1]}`;
+      }
+      return null;
+    };
+    
+    // Extract Pratyantar (sub_minor) and Antardasha from raw API response
+    const rawDasha = this.birthData.rawDashaResponse;
+    const pratyantar = rawDasha?.sub_minor?.planet || 'Mars';
+    
+    // CRITICAL FIX: ALWAYS prefer rawDasha over timeline/stored values (most accurate)
+    if (rawDasha?.minor?.planet) {
+      antardasha = rawDasha.minor.planet;
+    }
+    // Fallback chain: currentAntardasha from profile, then timeline parsing, then default
+    if (!antardasha) {
+      antardasha = this.birthData.currentAntardasha || 'Saturn';
+    }
+    
+    // Calculate antardasha end date for Best Windows - prefer raw API data
+    const antardashaEndDate = rawDasha?.minor?.end || antardashaEnd;
+    const formattedAntardashaEnd = formatDate(antardashaEndDate);
+    
+    console.log(`   [DEBUG] rawDasha minor: ${JSON.stringify(rawDasha?.minor || 'N/A')}`);
+    console.log(`   [DEBUG] antardashaEndDate: ${antardashaEndDate}, formatted: ${formattedAntardashaEnd}`);
+    
+    // Calculate next antardasha planet (for best windows)
+    const dashaSequence = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+    const currentAntarIndex = dashaSequence.indexOf(antardasha);
+    const nextAntardasha = currentAntarIndex >= 0 
+      ? dashaSequence[(currentAntarIndex + 1) % dashaSequence.length] 
+      : 'Saturn';
     
     const dashaData = {
       ...this.baseData,
       MAHADASHA: mahadasha,
       ANTARDASHA: antardasha,
+      PRATYANTAR: pratyantar,
       CURRENT_THEME: this.getDashaTheme(mahadasha),
-      ANTARDASHA_END: formatDate(antardashaEnd),
-      MAHADASHA_PERIOD: this.birthData.mahadashaPeriod || '2020 - 2036'
+      ANTARDASHA_END: formattedAntardashaEnd,
+      MAHADASHA_PERIOD: calculateMahadashaPeriod() || this.birthData.mahadashaPeriod || '2014 - 2031',
+      NEXT_ANTARDASHA: nextAntardasha,
+      NEXT_ANTARDASHA_THEME: this.getDashaTheme(nextAntardasha)
     };
+    
+    console.log(`   📅 Dasha Timeline: ${mahadasha}-${antardasha}-${pratyantar}, ends ${formattedAntardashaEnd}`);
+    console.log(`   📅 Mahadasha Period: ${dashaData.MAHADASHA_PERIOD}`);
     
     const html = processTemplate(template, dashaData);
     this.pages.push({ html, type: 'dasha' });
@@ -1362,7 +1432,8 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
           planetPositions: vedicProfile.planetPositions || testBirthData.planetPositions,
           retrogradeStatus: vedicProfile.retrogradeStatus || testBirthData.retrogradeStatus,
           manglikStatus: vedicProfile.manglikStatus || testBirthData.manglikStatus,
-          currentAntardasha: vedicProfile.currentAntardasha || testBirthData.currentAntardasha
+          currentAntardasha: vedicProfile.currentAntardasha || testBirthData.currentAntardasha,
+          rawDashaResponse: vedicProfile.rawDashaResponse || null  // CRITICAL: Pass raw API data for Dasha timeline
         };
         
         const retroCount = Object.values(testBirthData.retrogradeStatus || {}).filter(v => v === true).length;
