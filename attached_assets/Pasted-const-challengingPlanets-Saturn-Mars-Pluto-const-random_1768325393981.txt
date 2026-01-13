@@ -1,0 +1,73 @@
+const challengingPlanets = ['Saturn', 'Mars', 'Pluto'];
+const randomPlanet = challengingPlanets[Math.floor(Math.random() * challengingPlanets.length)];
+```
+
+**This means:**
+- London's "Saturn-IC Restrictions" warning is FAKE
+- Zurich's "Mars-DC Conflicts" is RANDOMLY PICKED
+- The Caution Zone interpretations are based on made-up data
+
+**This is a credibility issue** - if a user validates the report against actual astrocartography, the warnings won't match reality.
+
+**Fix Required:** Find actual nearest challenging line from API data for each Caution city.
+
+---
+
+### 4. Display Bugs - CONFIRMED
+
+All 4 bugs confirmed still exist:
+- Planetary Lines column = "—"
+- Nakshatra Lord = empty
+- Goal Planets = generic
+- Period Ends = empty
+
+---
+
+## Summary
+
+| Category | Status | Action |
+|----------|--------|--------|
+| Moon logic | ✅ Correct | None |
+| Malefic scoring | ✅ Works for functional malefics | v2: Add nearby line penalty |
+| **Caution Zone** | 🚨 **FAKE DATA** | **FIX NOW** |
+| Display bugs | ⚠️ 4 issues | Fix now |
+
+---
+
+## Recommendation
+
+The **Caution Zone fake data** is more serious than the display bugs. A user could check their actual astrocartography chart and see that London doesn't have Saturn-IC line - this destroys credibility.
+
+**Send this to Replit:**
+```
+Good analysis. I see the issues clearly now.
+
+PRIORITY 1 - CRITICAL: Caution Zone Fake Data
+
+The randomly generated challenging lines are a credibility risk. Fix this:
+
+1. For each Caution city, find the ACTUAL nearest planetary line from API data
+2. Determine if that line is challenging based on:
+   - Planet type (Saturn, Mars, Pluto = generally challenging)
+   - Planet's functional status for user's Lagna
+   - Line type (IC/DC often more challenging than MC/AC)
+3. Use the REAL line in the Caution Zone warning, not random
+
+Example for London:
+- Query: What is the actual nearest line to London from the astrocartography API?
+- If Jupiter-IC at 3024km (as shown in city page), that's NOT challenging
+- Need to find if there's a Saturn/Mars/Pluto line nearby
+
+PRIORITY 2 - Display Bugs
+
+Fix all 4:
+1. Planetary Lines column - show actual line info
+2. Nakshatra Lord - use getNakshatraLord() fallback
+3. Goal Planets - show Lagna-specific from getPersonalGoalPlanets()
+4. Period Ends - show Antardasha end date
+
+PRIORITY 3 - Gap Noted for v2
+
+The "nearby challenging line penalty" is noted but acceptable for MVP.
+
+After fixes, generate new PDF for final verification.
