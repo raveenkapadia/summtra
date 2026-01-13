@@ -980,9 +980,23 @@ async function getScoresForAllCities(birthData, cities, astroLines = null, goal 
   });
   console.log('===============================================================\n');
   
+  // FIX: Propagate goal-filtered nearestLine from credibility to top-level for ranking table
+  const citiesWithNearestLine = scoredCities.map(city => {
+    const goalFilteredLine = city.credibility?.western?.lineProximity?.nearestLine;
+    const goalFilteredDistance = city.credibility?.western?.lineProximity?.distanceKm;
+    
+    return {
+      ...city,
+      nearestLine: goalFilteredLine || city.nearestLine || null,
+      lineDistanceKm: goalFilteredDistance || city.lineDistanceKm || null
+    };
+  });
+  
+  console.log(`   ✅ Propagated nearestLine to top-level for ${citiesWithNearestLine.filter(c => c.nearestLine).length}/${citiesWithNearestLine.length} cities`);
+  
   return {
     success: true,
-    data: scoredCities
+    data: citiesWithNearestLine
   };
 }
 

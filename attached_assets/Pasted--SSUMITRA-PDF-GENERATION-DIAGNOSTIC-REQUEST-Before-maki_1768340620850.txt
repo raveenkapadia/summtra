@@ -1,0 +1,173 @@
+## SSUMITRA PDF GENERATION - DIAGNOSTIC REQUEST
+
+Before making any fixes, we need to understand the root cause of ongoing issues 
+and verify potential new issues. Please DO NOT fix anything yet - just diagnose 
+and report back.
+
+---
+
+### PART A: CONFIRMED ISSUE - RANKING TABLE MISALIGNMENT (International Only)
+
+**Symptom:**
+- India scope PDFs: Ranking table planetary lines MATCH city detail pages ✅
+- International scope PDFs: Ranking table planetary lines DO NOT MATCH city detail pages ❌
+
+**Evidence from PDF verification:**
+
+| PDF | Scope | City | Ranking Table Shows | City Page Shows | Match? |
+|-----|-------|------|--------------------|-----------------| -------|
+| PDF1 | International | Tokyo | Venus Midheaven | Jupiter-MC 633km | ❌ |
+| PDF1 | International | Seoul | Mercury Midheaven | Moon-MC 159km | ❌ |
+| PDF2 | India | Jaisalmer | Jupiter Imum Coeli | Jupiter-IC 107km | ✅ |
+| PDF2 | India | Ahmedabad | Jupiter Imum Coeli | Jupiter-IC 59km | ✅ |
+| PDF3 | International | Bangkok | Saturn Midheaven | Mars-AC 130km | ❌ |
+| PDF3 | International | Beijing | Saturn Midheaven | Mars-AC 88km | ❌ |
+
+**Critical Detail:** Venus (PDF1) and Saturn (PDF3) are NOT even goal planets for 
+those reports, yet they appear in the ranking table!
+
+**Questions to answer:**
+1. What is the exact code path for populating "PLANETARY LINES" column in the 
+   ranking table for INTERNATIONAL scope?
+2. What is the exact code path for populating "PLANETARY LINES" column in the 
+   ranking table for INDIA scope?
+3. Where does the divergence occur? (File name + line numbers)
+4. Is the ranking table using `lines` array vs `nearestLine` vs something else?
+
+---
+
+### PART B: POTENTIAL NEW ISSUE - DIRECTION PENALTY VERIFICATION
+
+**Concern:** We need to verify the -25% direction penalty is correctly applied.
+
+**From PDF1 (Scorpio + Wealth + International):**
+- Tokyo: 87% (East direction) - Score breakdown: 42+45=87 ✅
+- San Francisco: 75% (West direction) - Score breakdown: 38+37=75
+
+**Questions for San Francisco (West = unfavorable for Scorpio):**
+- Is the 75% score BEFORE or AFTER the -25% direction penalty?
+- If penalty is applied, where is it applied? (Western score? Vedic score? Final total?)
+- Show the raw calculation for San Francisco to confirm.
+
+**From Notable Cities section:**
+- Dubai shows: "#18, 66%, Direction adjustment (-25%)"
+
+**Question:** Does Dubai's 66% already include the -25%, or is 66% the pre-penalty score?
+
+---
+
+### PART C: POTENTIAL ISSUE - GOAL PLANETS IN RANKING VS CITY PAGES
+
+**From PDF3 (Scorpio + Career):**
+- Goal Planets Header shows: Sun, Mars, Jupiter, Mercury ✅
+- Bangkok ranking shows: Saturn Midheaven ❌ (Saturn not a goal planet!)
+- Bangkok city page shows: Mars-AC 130km ✅ (Mars IS a goal planet!)
+
+**Question:** Why is the ranking table showing NON-goal planets?
+This suggests the ranking table is not filtering by goal-relevant planets at all.
+
+---
+
+### PART D: DIAGNOSTIC REQUESTS
+
+Please provide the following WITHOUT making any changes:
+
+1. **Code snippet** showing where International ranking table gets planetary line data
+2. **Code snippet** showing where India ranking table gets planetary line data  
+3. **Code snippet** showing where city detail pages get planetary line data
+4. **Confirmation** of whether these three use the same or different data sources
+5. **Code snippet** showing direction penalty calculation and where it's applied
+6. **Sample debug log** for Tokyo showing:
+   - All available lines for Tokyo
+   - Which line was selected for ranking table
+   - Which line was selected for city detail page
+   - Goal planets active for this report
+
+---
+
+### EXPECTED OUTPUT FORMAT
+
+Please respond in this exact structure:
+
+## ROOT CAUSE ANALYSIS
+
+### A. Ranking Table Misalignment Issue
+- **File(s) involved:** [filename(s)]
+- **International code path:** [description of how data flows]
+- **India code path:** [description of how data flows]
+- **Divergence point:** [exact file + line numbers where they differ]
+- **Data source for International ranking:** [lines / nearestLine / other]
+- **Data source for India ranking:** [lines / nearestLine / other]
+- **Data source for city detail pages:** [lines / nearestLine / other]
+- **Root cause explanation:** [why International differs from India]
+
+### B. Direction Penalty Status
+- **Where penalty is calculated:** [file + function name]
+- **Where penalty is applied:** [Western score / Vedic score / Final total / Lagna-Vastu subscore]
+- **San Francisco raw calculation:**
+  - Line proximity score (before penalty): X/25
+  - Direction penalty applied: Y points
+  - Final line proximity score: Z/25
+  - Full breakdown: Western XX + Vedic YY = ZZ%
+- **Dubai raw calculation:**
+  - Pre-penalty score: X%
+  - Post-penalty score: Y%
+  - Penalty already included in 66%: [YES/NO]
+- **Status:** [WORKING CORRECTLY / BUG FOUND - describe]
+
+### C. Goal Planet Filtering in Ranking Table
+- **Does ranking table filter by goal planets?** [YES/NO]
+- **If NO, what does it use instead?** [describe]
+- **Does city detail page filter by goal planets?** [YES/NO]
+- **Root cause of mismatch:** [explanation]
+
+### D. Code Snippets
+
+**D1. International Ranking Table - Planetary Line Selection:**
+```javascript
+// File: [filename], Lines: [X-Y]
+[paste relevant code]
+```
+
+**D2. India Ranking Table - Planetary Line Selection:**
+```javascript
+// File: [filename], Lines: [X-Y]
+[paste relevant code]
+```
+
+**D3. City Detail Page - Planetary Line Selection:**
+```javascript
+// File: [filename], Lines: [X-Y]
+[paste relevant code]
+```
+
+**D4. Direction Penalty Calculation:**
+```javascript
+// File: [filename], Lines: [X-Y]
+[paste relevant code]
+```
+
+### E. Debug Log for Tokyo (Scorpio + Wealth + International)
+City: Tokyo
+Goal: Wealth
+Goal Planets: [list]
+All Available Lines:
+
+Sun-MC: XXX km
+Moon-MC: XXX km
+Jupiter-MC: XXX km
+Venus-MC: XXX km
+[etc.]
+
+Ranking Table Selected: [planet]-[angle] (reason: [why this was chosen])
+City Detail Page Selected: [planet]-[angle] (reason: [why this was chosen])
+MATCH: [YES/NO]
+
+---
+
+## IMPORTANT REMINDERS
+
+1. DO NOT make any code changes yet
+2. DO NOT generate new PDFs yet
+3. ONLY provide diagnostic information as requested above
+4. We will review your analysis and then provide specific fix instructions
