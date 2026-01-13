@@ -5,7 +5,7 @@
 
 const axios = require('axios');
 const { trackExternalApiCall } = require('./apiTracker.js');
-const { deriveFunctionalStatus } = require('./vedicLordship.js');
+const { deriveFunctionalStatus, getHouseLord } = require('./vedicLordship.js');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'best-astrology-api-natal-charts-transits-synastry.p.rapidapi.com';
@@ -1339,26 +1339,50 @@ function getCombustionModifier(planet, sunLongitude, planetLongitude) {
   return { modifier: 1.0, isCombust: false };
 }
 
-// Get personalized goal planets (adds Yogakaraka to base list)
+// DYNAMIC: Goal-Planet mapping using house lords for user's Lagna
+// Each goal maps to specific houses, and we derive the lords dynamically
+const GOAL_HOUSE_MAPPING = {
+  'Career': [1, 10, 6, 2],      // 1st (self), 10th (career), 6th (service), 2nd (income)
+  'Wealth': [2, 5, 11, 9],       // 2nd (wealth), 5th (speculation), 11th (gains), 9th (fortune)
+  'Love': [7, 5, 1, 4],          // 7th (partnership), 5th (romance), 1st (self), 4th (happiness)
+  'Education': [4, 5, 9, 1],     // 4th (learning), 5th (intelligence), 9th (higher ed), 1st (self)
+  'Settlement': [4, 7, 12, 9],   // 4th (home), 7th (partnership), 12th (foreign), 9th (distance)
+  'Complete': [1, 2, 5, 9, 10, 11] // All major houses for general analysis
+};
+
+// Get personalized goal planets using DYNAMIC house lord derivation
 function getPersonalGoalPlanets(goal, lagna) {
-  const baseGoalPlanets = {
-    'Career': ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
-    'Wealth': ['Jupiter', 'Venus', 'Mercury', 'Sun'],
-    'Love': ['Venus', 'Moon', 'Mars', 'Jupiter'],
-    'Education': ['Mercury', 'Jupiter', 'Moon', 'Sun'],
-    'Settlement': ['Moon', 'Venus', 'Saturn', 'Jupiter'],
-    'Complete': ['Jupiter', 'Venus', 'Sun', 'Moon', 'Mercury', 'Saturn', 'Mars']
-  };
-  
-  let personalPlanets = [...(baseGoalPlanets[goal] || baseGoalPlanets['Complete'])];
-  
-  // Add Yogakaraka if exists and not already in list
-  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
-  if (yogakaraka && !personalPlanets.includes(yogakaraka)) {
-    personalPlanets.push(yogakaraka);
+  if (!lagna) {
+    console.warn('[getPersonalGoalPlanets] No lagna provided, using fallback');
+    return ['Jupiter', 'Venus', 'Sun', 'Moon', 'Mercury', 'Saturn', 'Mars'];
   }
   
-  return personalPlanets;
+  const houses = GOAL_HOUSE_MAPPING[goal] || GOAL_HOUSE_MAPPING['Complete'];
+  const planets = new Set();
+  
+  // Derive house lords dynamically for this user's Lagna
+  for (const house of houses) {
+    const lord = getHouseLord(house, lagna);
+    if (lord) {
+      planets.add(lord);
+    }
+  }
+  
+  // Add Yogakaraka if exists (most beneficial planet for this lagna)
+  const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
+  if (yogakaraka) {
+    planets.add(yogakaraka);
+  }
+  
+  // Add Lagna lord (always relevant for any goal)
+  const lagnaLord = getHouseLord(1, lagna);
+  if (lagnaLord) {
+    planets.add(lagnaLord);
+  }
+  
+  const result = Array.from(planets);
+  console.log(`[getPersonalGoalPlanets] ${goal} for ${lagna} Lagna → ${result.join(', ')}`);
+  return result;
 }
 
 // Calculate personalized planet boost based on user's chart
