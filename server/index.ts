@@ -858,9 +858,9 @@ async function startServer() {
       const maxScore = allScores.length > 0 ? Math.max(...allScores) : null;
       const avgScore = allScores.length > 0 ? Math.round(allScores.reduce((a: number, b: number) => a + b, 0) / allScores.length) : null;
       
-      // Get sample cities by name
+      // Get sample cities by name (including Seoul for audit)
       const sampleCities = [...indiaCities, ...intlCities].filter((c: any) => 
-        ['Mumbai', 'Delhi', 'Chennai', 'Bangalore', 'New York', 'London', 'Tokyo', 'Singapore'].includes(c.name)
+        ['Mumbai', 'Delhi', 'Chennai', 'Bangalore', 'New York', 'London', 'Tokyo', 'Singapore', 'Seoul'].includes(c.name)
       );
       
       console.log(`\nScore Distribution: min=${minScore}, max=${maxScore}, avg=${avgScore}`);
@@ -894,7 +894,8 @@ async function startServer() {
           score: c.score,
           lines: c.lines,
           method: c.scoringMethod,
-          contributingZones: c.contributingZones
+          contributingZones: c.contributingZones,
+          lineDetails: c.lineDetails || []
         }))
       });
       
