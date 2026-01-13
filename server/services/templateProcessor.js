@@ -543,29 +543,13 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
       </div>`;
   }
   
-  // Build direction adjustment row HTML
+  // Per transparency rule: Direction penalty is baked into Western score, not shown separately
+  // Remove the separate direction adjustment row - penalty already applied to westernAdjusted
   let directionAdjustmentRow = '';
-  if (hasPenalty) {
-    directionAdjustmentRow = `
-      <div class="score-item" style="background: rgba(220, 38, 38, 0.08); border-radius: 4px; padding: 4px 8px;">
-        <span>📍 Direction Adj. (${cityDirection} -${penaltyPercentage}%)</span>
-        <span style="color: #DC2626;">-${penaltyAmount}</span>
-      </div>`;
-  } else {
-    directionAdjustmentRow = `
-      <div class="score-item" style="font-style: italic; background: rgba(212, 175, 55, 0.15); border-radius: 4px; padding: 4px 8px;">
-        <span>📍 Direction: ${cityDirection} (favorable)</span>
-        <span style="color: #059669;">+0</span>
-      </div>`;
-  }
   
-  // Build the calculation display string showing direction adjustment
-  let calcString;
-  if (hasPenalty) {
-    calcString = `${westernOriginal} - ${penaltyAmount} + ${vedicTotal} = ${score}%`;
-  } else {
-    calcString = `${westernOriginal} + ${vedicTotal} = ${score}%`;
-  }
+  // Simple calculation display: Western (adjusted) + Vedic = Total
+  // Direction penalty is already baked into westernAdjusted, so we use that
+  const calcString = `${westernAdjusted} + ${vedicTotal} = ${score}%`;
   
   return {
     ...baseData,
@@ -596,7 +580,7 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     
     PARAN_TAGS: paranTagsHtml,
     
-    WESTERN_SCORE: westernOriginal,
+    WESTERN_SCORE: westernAdjusted,
     LINE_PROXIMITY_SCORE: lineProximityScore,
     PLANET_BOOST_ROW: planetBoostRow,
     PARAN_SCORE: paranScore,

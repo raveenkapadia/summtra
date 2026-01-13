@@ -38,6 +38,28 @@ export class PDFAssembler {
     this.scope = options.scope || 'Both';
     this.reportType = this.goal === 'Complete' ? 'Complete' : 'Single';
     
+    // Normalize astroLines to planetaryLines format for map renderer
+    // API returns: { lines: [{planet, line_type, points}] }
+    // Map renderer expects: [{planet, line_type, points, color}]
+    if (astroData?.astroLines && !astroData.planetaryLines) {
+      const rawLines = astroData.astroLines?.lines || astroData.astroLines || [];
+      if (Array.isArray(rawLines)) {
+        const PLANET_COLORS = {
+          Sun: '#FF8C00', Moon: '#C0C0C0', Mercury: '#4ECDC4', Venus: '#FF69B4',
+          Mars: '#DC143C', Jupiter: '#FFD700', Saturn: '#708090', Uranus: '#00BFFF',
+          Neptune: '#9370DB', Pluto: '#8B008B', NorthNode: '#8B5CF6', SouthNode: '#8B5CF6',
+          Chiron: '#CD853F', Vertex: '#98FB98', PartOfFortune: '#20B2AA'
+        };
+        this.astroData.planetaryLines = rawLines.map(line => ({
+          planet: line.planet,
+          line_type: line.line_type || line.angle || 'AC',
+          points: line.points || line.coordinates || [],
+          color: PLANET_COLORS[line.planet] || '#FFFFFF'
+        }));
+        console.log(`   🗺️ Normalized ${this.astroData.planetaryLines.length} planetary lines for maps`);
+      }
+    }
+    
     this.baseData = prepareReportData(birthData, astroData, {
       goal: this.goal,
       goals: this.goal === 'Complete' ? GOALS_ORDER : [this.goal],
