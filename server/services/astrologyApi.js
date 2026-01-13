@@ -5,6 +5,7 @@
 
 const axios = require('axios');
 const { trackExternalApiCall } = require('./apiTracker.js');
+const { deriveFunctionalStatus } = require('./vedicLordship.js');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'best-astrology-api-natal-charts-transits-synastry.p.rapidapi.com';
@@ -1270,58 +1271,9 @@ const YOGAKARAKA_BY_LAGNA = {
   'Pisces': null
 };
 
-// Functional Benefic/Malefic status by Lagna
-// Based on house lordships: Trines/Angles = Benefic, 6th/8th/12th = Malefic
-const FUNCTIONAL_STATUS_BY_LAGNA = {
-  'Aries': {
-    benefics: ['Jupiter', 'Sun', 'Mars', 'Moon'],
-    malefics: ['Mercury', 'Venus', 'Saturn']
-  },
-  'Taurus': {
-    benefics: ['Saturn', 'Venus', 'Sun', 'Mercury'],
-    malefics: ['Moon', 'Mars', 'Jupiter']
-  },
-  'Gemini': {
-    benefics: ['Venus', 'Saturn', 'Mercury'],
-    malefics: ['Moon', 'Mars', 'Jupiter']
-  },
-  'Cancer': {
-    benefics: ['Mars', 'Jupiter', 'Moon'],
-    malefics: ['Mercury', 'Venus', 'Saturn']
-  },
-  'Leo': {
-    benefics: ['Mars', 'Jupiter', 'Sun'],
-    malefics: ['Mercury', 'Venus', 'Saturn']
-  },
-  'Virgo': {
-    benefics: ['Venus', 'Mercury'],
-    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
-  },
-  'Libra': {
-    benefics: ['Saturn', 'Venus', 'Mercury'],
-    malefics: ['Sun', 'Moon', 'Mars', 'Jupiter']
-  },
-  'Scorpio': {
-    benefics: ['Jupiter', 'Moon', 'Sun'],
-    malefics: ['Mercury', 'Venus', 'Mars']
-  },
-  'Sagittarius': {
-    benefics: ['Jupiter', 'Sun', 'Mars'],
-    malefics: ['Mercury', 'Venus', 'Saturn']
-  },
-  'Capricorn': {
-    benefics: ['Venus', 'Saturn', 'Mercury'],
-    malefics: ['Moon', 'Mars', 'Jupiter']
-  },
-  'Aquarius': {
-    benefics: ['Venus', 'Saturn'],
-    malefics: ['Moon', 'Mars', 'Jupiter', 'Sun']
-  },
-  'Pisces': {
-    benefics: ['Jupiter', 'Moon', 'Mars'],
-    malefics: ['Sun', 'Mercury', 'Venus', 'Saturn']
-  }
-};
+// REMOVED: Hardcoded FUNCTIONAL_STATUS_BY_LAGNA table
+// Now using dynamic deriveFunctionalStatus() from vedicLordship.js
+// This correctly derives benefic/malefic status from house lordships for any Lagna
 
 // Exaltation and Debilitation signs for each planet
 const EXALTATION = {
@@ -1423,11 +1375,13 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   // Get wealth lords for this lagna
   const wealthLords = WEALTH_LORDS_BY_LAGNA[lagnaClean] || { second: null, eleventh: null };
   const yogakaraka = YOGAKARAKA_BY_LAGNA[lagnaClean];
-  const functionalStatus = FUNCTIONAL_STATUS_BY_LAGNA[lagnaClean] || { benefics: [], malefics: [] };
   
-  // Check if this planet is functional benefic or malefic for this lagna
-  const isFunctionalBenefic = functionalStatus.benefics.includes(planet);
-  const isFunctionalMalefic = functionalStatus.malefics.includes(planet);
+  // DYNAMIC: Use deriveFunctionalStatus() instead of hardcoded table
+  // This correctly classifies planets based on actual house lordships for this Lagna
+  // Returns: 'BENEFIC' | 'MALEFIC' | 'NEUTRAL'
+  const functionalStatus = deriveFunctionalStatus(planet, lagnaClean);
+  const isFunctionalBenefic = functionalStatus === 'BENEFIC';
+  const isFunctionalMalefic = functionalStatus === 'MALEFIC';
   
   // Get planet positions for exaltation/combustion checks
   const planetPositions = birthData.planetPositions || {};
