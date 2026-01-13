@@ -1474,6 +1474,14 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   };
 }
 
+// H1: Line Type Weighting - MC (career apex) > AC (identity) > IC (roots) > DC (partnerships)
+const LINE_TYPE_WEIGHTS = {
+  'MC': 1.15,   // Midheaven - strongest influence on career/public life
+  'AC': 1.10,   // Ascendant - strong identity/self expression  
+  'IC': 1.05,   // Imum Coeli - roots, home, inner foundation
+  'DC': 1.00    // Descendant - partnerships, baseline influence
+};
+
 // CREDIBILITY SCORING: Calculate 50/50 Western + Vedic breakdown
 function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Career') {
   const cityLat = cityData.lat || cityData.latitude;
@@ -1488,6 +1496,7 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   let nearestDistanceKm = null;
   let orbStrength = { label: 'None', bars: 0 };
   let nearestPlanet = null;
+  let nearestLineType = null;
   let planetBoostInfo = null;
   
   if (astroLines) {
@@ -1509,7 +1518,8 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
         if (result && (nearestDistanceKm === null || result.distance < nearestDistanceKm)) {
           nearestDistanceKm = result.distance;
           nearestPlanet = line.planet;
-          nearestLine = `${line.planet}-${line.line_type || line.type || line.angle}`;
+          nearestLineType = (line.line_type || line.type || line.angle || 'AC').toUpperCase();
+          nearestLine = `${line.planet}-${nearestLineType}`;
           
           // Get base orb score
           const baseOrb = getOrbStrength(result.distance);
@@ -1518,6 +1528,12 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
         }
       }
     }
+  }
+  
+  // H1: Apply line type weight (MC > AC > IC > DC)
+  if (nearestLineType) {
+    const lineTypeWeight = LINE_TYPE_WEIGHTS[nearestLineType] || 1.0;
+    lineProximityScore = Math.round(lineProximityScore * lineTypeWeight);
   }
   
   // Apply personalized planet boost to line score (works for all goals)
