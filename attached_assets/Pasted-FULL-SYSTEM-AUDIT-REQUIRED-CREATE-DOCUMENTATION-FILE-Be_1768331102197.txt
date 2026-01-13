@@ -1,0 +1,280 @@
+FULL SYSTEM AUDIT REQUIRED - CREATE DOCUMENTATION FILE
+
+Before generating any more PDFs, I need you to perform a complete audit of the entire data pipeline and CREATE A MARKDOWN FILE with all findings that I can share for external review.
+
+User Details for Testing:
+- Name: Raveen Kapadia
+- Birth Date: November 15, 1982
+- Birth Time: 08:20 AM
+- Birth Place: Ahmedabad, India (23.0225° N, 72.5714° E)
+- Goal: Wealth
+
+---
+
+CREATE A FILE CALLED: ssumitra_audit_14jan.md
+
+This file must contain the following sections with ACTUAL DATA from your system (not placeholders):
+
+---
+
+## SECTION 1: RAW API RESPONSES
+
+Call each Vedic API and document the RAW JSON response:
+
+### 1.1 Lagna API
+- Endpoint URL: [document it]
+- Raw Response: [paste full JSON]
+- Parsed Lagna: [what your code extracts]
+
+### 1.2 Nakshatra API
+- Endpoint URL: [document it]
+- Raw Response: [paste full JSON]
+- Parsed Nakshatra: [what your code extracts]
+- Parsed Nakshatra Lord: [what your code extracts]
+
+### 1.3 Dasha/Antardasha API - CRITICAL
+- Endpoint URL: [document it]
+- Raw Response: [paste full JSON]
+- Parsed Mahadasha: [what your code extracts]
+- Parsed Antardasha: [what your code extracts]
+- Parsed Antardasha End Date: [what your code extracts]
+
+NOTE: External Vedic tools show Rahu Antardasha ending June 2026. If your data differs, explain why.
+
+### 1.4 Planetary Positions API
+- Endpoint URL: [document it]
+- Raw Response: [paste full JSON]
+
+---
+
+## SECTION 2: HOUSE LORDSHIP CALCULATION
+
+Show your system's house lordship output for Scorpio Lagna:
+
+| House | Sign | Lord (Your System) | Correct? |
+|-------|------|-------------------|----------|
+| 1st | ? | ? | ? |
+| 2nd | ? | ? | ? |
+| 3rd | ? | ? | ? |
+| 4th | ? | ? | ? |
+| 5th | ? | ? | ? |
+| 6th | ? | ? | ? |
+| 7th | ? | ? | ? |
+| 8th | ? | ? | ? |
+| 9th | ? | ? | ? |
+| 10th | ? | ? | ? |
+| 11th | ? | ? | ? |
+| 12th | ? | ? | ? |
+
+---
+
+## SECTION 3: GOAL PLANETS CALCULATION
+
+For Wealth goal (houses 2, 5, 9, 11) and Scorpio Lagna:
+
+### Your system's calculation:
+- Function name: [e.g., getPersonalGoalPlanets()]
+- File location: [e.g., /src/utils/vedic.js line 245]
+- Input parameters: [lagna=Scorpio, goal=Wealth]
+- Output: [list the planets your function returns]
+
+### Step-by-step trace:
+- 2nd house lord calculated as: ?
+- 5th house lord calculated as: ?
+- 9th house lord calculated as: ?
+- 11th house lord calculated as: ?
+- Final goal planets array: ?
+
+### ISSUE: PDF shows Venus in goal planets
+- Does Venus rule any of houses 2, 5, 9, 11? [Yes/No]
+- If No, why is Venus included? [explain the bug]
+- Code line causing this: [file:line]
+
+---
+
+## SECTION 4: FUNCTIONAL STATUS CALCULATION
+
+Show deriveFunctionalStatus() output for each planet with Scorpio Lagna:
+
+| Planet | Houses Ruled | Your Output | Calculation Logic |
+|--------|--------------|-------------|-------------------|
+| Sun | ? | ? | ? |
+| Moon | ? | ? | ? |
+| Mars | ? | ? | ? |
+| Mercury | ? | ? | ? |
+| Jupiter | ? | ? | ? |
+| Venus | ? | ? | ? |
+| Saturn | ? | ? | ? |
+| Rahu | ? | ? | ? |
+| Ketu | ? | ? | ? |
+
+---
+
+## SECTION 5: ANTARDASHA DATA FLOW - CRITICAL
+
+### Current bug:
+- City pages show: Antardasha = Rahu
+- Timeline page shows: Antardasha = Saturn
+- These CONFLICT within the same PDF
+
+### Trace the data:
+
+#### Timeline Page:
+- Data source function: [function name]
+- File location: [file:line]
+- Variable name: [e.g., currentAntardasha]
+- Value at runtime: [what it contains]
+
+#### City Page:
+- Data source function: [function name]
+- File location: [file:line]
+- Variable name: [e.g., userData.antardasha]
+- Value at runtime: [what it contains]
+
+### Root cause:
+[Explain why these two show different values]
+
+---
+
+## SECTION 6: RANKING TABLE vs CITY PAGE MISMATCH
+
+### Current bug:
+- Tokyo in ranking table shows: "Venus Midheaven"
+- Tokyo city page shows: "Jupiter-MC 633km"
+
+### Trace the data:
+
+#### Ranking Table "Planetary Lines" column:
+- Data field used: [e.g., city.lines]
+- File location: [file:line]
+- Value for Tokyo: [what it contains]
+
+#### City Page "Planetary Line Influence":
+- Data field used: [e.g., city.nearestLine]
+- File location: [file:line]
+- Value for Tokyo: [what it contains]
+
+### Root cause:
+[Explain why these show different values]
+
+---
+
+## SECTION 7: ASTROCARTOGRAPHY LINE DATA
+
+For Seoul, show complete line data:
+
+### Raw API Response:
+[Paste the astrocartography API response for Seoul area]
+
+### Parsed Lines:
+| Planet | Line Type | Distance from Seoul | Orb |
+|--------|-----------|---------------------|-----|
+| ? | ? | ? km | ? |
+| ? | ? | ? km | ? |
+| ? | ? | ? km | ? |
+
+### Nearest Line Selected:
+- Planet: ?
+- Line Type: ?
+- Distance: ? km
+
+---
+
+## SECTION 8: SCORING CALCULATION FOR TOKYO
+
+Show complete scoring breakdown:
+
+### Western Score (50 max):
+
+#### Line Proximity (35 max):
+- Nearest line: [planet]-[type] at [X] km
+- Base proximity score: ?/25
+- Planet relevance multiplier: ? (planet=?, multiplier=?)
+- Line type weight: ? (type=?, weight=?)
+- Calculated score: ?/35
+
+#### Paran Score (15 max):
+- Paran lines found: [list them]
+- Paran calculation: ?
+- Calculated score: ?/15
+
+#### Western Total: ?/50
+
+### Vedic Score (50 max):
+
+#### Nakshatra-Direction (20 max):
+- Nakshatra: Vishakha
+- Favorable direction: East
+- Tokyo direction from Ahmedabad: ?
+- Match score: ?/20
+
+#### Lagna-Vastu (15 max):
+- Lagna: Scorpio
+- Scorpio favorable direction: ?
+- Tokyo direction: ?
+- Match score: ?/15
+
+#### Dasha Timing (15 max):
+- Current Dasha lord: ?
+- Relevance to Tokyo lines: ?
+- Calculated score: ?/15
+
+#### Vedic Total: ?/50
+
+### FINAL TOTAL: ?/100
+
+### Does this match PDF? [Yes/No]
+If No, explain discrepancy: [...]
+
+---
+
+## SECTION 9: CITY DATABASE
+
+- Total cities in database: ?
+- Cities included in this PDF: ?
+- Why "12 Cities Analyzed" shown: ?
+- Endpoint used: ?
+- Configuration used: ?
+
+---
+
+## SECTION 10: BUGS FOUND SUMMARY
+
+| # | Bug | Root Cause | File:Line | Fix Required |
+|---|-----|------------|-----------|--------------|
+| 1 | ? | ? | ? | ? |
+| 2 | ? | ? | ? | ? |
+| 3 | ? | ? | ? | ? |
+
+---
+
+## SECTION 11: CODE SNIPPETS
+
+Paste the actual code for these critical functions:
+
+### getPersonalGoalPlanets():
+```javascript
+[paste full function code]
+```
+
+### deriveFunctionalStatus():
+```javascript
+[paste full function code]
+```
+
+### Antardasha data fetching:
+```javascript
+[paste relevant code]
+```
+
+---
+
+IMPORTANT INSTRUCTIONS:
+
+1. DO NOT use placeholder values - use ACTUAL data from API calls and your system
+2. DO NOT skip any section
+3. DO NOT generate any PDF until this audit is complete
+4. CREATE the file ssumitra_audit_14jan.md with all findings
+5. SHARE the file with me for review
+
+After I review this audit file, I will decide next steps.
