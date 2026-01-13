@@ -846,7 +846,8 @@ export function generateDividerPlanetData(goal, baseData) {
   const data = { ...baseData };
   
   // Bug 5 Fix: Use Lagna-derived house lords when available
-  const lagna = baseData.LAGNA || null;
+  // Note: baseData may use either LAGNA or lagna (case-insensitive check)
+  const lagna = baseData.LAGNA || baseData.lagna || null;
   const keyPlanets = getPersonalGoalPlanetsForDisplay(goal, lagna);
   
   for (let i = 0; i < 4; i++) {
