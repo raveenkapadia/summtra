@@ -1068,45 +1068,71 @@ export class PDFAssembler {
     });
   }
   
-  async generatePDF(outputPath) {
+  async generatePDF(outputPath, maxRetries = 3) {
     console.log(`\n📄 Generating PDF with ${this.pages.length} pages...`);
     
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-    });
-    
-    try {
-      const page = await browser.newPage();
-      
-      await page.setViewport({ width: 794, height: 1123 });
-      
-      const pdfBuffers = [];
-      
-      for (let i = 0; i < this.pages.length; i++) {
-        const pageData = this.pages[i];
-        console.log(`   Rendering page ${i + 1}/${this.pages.length} (${pageData.type})`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      let browser = null;
+      try {
+        console.log(`   Attempt ${attempt}/${maxRetries}...`);
         
-        await page.setContent(pageData.html, { waitUntil: 'networkidle0', timeout: 30000 });
-        
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: { top: 0, right: 0, bottom: 0, left: 0 }
+        browser = await puppeteer.launch({
+          headless: 'new',
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium',
+          args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--disable-dev-shm-usage', 
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote',
+            '--disable-extensions',
+            '--disable-background-networking',
+            '--disable-sync',
+            '--disable-translate',
+            '--metrics-recording-only',
+            '--no-first-run'
+          ],
+          protocolTimeout: 120000
         });
         
-        pdfBuffers.push(pdfBuffer);
+        const page = await browser.newPage();
+        await page.setViewport({ width: 794, height: 1123 });
+        
+        const pdfBuffers = [];
+        
+        for (let i = 0; i < this.pages.length; i++) {
+          const pageData = this.pages[i];
+          console.log(`   Rendering page ${i + 1}/${this.pages.length} (${pageData.type})`);
+          
+          await page.setContent(pageData.html, { waitUntil: 'networkidle0', timeout: 60000 });
+          
+          const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: 0, right: 0, bottom: 0, left: 0 }
+          });
+          
+          pdfBuffers.push(pdfBuffer);
+        }
+        
+        const combinedPDF = await this.combinePDFBuffers(pdfBuffers);
+        
+        fs.writeFileSync(outputPath, combinedPDF);
+        console.log(`✅ PDF saved to ${outputPath} (${this.pages.length} pages)`);
+        
+        await browser.close();
+        return outputPath;
+        
+      } catch (error) {
+        console.error(`   ❌ Attempt ${attempt} failed: ${error.message}`);
+        if (browser) {
+          try { await browser.close(); } catch (e) {}
+        }
+        if (attempt === maxRetries) throw error;
+        console.log(`   Retrying in 2 seconds...`);
+        await new Promise(r => setTimeout(r, 2000));
       }
-      
-      const combinedPDF = await this.combinePDFBuffers(pdfBuffers);
-      
-      fs.writeFileSync(outputPath, combinedPDF);
-      console.log(`✅ PDF saved to ${outputPath} (${this.pages.length} pages)`);
-      
-      return outputPath;
-    } finally {
-      await browser.close();
     }
   }
   
