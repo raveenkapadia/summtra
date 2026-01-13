@@ -166,21 +166,80 @@ export async function getVedicProfile(birthData) {
     const sun = planets.find(p => p.name === 'Sun');
     const ascendant = planets.find(p => p.name === 'Ascendant');
     
-    let currentDasha = null;
+    // Extract Lagna from Ascendant - FIX C3a: Ensure correct extraction
+    const lagna = ascendant?.sign || null;
+    const lagnaLord = ascendant?.signLord || null;
+    
+    // Log for debugging
+    console.log('[VedicAPI] Ascendant data:', JSON.stringify(ascendant, null, 2));
+    console.log('[VedicAPI] Extracted Lagna:', lagna);
+    
+    // Initialize dasha variables
+    let currentMahadasha = null;
+    let currentAntardasha = null;
+    let currentDashaEnd = null;
+    let rawDashaResponse = null;
+    
     try {
-      currentDasha = await getCurrentDasha(birthData);
+      rawDashaResponse = await getCurrentDasha(birthData);
+      
+      // Log raw response for debugging - FIX C3b: Understand API structure
+      console.log('[VedicAPI] Current Dasha raw response:', JSON.stringify(rawDashaResponse, null, 2));
+      
+      // API Response Structure from astrologyapi.com/current_vdasha:
+      // {
+      //   "major_dasha": { "planet": "Mercury", "start": "...", "end": "..." },
+      //   "antar_dasha": { "planet": "Rahu", "start": "...", "end": "..." },
+      //   ...
+      // }
+      // OR legacy format:
+      // { "planet": "Mercury", "major": "Mercury", "end": "..." }
+      
+      if (rawDashaResponse) {
+        // Primary API structure: { major: { planet: "X" }, minor: { planet: "Y" } }
+        if (rawDashaResponse.major && rawDashaResponse.major.planet) {
+          currentMahadasha = rawDashaResponse.major.planet;
+          currentDashaEnd = rawDashaResponse.major.end || null;
+        }
+        if (rawDashaResponse.minor && rawDashaResponse.minor.planet) {
+          currentAntardasha = rawDashaResponse.minor.planet;
+        }
+        
+        // Alternative structure: { major_dasha: { planet: "X" }, antar_dasha: { planet: "Y" } }
+        if (!currentMahadasha && rawDashaResponse.major_dasha) {
+          currentMahadasha = rawDashaResponse.major_dasha.planet || null;
+          currentDashaEnd = rawDashaResponse.major_dasha.end || null;
+        }
+        if (!currentAntardasha && rawDashaResponse.antar_dasha) {
+          currentAntardasha = rawDashaResponse.antar_dasha.planet || null;
+        }
+        
+        // Legacy/fallback: flat structure { planet: "X", end: "..." }
+        if (!currentMahadasha) {
+          currentMahadasha = rawDashaResponse.planet || null;
+          currentDashaEnd = rawDashaResponse.end || null;
+        }
+      }
+      
+      console.log('[VedicAPI] Extracted Mahadasha:', currentMahadasha);
+      console.log('[VedicAPI] Extracted Antardasha:', currentAntardasha);
+      
     } catch (e) {
-      console.log('Current dasha not available, trying maha dasha');
-      const mahaDasha = await getMahaDasha(birthData);
-      if (mahaDasha && mahaDasha.length > 0) {
+      console.log('[VedicAPI] current_vdasha not available, trying major_vdasha fallback');
+      const mahaDashaList = await getMahaDasha(birthData);
+      if (mahaDashaList && mahaDashaList.length > 0) {
         const now = new Date();
-        currentDasha = mahaDasha.find(d => {
+        const currentPeriod = mahaDashaList.find(d => {
           const startParts = d.start.split(/[-\s:]/);
           const endParts = d.end.split(/[-\s:]/);
           const start = new Date(startParts[2], startParts[1] - 1, startParts[0]);
           const end = new Date(endParts[2], endParts[1] - 1, endParts[0]);
           return now >= start && now <= end;
         });
+        if (currentPeriod) {
+          currentMahadasha = currentPeriod.planet || null;
+          currentDashaEnd = currentPeriod.end || null;
+        }
       }
     }
     
@@ -203,11 +262,13 @@ export async function getVedicProfile(birthData) {
       nakshatra: moon?.nakshatra || null,
       nakshatraLord: moon?.nakshatraLord || null,
       nakshatraPada: moon?.nakshatra_pad || null,
-      lagna: ascendant?.sign || null,
-      lagnaLord: ascendant?.signLord || null,
+      lagna,  // FIX C3a: Now explicitly extracted and logged
+      lagnaLord,
       sunSign: sun?.sign || null,
-      currentDashaLord: currentDasha?.planet || currentDasha?.major || null,
-      currentDashaEnd: currentDasha?.end || null,
+      currentDashaLord: currentMahadasha,  // FIX C3b: Properly extracted Mahadasha
+      currentAntardasha,  // FIX C3b: NEW - Properly extracted Antardasha
+      currentDashaEnd,
+      rawDashaResponse,  // Keep raw for debugging
       planetPositions, // For exaltation/combustion checks
       planets: planets.map(p => ({
         name: p.name,
@@ -702,13 +763,30 @@ export function generateTimingSummary(vedicProfile, topCities, antardashaTimelin
     return new Date(dateStr);
   }
   
-  // Find current antardasha
-  const now = new Date();
-  const currentAntar = antardashaTimeline.find(period => {
-    const start = parseDateStr(period.start);
-    const end = parseDateStr(period.end);
-    return start && end && now >= start && now <= end;
-  });
+  // FIX C3b: Use pre-extracted currentAntardasha from vedicProfile first
+  let currentAntar = null;
+  
+  // First try to get from vedicProfile (extracted from API)
+  if (vedicProfile?.currentAntardasha) {
+    // Find the period object matching the antardasha planet
+    currentAntar = antardashaTimeline.find(p => 
+      p.planet === vedicProfile.currentAntardasha
+    );
+    // If not found in timeline, create a minimal object
+    if (!currentAntar) {
+      currentAntar = { planet: vedicProfile.currentAntardasha };
+    }
+  }
+  
+  // Fallback: Calculate from timeline by date
+  if (!currentAntar) {
+    const now = new Date();
+    currentAntar = antardashaTimeline.find(period => {
+      const start = parseDateStr(period.start);
+      const end = parseDateStr(period.end);
+      return start && end && now >= start && now <= end;
+    });
+  }
   
   // Get upcoming periods
   const upcoming = antardashaTimeline
@@ -905,8 +983,11 @@ export function generateTimingSection(city, vedicProfile, antardashaTimeline) {
     return null;
   }
   
-  let currentAntar = null;
-  if (antardashaTimeline && Array.isArray(antardashaTimeline)) {
+  // FIX C3b: Use pre-extracted currentAntardasha from vedicProfile first
+  let currentAntar = vedicProfile?.currentAntardasha || null;
+  
+  // Fallback: Calculate from timeline if not in profile
+  if (!currentAntar && antardashaTimeline && Array.isArray(antardashaTimeline)) {
     const now = new Date();
     const current = antardashaTimeline.find(period => {
       const parts = period.start?.split(/[-\s:]/);
