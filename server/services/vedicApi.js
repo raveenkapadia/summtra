@@ -116,6 +116,50 @@ export async function getPlanets(birthData) {
   return callAstrologyApi('planets', birthData);
 }
 
+export async function getPlanetsExtended(birthData) {
+  return callAstrologyApi('planets/extended', birthData);
+}
+
+export async function getManglik(birthData) {
+  return callAstrologyApi('manglik', birthData);
+}
+
+export const NAKSHATRA_LORDS = {
+  'Ashwini': 'Ketu',
+  'Bharani': 'Venus',
+  'Krittika': 'Sun',
+  'Rohini': 'Moon',
+  'Mrigashira': 'Mars',
+  'Ardra': 'Rahu',
+  'Punarvasu': 'Jupiter',
+  'Pushya': 'Saturn',
+  'Ashlesha': 'Mercury',
+  'Magha': 'Ketu',
+  'Purva Phalguni': 'Venus',
+  'Uttara Phalguni': 'Sun',
+  'Hasta': 'Moon',
+  'Chitra': 'Mars',
+  'Swati': 'Rahu',
+  'Vishakha': 'Jupiter',
+  'Anuradha': 'Saturn',
+  'Jyeshtha': 'Mercury',
+  'Mula': 'Ketu',
+  'Purva Ashadha': 'Venus',
+  'Uttara Ashadha': 'Sun',
+  'Shravana': 'Moon',
+  'Dhanishta': 'Mars',
+  'Shatabhisha': 'Rahu',
+  'Purva Bhadrapada': 'Jupiter',
+  'Uttara Bhadrapada': 'Saturn',
+  'Revati': 'Mercury'
+};
+
+export function getNakshatraLord(nakshatra) {
+  if (!nakshatra) return null;
+  const cleaned = nakshatra.trim();
+  return NAKSHATRA_LORDS[cleaned] || null;
+}
+
 export async function getMahaDasha(birthData) {
   return callAstrologyApi('major_vdasha', birthData);
 }
@@ -245,15 +289,27 @@ export async function getVedicProfile(birthData) {
     
     // Build planetPositions object for exaltation/combustion checks
     const planetPositions = {};
+    const retrogradeStatus = {};
     for (const p of planets) {
       if (p.name && p.name !== 'Ascendant') {
+        const isRetro = p.isRetro === 'true' || p.isRetro === true;
         planetPositions[p.name] = {
           sign: p.sign,
           longitude: p.fullDegree || null,
           normDegree: p.normDegree || null,
-          isRetro: p.isRetro === 'true' || p.isRetro === true
+          isRetro: isRetro
         };
+        retrogradeStatus[p.name] = isRetro;
       }
+    }
+    
+    // H6: Fetch Manglik status for Love goal adjustments
+    let manglikStatus = null;
+    try {
+      manglikStatus = await getManglik(birthData);
+      console.log('[VedicAPI] Manglik status:', JSON.stringify(manglikStatus, null, 2));
+    } catch (e) {
+      console.log('[VedicAPI] Manglik API not available:', e.message);
     }
     
     return {
@@ -270,6 +326,8 @@ export async function getVedicProfile(birthData) {
       currentDashaEnd,
       rawDashaResponse,  // Keep raw for debugging
       planetPositions, // For exaltation/combustion checks
+      retrogradeStatus, // H4: For retrograde detection in scoring
+      manglikStatus, // H6: For Love goal Mars adjustments
       planets: planets.map(p => ({
         name: p.name,
         sign: p.sign,

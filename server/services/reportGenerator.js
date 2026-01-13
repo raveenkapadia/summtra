@@ -40,12 +40,15 @@ async function generateReport(params) {
     console.log('\n🌟 Step 1: Fetching astrology data from API...');
     const astrologyData = await fetchAllAstrologyData(birth, reportType);
     console.log('   ✅ Astrology data fetched');
+    
+    // Use enriched birth data for H4-H6 scoring (retrograde, nakshatra lord, manglik)
+    const enrichedBirth = astrologyData.enrichedBirthData || birth;
 
     // Step 2: Generate AI interpretations using Claude
     console.log('\n🤖 Step 2: Generating AI interpretations...');
     const interpretations = await generateAllInterpretations(
       astrologyData,
-      { name: user.name, birth },
+      { name: user.name, birth: enrichedBirth },
       reportType
     );
     console.log('   ✅ Interpretations generated');
@@ -61,7 +64,7 @@ async function generateReport(params) {
     const pdfPath = path.join(outputDir, pdfFilename);
     
     await generatePDF({
-      userData: { name: user.name, email: user.email, birth },
+      userData: { name: user.name, email: user.email, birth: enrichedBirth },
       astrologyData,
       interpretations,
       reportType

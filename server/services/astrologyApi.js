@@ -6,6 +6,7 @@
 const axios = require('axios');
 const { trackExternalApiCall } = require('./apiTracker.js');
 const { deriveFunctionalStatus, getHouseLord } = require('./vedicLordship.js');
+const { getNakshatraLord, NAKSHATRA_LORDS } = require('./vedicApi.js');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'best-astrology-api-natal-charts-transits-synastry.p.rapidapi.com';
@@ -501,6 +502,45 @@ async function fetchAllAstrologyData(birthData, reportType) {
   console.log('🌟 FETCHING ALL ASTROLOGY DATA (9 API ENDPOINTS)');
   console.log('═'.repeat(60) + '\n');
   
+  // H4-H6: Enrich birthData with Vedic profile if API keys are available
+  let enrichedBirthData = { ...birthData };
+  if (process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
+    try {
+      console.log('   🔮 Fetching Vedic profile for H4-H6 modifiers...');
+      const vedicApi = require('./vedicApi.js');
+      
+      // Convert to Vedic API format
+      const [year, month, day] = birthData.date.split('-').map(Number);
+      const vedicBirthData = {
+        birthDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+        birthTime: birthData.time,
+        latitude: birthData.latitude,
+        longitude: birthData.longitude
+      };
+      
+      const vedicProfile = await vedicApi.getVedicProfile(vedicBirthData);
+      if (vedicProfile) {
+        enrichedBirthData = {
+          ...enrichedBirthData,
+          lagna: vedicProfile.lagna || enrichedBirthData.lagna,
+          nakshatra: vedicProfile.nakshatra || enrichedBirthData.nakshatra,
+          rashi: vedicProfile.rashi || enrichedBirthData.rashi,
+          currentDashaLord: vedicProfile.currentDashaLord || enrichedBirthData.currentDashaLord,
+          currentAntardasha: vedicProfile.currentAntardasha || enrichedBirthData.currentAntardasha,
+          planetPositions: vedicProfile.planetPositions || enrichedBirthData.planetPositions,
+          retrogradeStatus: vedicProfile.retrogradeStatus || enrichedBirthData.retrogradeStatus,
+          manglikStatus: vedicProfile.manglikStatus || enrichedBirthData.manglikStatus
+        };
+        const retroCount = Object.values(enrichedBirthData.retrogradeStatus || {}).filter(v => v === true).length;
+        const hasManglik = enrichedBirthData.manglikStatus?.is_manglik || enrichedBirthData.manglikStatus?.manglik;
+        console.log(`   ✅ Vedic Profile: Lagna=${enrichedBirthData.lagna}, Nakshatra=${enrichedBirthData.nakshatra}`);
+        console.log(`   ✅ H4-H6 Data: Retrograde=${retroCount}, Manglik=${hasManglik ? 'Yes' : 'No'}`);
+      }
+    } catch (e) {
+      console.log('   ⚠️ Vedic API not available, H4-H6 modifiers will use defaults:', e.message);
+    }
+  }
+  
   const results = {
     // Core data
     natalChart: null,
@@ -661,7 +701,11 @@ async function fetchAllAstrologyData(birthData, reportType) {
     console.log(`   • Location Comparison: ${results.locationComparison ? '✅' : '❌'}`);
     console.log('');
 
-    return results;
+    // Return both results and enriched birth data for downstream scoring
+    return {
+      ...results,
+      enrichedBirthData
+    };
 
   } catch (error) {
     console.error('\n❌ Error fetching astrology data:', error.message);
@@ -1452,6 +1496,39 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     reasons.push(`Combust (within ${COMBUSTION_ORBS[planet]}° of Sun) (×0.85)`);
   }
   
+  // H4: Retrograde Detection
+  // Retrograde outer planets get penalty, retrograde Mercury gets boost
+  const retrogradeStatus = birthData.retrogradeStatus || {};
+  const isRetrograde = retrogradeStatus[planet] === true;
+  const outerPlanets = ['Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+  
+  if (isRetrograde) {
+    if (outerPlanets.includes(planet)) {
+      boost *= 0.90;
+      reasons.push(`${planet} retrograde (×0.90)`);
+    } else if (planet === 'Mercury') {
+      boost *= 1.05;
+      reasons.push(`Mercury retrograde - introspection boost (×1.05)`);
+    }
+  }
+  
+  // H5: Nakshatra Lord Boost
+  // If planet = user's birth nakshatra lord → ×1.10 boost
+  const userNakshatra = birthData.nakshatra || null;
+  const nakshatraLord = getNakshatraLord(userNakshatra);
+  if (nakshatraLord && planet === nakshatraLord) {
+    boost *= 1.10;
+    reasons.push(`Nakshatra lord (${userNakshatra}) (×1.10)`);
+  }
+  
+  // H6: Manglik Check for Love Goal
+  // If Manglik present AND goal is Love AND planet is Mars → note in reasons
+  const isManglik = birthData.manglikStatus?.is_manglik === true || birthData.manglikStatus?.manglik === true;
+  if (isManglik && goal === 'Love' && planet === 'Mars') {
+    boost *= 0.85;
+    reasons.push(`Manglik Dosha - Mars needs remediation for Love (×0.85)`);
+  }
+  
   // 7. General functional malefic penalty (×0.90)
   // Decision 4: Skip penalty if planet is goal-relevant (e.g., Mercury as 11th lord for Wealth)
   const goalPlanets = getPersonalGoalPlanets(goal, lagnaClean);
@@ -1473,7 +1550,11 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
     isFunctionalMalefic,
     exaltationStatus: exaltStatus.status,
     isCombust: combustStatus.isCombust,
-    planetSign: planetSign
+    planetSign: planetSign,
+    isRetrograde: isRetrograde,
+    nakshatraLord: nakshatraLord,
+    isNakshatraLord: nakshatraLord === planet,
+    isManglik: isManglik
   };
 }
 

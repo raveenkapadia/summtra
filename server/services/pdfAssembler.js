@@ -1108,12 +1108,15 @@ function convertBirthDataForAPI(birthData) {
     timezone: 'Asia/Kolkata',
     // Preserve Vedic properties for scoring calculations
     currentDashaLord: birthData.currentDashaLord,
+    currentAntardasha: birthData.currentAntardasha,
     lagna: birthData.lagna,
     lagnaSign: birthData.lagnaSign || birthData.lagna,
     nakshatra: birthData.nakshatra,
     rashi: birthData.rashi,
     sunSign: birthData.sunSign,
-    planetPositions: birthData.planetPositions
+    planetPositions: birthData.planetPositions,
+    retrogradeStatus: birthData.retrogradeStatus,
+    manglikStatus: birthData.manglikStatus
   };
 }
 
@@ -1228,9 +1231,17 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
           lagnaLord: vedicProfile.lagnaLord || testBirthData.lagnaLord,
           sunSign: vedicProfile.sunSign || testBirthData.sunSign,
           currentDashaLord: dashaLord,
-          currentDashaEnd: vedicProfile.currentDashaEnd || testBirthData.currentDashaEnd
+          currentDashaEnd: vedicProfile.currentDashaEnd || testBirthData.currentDashaEnd,
+          planetPositions: vedicProfile.planetPositions || testBirthData.planetPositions,
+          retrogradeStatus: vedicProfile.retrogradeStatus || testBirthData.retrogradeStatus,
+          manglikStatus: vedicProfile.manglikStatus || testBirthData.manglikStatus,
+          currentAntardasha: vedicProfile.currentAntardasha || testBirthData.currentAntardasha
         };
+        
+        const retroCount = Object.values(testBirthData.retrogradeStatus || {}).filter(v => v === true).length;
+        const hasManglik = testBirthData.manglikStatus?.is_manglik || testBirthData.manglikStatus?.manglik;
         console.log(`   ✅ Vedic Profile: Rashi=${testBirthData.rashi}, Lagna=${testBirthData.lagna}, Nakshatra=${testBirthData.nakshatra}, Dasha=${testBirthData.currentDashaLord}`);
+        console.log(`   ✅ H4-H6 Data: Retrograde planets=${retroCount}, Manglik=${hasManglik ? 'Yes' : 'No'}`);
       }
     } catch (error) {
       console.warn('   ⚠️ Vedic API fetch failed, using defaults:', error.message);
