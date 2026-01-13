@@ -39,8 +39,8 @@ export class PDFAssembler {
     this.reportType = this.goal === 'Complete' ? 'Complete' : 'Single';
     
     // Normalize astroLines to planetaryLines format for map renderer
-    // API returns: { lines: [{planet, line_type, points}] }
-    // Map renderer expects: [{planet, line_type, points, color}]
+    // API returns: { lines: [{planet, line_type, points: [{latitude, longitude}]}] }
+    // Map renderer expects: [{planet, line_type, points: [[lng, lat], ...], color}] (GeoJSON format)
     if (astroData?.astroLines && !astroData.planetaryLines) {
       const rawLines = astroData.astroLines?.lines || astroData.astroLines || [];
       if (Array.isArray(rawLines)) {
@@ -50,13 +50,32 @@ export class PDFAssembler {
           Neptune: '#9370DB', Pluto: '#8B008B', NorthNode: '#8B5CF6', SouthNode: '#8B5CF6',
           Chiron: '#CD853F', Vertex: '#98FB98', PartOfFortune: '#20B2AA'
         };
-        this.astroData.planetaryLines = rawLines.map(line => ({
-          planet: line.planet,
-          line_type: line.line_type || line.angle || 'AC',
-          points: line.points || line.coordinates || [],
-          color: PLANET_COLORS[line.planet] || '#FFFFFF'
-        }));
-        console.log(`   🗺️ Normalized ${this.astroData.planetaryLines.length} planetary lines for maps`);
+        
+        this.astroData.planetaryLines = rawLines.map(line => {
+          // Bug 6 Fix: Convert points from {latitude, longitude} objects to [lng, lat] arrays
+          const rawPoints = line.points || line.coordinates || [];
+          let normalizedPoints = [];
+          
+          if (Array.isArray(rawPoints) && rawPoints.length > 0) {
+            if (typeof rawPoints[0] === 'object' && rawPoints[0].latitude !== undefined) {
+              // API format: [{latitude: X, longitude: Y}, ...]
+              normalizedPoints = rawPoints.map(p => [p.longitude, p.latitude]);
+            } else if (Array.isArray(rawPoints[0])) {
+              // Already in GeoJSON format: [[lng, lat], ...]
+              normalizedPoints = rawPoints;
+            }
+          }
+          
+          return {
+            planet: line.planet,
+            line_type: line.line_type || line.angle || 'AC',
+            points: normalizedPoints,
+            color: PLANET_COLORS[line.planet] || '#FFFFFF'
+          };
+        });
+        
+        const pointsCount = this.astroData.planetaryLines.reduce((sum, l) => sum + l.points.length, 0);
+        console.log(`   🗺️ Normalized ${this.astroData.planetaryLines.length} planetary lines (${pointsCount} total points) for maps`);
       }
     }
     
@@ -461,13 +480,24 @@ export class PDFAssembler {
     if (type === 'best') {
       return sorted.slice(0, bestCount);
     } else {
+      // Bug 7 Fix: Use ABSOLUTE score threshold, not relative ranking
+      // Cities ≥60% should NEVER appear in Caution Zone (they're favorable)
+      // Only cities <52% are truly "caution" worthy
+      const CAUTION_THRESHOLD = 52;  // Cities below this are genuine caution
+      
       const birthPlace = this.birthData?.birthPlace || this.birthData?.birth_place || '';
       const birthPlaceLower = birthPlace.toLowerCase().trim();
       
-      let avoidCandidates = sorted.slice(-avoidCount - 5).reverse();
+      // Start from lowest-scored cities
+      let avoidCandidates = sorted.slice(-avoidCount - 10).reverse();
       
       avoidCandidates = avoidCandidates.filter(city => {
         const cityName = (city.name || '').toLowerCase().trim();
+        const cityScore = city.goalScores?.[this.goal] || city.score || 0;
+        
+        // Bug 7: Exclude favorable cities (≥60%) from Caution Zone entirely
+        if (cityScore >= 60) return false;
+        
         if (city.direction === 'Origin') return false;
         if (cityName === birthPlaceLower) return false;
         if (birthPlaceLower.includes(cityName) || cityName.includes(birthPlaceLower)) return false;
@@ -1314,7 +1344,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     longitude: city.lng || city.longitude,
     score: city.score || 60,
     direction: city.direction || getDirectionFromCoords(parseFloat(testBirthData.latitude), parseFloat(testBirthData.longitude), city.lat || city.latitude, city.lng || city.longitude),
-    nakshatraMatch: city.score >= 70,
+    nakshatraMatch: city.nakshatraMatch ?? false,  // Bug 4 Fix: Use actual nakshatra match, not score proxy
     verdict: city.score >= 70 ? 'Highly Favorable' : city.score >= 60 ? 'Favorable' : city.score >= 52 ? 'Moderate' : 'Challenging',
     lines: (city.lines || []).map(l => typeof l === 'string' ? { planet: l.split('-')[0], line_type: l.split('-')[1] || 'AC' } : l),
     avoidReasons: city.score < 52 ? ['Low compatibility score', 'Challenging planetary influences'] : undefined,

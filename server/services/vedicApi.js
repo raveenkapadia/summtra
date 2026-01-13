@@ -322,11 +322,15 @@ export async function getVedicProfile(birthData) {
       console.log('[VedicAPI] Manglik API not available:', e.message);
     }
     
+    // Bug 3 Fix: Use getNakshatraLord() as fallback when API doesn't provide nakshatraLord
+    const nakshatraName = moon?.nakshatra || null;
+    const nakshatraLord = moon?.nakshatraLord || getNakshatraLord(nakshatraName);
+    
     return {
       rashi: moon?.sign || null,
       rashiLord: moon?.signLord || null,
-      nakshatra: moon?.nakshatra || null,
-      nakshatraLord: moon?.nakshatraLord || null,
+      nakshatra: nakshatraName,
+      nakshatraLord: nakshatraLord,
       nakshatraPada: moon?.nakshatra_pad || null,
       lagna,  // FIX C3a: Now explicitly extracted and logged
       lagnaLord,

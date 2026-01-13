@@ -128,12 +128,18 @@ export function generateCityRows(cities, startRank = 1) {
     const scoreClass = city.score >= 85 ? 'excellent' : city.score >= 75 ? 'good' : city.score >= 65 ? 'moderate' : 'low';
     const matchIcon = city.nakshatraMatch ? '✓' : '—';
     
+    // Bug 1 Fix: Extract planetary lines for display
+    const cityLines = (city.lines || []).map(l => 
+      typeof l === 'string' ? l : `${l.planet}-${l.line_type || 'AC'}`
+    ).slice(0, 2).join(', ') || '—';
+    
     return `
       <tr class="city-row ${scoreClass}">
         <td class="rank">${rank}</td>
         <td class="city-name">${city.name}</td>
         <td class="country">${city.country || ''}</td>
         <td class="score">${city.score}</td>
+        <td class="planetary-lines">${cityLines}</td>
         <td class="direction">${city.direction || '—'}</td>
         <td class="nakshatra-match">${matchIcon}</td>
         <td class="verdict">${city.verdict || 'Favorable'}</td>
@@ -504,22 +510,27 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
   const multiplier = dirAdj.multiplier || 1.0;
   const penaltyPercentage = hasPenalty ? Math.round((1 - multiplier) * 100) : 0;
   
-  // Sub-scores from credibilityData - trust API values when available
-  // lineProx.score = base score (0-25), lineProx.boostedScore = after planet multiplier (0-35)
+  // Bug 8 Option B: Show FINAL adjusted scores only
+  // Sub-scores must add up to westernAdjusted (not westernOriginal)
+  // Apply penalty ratio to scale down sub-components proportionally
+  
   const rawBaseScore = hasValidBreakdown ? (lineProx.score ?? 0) : 0;
   const boostedLineScore = hasValidBreakdown ? (lineProx.boostedScore ?? rawBaseScore) : rawBaseScore;
   const boostReasons = hasValidBreakdown ? (lineProx.boostReasons || []) : [];
   
-  // Calculate actual boost points from raw values (not capped)
-  const actualBoostPoints = Math.max(0, Math.round(boostedLineScore - rawBaseScore));
+  // Calculate penalty ratio for proportional scaling
+  const penaltyRatio = westernOriginal > 0 ? (westernAdjusted / westernOriginal) : 1;
   
-  // For display: cap line proximity at 25 (the max possible base score)
-  const lineProximityScore = Math.min(25, rawBaseScore);
-  
-  // Paran score from API, with fallback that ensures total adds up
-  // westernOriginal = boostedLineScore + paranScore (capped at 50)
+  // Get raw Paran score
   const apiParanScore = hasValidBreakdown ? (western.parans?.score ?? null) : null;
-  const paranScore = apiParanScore !== null ? Math.min(25, apiParanScore) : Math.max(0, Math.min(25, westernOriginal - boostedLineScore));
+  const rawParanScore = apiParanScore !== null ? Math.min(25, apiParanScore) : Math.max(0, Math.min(25, westernOriginal - boostedLineScore));
+  
+  // Bug 8: Scale sub-scores proportionally so they ADD UP to westernAdjusted
+  const lineProximityScore = Math.round(Math.min(25, rawBaseScore) * penaltyRatio);
+  const actualBoostPoints = Math.max(0, Math.round((boostedLineScore - rawBaseScore) * penaltyRatio));
+  const paranScore = Math.round(rawParanScore * penaltyRatio);
+  
+  // Vedic scores remain unchanged (no penalty applied to Vedic)
   const nakshatraRashiScore = hasValidBreakdown ? (vedic.nakshatraRashi?.score ?? Math.round(vedicTotal * 0.4)) : Math.round(vedicTotal * 0.4);
   const lagnaVastuScore = hasValidBreakdown ? (vedic.lagnaVastu?.score ?? Math.round(vedicTotal * 0.3)) : Math.round(vedicTotal * 0.3);
   const dashaScore = hasValidBreakdown ? (vedic.dashaTiming?.score ?? (vedicTotal - nakshatraRashiScore - lagnaVastuScore)) : (vedicTotal - nakshatraRashiScore - lagnaVastuScore);
@@ -527,10 +538,8 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
   // Build planet boost row HTML (only when there's an actual boost)
   let planetBoostRow = '';
   if (actualBoostPoints > 0) {
-    // Extract planet name from boostReasons or nearestLine
     const nearestLine = lineProx.nearestLine || '';
     let planetName = nearestLine.split('-')[0] || 'Planet';
-    // Try to get from boost reasons for accuracy
     if (boostReasons.length > 0) {
       const firstReason = boostReasons[0] || '';
       const planetMatch = firstReason.match(/^(Jupiter|Venus|Mercury|Sun|Moon|Mars|Saturn)/);
@@ -772,6 +781,7 @@ function formatPlanetLine(planet, type) {
   return `${symbol} ${planet} ${lineName}`.trim();
 }
 
+// Bug 5: Static fallback planets (used when Lagna not available)
 const GOAL_KEY_PLANETS = {
   Career: ['Sun', 'Saturn', 'Jupiter', 'Mercury'],
   Wealth: ['Jupiter', 'Venus', 'Mercury', 'Sun'],
@@ -781,9 +791,63 @@ const GOAL_KEY_PLANETS = {
   Complete: ['Sun', 'Moon', 'Jupiter', 'Venus']
 };
 
+// Bug 5: Lagna-based dynamic house lord derivation for goal planets
+const GOAL_HOUSE_MAPPING = {
+  Career: [10, 6, 2, 11],      // 10th (career), 6th (work), 2nd (income), 11th (gains)
+  Wealth: [2, 11, 5, 9],       // 2nd (money), 11th (gains), 5th (speculation), 9th (fortune)
+  Love: [7, 5, 1, 4],          // 7th (partner), 5th (romance), 1st (self), 4th (home)
+  Education: [4, 5, 9, 1],     // 4th (learning), 5th (intelligence), 9th (higher ed), 1st (self)
+  Settlement: [4, 7, 2, 12],   // 4th (home), 7th (partnership), 2nd (family), 12th (foreign)
+  Complete: [1, 9, 10, 5]      // 1st, 9th, 10th, 5th (key houses)
+};
+
+const HOUSE_LORDS_BY_LAGNA = {
+  Aries: ['Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter'],
+  Taurus: ['Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars'],
+  Gemini: ['Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus'],
+  Cancer: ['Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury'],
+  Leo: ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon'],
+  Virgo: ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun'],
+  Libra: ['Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury'],
+  Scorpio: ['Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus'],
+  Sagittarius: ['Jupiter', 'Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars'],
+  Capricorn: ['Saturn', 'Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter'],
+  Aquarius: ['Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'],
+  Pisces: ['Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn']
+};
+
+function getPersonalGoalPlanetsForDisplay(goal, lagna) {
+  if (!lagna || !HOUSE_LORDS_BY_LAGNA[lagna]) {
+    return GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
+  }
+  
+  const houses = GOAL_HOUSE_MAPPING[goal] || GOAL_HOUSE_MAPPING.Complete;
+  const houseLords = HOUSE_LORDS_BY_LAGNA[lagna];
+  const planets = new Set();
+  
+  for (const house of houses) {
+    const lord = houseLords[house - 1];
+    if (lord) planets.add(lord);
+    if (planets.size >= 4) break;
+  }
+  
+  // Fill remaining slots with fallback planets
+  const result = Array.from(planets);
+  const fallback = GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
+  for (const p of fallback) {
+    if (result.length >= 4) break;
+    if (!result.includes(p)) result.push(p);
+  }
+  
+  return result.slice(0, 4);
+}
+
 export function generateDividerPlanetData(goal, baseData) {
   const data = { ...baseData };
-  const keyPlanets = GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
+  
+  // Bug 5 Fix: Use Lagna-derived house lords when available
+  const lagna = baseData.LAGNA || null;
+  const keyPlanets = getPersonalGoalPlanetsForDisplay(goal, lagna);
   
   for (let i = 0; i < 4; i++) {
     const num = i + 1;

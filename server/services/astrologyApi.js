@@ -6,7 +6,7 @@
 const axios = require('axios');
 const { trackExternalApiCall } = require('./apiTracker.js');
 const { deriveFunctionalStatus, getHouseLord } = require('./vedicLordship.js');
-const { getNakshatraLord, NAKSHATRA_LORDS } = require('./vedicApi.js');
+const { getNakshatraLord, NAKSHATRA_LORDS, checkNakshatraCityMatch, NAKSHATRA_DIRECTIONS } = require('./vedicApi.js');
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'best-astrology-api-natal-charts-transits-synastry.p.rapidapi.com';
@@ -919,6 +919,11 @@ async function getScoresForAllCities(birthData, cities, astroLines = null, goal 
     // Apply direction penalty for opposite directions (reduces misaligned cities)
     const penalizedScore = applyDirectionPenalty(credibilityResult, birthData, direction);
     
+    // Bug 4 Fix: Calculate ACTUAL nakshatra-direction match (not score proxy)
+    const userNakshatra = birthData.nakshatra;
+    const nakshatraMatchResult = checkNakshatraCityMatch(userNakshatra, direction);
+    const nakshatraMatch = nakshatraMatchResult.matches === true || nakshatraMatchResult.partial === true;
+    
     return {
       name: city.name,
       state: city.state || null,
@@ -929,7 +934,9 @@ async function getScoresForAllCities(birthData, cities, astroLines = null, goal 
       score: penalizedScore.total,
       credibility: penalizedScore.breakdown,
       lines: [],
-      isIndian: city.country === 'India'
+      isIndian: city.country === 'India',
+      nakshatraMatch,  // Bug 4: Actual nakshatra direction match
+      nakshatraMatchInfo: nakshatraMatchResult  // For debugging
     };
   });
   
