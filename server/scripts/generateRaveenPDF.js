@@ -146,10 +146,11 @@ async function generateRaveenPDF() {
 
     const pdfAssembler = new PDFAssembler(
       { ...enrichedBirth, name: userData.name, email: userData.email },
-      { ...astroData, scoredCities: sortedCities },
+      { ...astroData, topCities: sortedCities, scoredCities: sortedCities },
       { goal, scope: 'Both', topCities: 10 }
     );
 
+    await pdfAssembler.assemble();
     await pdfAssembler.generatePDF(outputPath);
     
     console.log('\n' + '▓'.repeat(70));
