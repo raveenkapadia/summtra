@@ -2351,9 +2351,10 @@ async function startServer() {
 
   app.use(express.static(path.join(process.cwd())));
   app.use('/test-pdfs', express.static(path.join(process.cwd(), 'public', 'test-pdfs')));
+  app.use('/reports', express.static(path.join(process.cwd(), 'generated_reports')));
 
   app.use((req, res, next) => {
-    if (!req.path.startsWith("/api") && req.path !== "/admin" && !req.path.startsWith("/test-pdfs")) {
+    if (!req.path.startsWith("/api") && req.path !== "/admin" && !req.path.startsWith("/test-pdfs") && !req.path.startsWith("/reports")) {
       res.sendFile(path.join(process.cwd(), "index.html"));
     } else {
       next();
