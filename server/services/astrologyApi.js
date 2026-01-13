@@ -1379,9 +1379,7 @@ function getPersonalGoalPlanets(goal, lagna) {
   // Decision 5: "Lagna lord is never penalized" means benefic STATUS, not inclusion in all goals
   // Lagna lord only appears if it naturally rules one of the goal's mapped houses
   
-  const result = Array.from(planets);
-  console.log(`[getPersonalGoalPlanets] ${goal} for ${lagna} Lagna → ${result.join(', ')}`);
-  return result;
+  return Array.from(planets);
 }
 
 // Calculate personalized planet boost based on user's chart
@@ -1455,9 +1453,15 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   }
   
   // 7. General functional malefic penalty (×0.90)
-  if (isFunctionalMalefic) {
+  // Decision 4: Skip penalty if planet is goal-relevant (e.g., Mercury as 11th lord for Wealth)
+  const goalPlanets = getPersonalGoalPlanets(goal, lagnaClean);
+  const isGoalRelevant = goalPlanets.includes(planet);
+  
+  if (isFunctionalMalefic && !isGoalRelevant) {
     boost *= 0.90;
     reasons.push(`Functional malefic for ${lagnaClean} (×0.90)`);
+  } else if (isFunctionalMalefic && isGoalRelevant) {
+    reasons.push(`Goal-relevant (${goal}) - malefic penalty skipped`);
   }
   
   return {
