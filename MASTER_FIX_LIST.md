@@ -113,15 +113,16 @@ After testing VedicAstroAPI, AstrologyAPI.com, and RapidAPI:
 
 ---
 
-## CRITICAL BUGS (C1-C5)
+## CRITICAL BUGS (C1-C5) ✅ ALL COMPLETE
 
-### C1: Mars Misclassified for Scorpio Lagna
+### C1: Mars Misclassified for Scorpio Lagna ✅
 **Current**: Mars treated as malefic (6th lord)
 **Should Be**: Mars is BENEFIC (1st + 8th lord, Lagna lord always benefic)
 **Impact**: Scorpio Lagna users get wrong city recommendations
 
-### C2: All 12 Lagna Classifications Hardcoded
+### C2: All 12 Lagna Classifications Hardcoded ✅
 **Fix Required**: Replace `BENEFIC_PLANETS_BY_LAGNA` with dynamic derivation
+**FIXED**: Using deriveFunctionalStatus() for all planet classifications
 
 | Lagna | Planet | Current | Should Be | Why |
 |-------|--------|---------|-----------|-----|
@@ -134,48 +135,57 @@ After testing VedicAstroAPI, AstrologyAPI.com, and RapidAPI:
 | Libra | Moon | Malefic | **Neutral** | 10th lord (Kendradhipati) |
 | Leo | Venus | Malefic | **Neutral** | 3rd + 10th lord (mixed) |
 
-### C3: API Response Parsing Errors
+### C3: API Response Parsing Errors ✅
 **Issues**:
 a) Lagna not extracted correctly from Ascendant.sign
 b) Antardasha value displayed incorrectly (PDF showed "Mercury-Saturn", API returned "Mercury-Rahu")
 
 **Fix**: Audit all API response parsing in vedicApi.js to ensure correct field extraction
+**FIXED**: getVedicProfile() now correctly parses Lagna, Antardasha with 50/50 weighting
 
-### C4: Goal-Planet Mapping Ignores Lagna
+### C4: Goal-Planet Mapping Ignores Lagna ✅
 **Current**: Same planets for all users' wealth goal
 **Should Be**: Use house lords specific to user's Lagna
+**FIXED**: getPersonalGoalPlanets() derives goal planets dynamically per Lagna
 
-### C5: 5th House Lord Missing from Wealth Goal
+### C5: 5th House Lord Missing from Wealth Goal ✅
 **Current**: WEALTH_LORDS_BY_LAGNA only has 2nd and 11th lords
 **Should Add**: 5th lord (speculation, investments, sudden gains)
+**FIXED**: 5th lord now included in Wealth goal planets
 
 ---
 
-## HIGH PRIORITY (H1-H6)
+## HIGH PRIORITY (H1-H6) ✅ ALL COMPLETE
 
-### H1: Unused Planetary Line Data
+### H1: Unused Planetary Line Data ✅
 **Current**: `lineDetails` fetched but scoring uses only basic scores
 **Fix**: Use line proximity, line type (MC > AC > IC > DC) in scoring
+**FIXED**: getLineTypeWeight() applies MC×1.25 for Career, DC×1.25 for Love, etc.
 
-### H2: No Direction Penalty/Bonus
+### H2: No Direction Penalty/Bonus ✅
 **Current**: All directions treated equal
 **Fix**: Apply Nakshatra-direction affinity bonus (+5-10%)
+**FIXED**: Nakshatra direction from Moon's birth star applied in scoring
 
-### H3: Dasha-Goal Timing Not Connected
+### H3: Dasha-Goal Timing Not Connected ✅
 **Current**: Dasha shown but not used in goal scoring
 **Fix**: If Mahadasha lord = goal-relevant planet → timing boost
+**FIXED**: Dasha-Goal synergy with 50/50 Maha+Antardasha weighting
 
-### H4: Retrograde Detection Available But Unused
+### H4: Retrograde Detection Available But Unused ✅
 **Endpoint**: AstrologyAPI.com `/planets` has `isRetro` flag
 **Fix**: Apply retrograde modifier (-10% for outer planets, +5% for Mercury)
+**FIXED**: retrogradeStatus populated from API, ×0.90 for Mars/Jupiter/Saturn, ×1.05 for Mercury
 
-### H5: Nakshatra Lord Boost Missing
+### H5: Nakshatra Lord Boost Missing ✅
 **Available**: Moon's Nakshatra Lord from `/planets`
 **Fix**: If city's dominant line = Nakshatra Lord → affinity boost (+8%)
+**FIXED**: getNakshatraLord() + ×1.10 boost when planet matches nakshatra lord
 
-### H6: Manglik Check for Love Goal
+### H6: Manglik Check for Love Goal ✅
 **Endpoint**: AstrologyAPI.com `/manglik`
 **Fix**: For Love/Settlement goal, check Manglik status, adjust Mars line interpretation
+**FIXED**: manglikStatus from /manglik API, ×0.85 penalty for Mars lines on Love goal if Manglik
 
 ---
 
@@ -365,13 +375,14 @@ function calculateCityScore(city, birthData, goal, vedicProfile) {
 
 ## VERIFICATION CHECKLIST
 
-Before marking any fix complete:
-- [ ] Works for Aries Lagna
-- [ ] Works for Scorpio Lagna (Mars must be benefic)
-- [ ] Works for Virgo Lagna (Saturn must be benefic)
-- [ ] Works for Aquarius Lagna (Mercury must be benefic)
-- [ ] No hardcoded planet lists remain
-- [ ] All house lords derived dynamically
+✅ **VERIFIED January 13, 2026** (see server/scripts/verifyLagnas.js)
+
+- [x] Works for Aries Lagna - Mars=BENEFIC, Goal planets: Venus(2nd), Sun(5th), Saturn(11th)
+- [x] Works for Scorpio Lagna - Mars=BENEFIC, Jupiter×1.67 boost (benefic+2nd+5th+nakshatra)
+- [x] Works for Virgo Lagna - Saturn=BENEFIC (5th lord), Mercury=BENEFIC (Lagna lord)
+- [x] Works for Aquarius Lagna - Mercury=BENEFIC (5th lord), Saturn=BENEFIC (Lagna lord)
+- [x] No hardcoded planet lists remain - All derived via getHouseLord() and deriveFunctionalStatus()
+- [x] All house lords derived dynamically - Goal planets vary by Lagna correctly
 
 ---
 
@@ -384,4 +395,4 @@ Before marking any fix complete:
 ---
 
 *Last Updated: January 13, 2026*
-*Document Status: APPROVED*
+*Document Status: COMPLETE - All Critical (C1-C5) and High Priority (H1-H6) items verified and implemented*
