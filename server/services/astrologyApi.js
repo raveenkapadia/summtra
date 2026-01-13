@@ -344,10 +344,18 @@ async function generateParanMap(birthData) {
   console.log('📡 [4/9] Generating paran map (line crossings)...');
   
   const result = await apiCall('POST', '/api/v3/astrocartography/paran-map', {
-    datetime: `${birthData.date}T${birthData.time}:00`,
-    latitude: birthData.latitude,
-    longitude: birthData.longitude,
-    timezone: birthData.timezone,
+    subject: {
+      birth_data: {
+        year: parseInt(birthData.date.split('-')[0]),
+        month: parseInt(birthData.date.split('-')[1]),
+        day: parseInt(birthData.date.split('-')[2]),
+        hour: parseInt(birthData.time.split(':')[0]),
+        minute: parseInt(birthData.time.split(':')[1]) || 0,
+        longitude: birthData.longitude,
+        latitude: birthData.latitude,
+        timezone: (typeof birthData.timezone === 'string') ? birthData.timezone : 'Asia/Kolkata'
+      }
+    },
     include_minor_aspects: true
   });
   

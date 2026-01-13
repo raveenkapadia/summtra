@@ -10,6 +10,9 @@ async function generateRaveenPDF() {
   const birthData = {
     date: '1982-11-15',
     time: '08:20',
+    birthDate: '15/11/1982',
+    birthTime: '08:20 AM',
+    birthPlace: 'Ahmedabad, India',
     latitude: 23.0225,
     longitude: 72.5714,
     timezone: 5.5,
