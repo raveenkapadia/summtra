@@ -221,7 +221,8 @@ export async function getVedicProfile(birthData) {
     // Initialize dasha variables
     let currentMahadasha = null;
     let currentAntardasha = null;
-    let currentDashaEnd = null;
+    let currentDashaEnd = null;  // ANTARDASHA end date (more useful for timing)
+    let mahadashaEnd = null;     // MAHADASHA end date (for reference)
     let rawDashaResponse = null;
     
     try {
@@ -232,41 +233,50 @@ export async function getVedicProfile(birthData) {
       
       // API Response Structure from astrologyapi.com/current_vdasha:
       // {
-      //   "major_dasha": { "planet": "Mercury", "start": "...", "end": "..." },
-      //   "antar_dasha": { "planet": "Rahu", "start": "...", "end": "..." },
+      //   "major": { "planet": "Mercury", "start": "...", "end": "..." },
+      //   "minor": { "planet": "Rahu", "start": "...", "end": "..." },
       //   ...
       // }
-      // OR legacy format:
-      // { "planet": "Mercury", "major": "Mercury", "end": "..." }
+      // OR alternative format:
+      // { "major_dasha": { "planet": "Mercury", "start": "...", "end": "..." },
+      //   "antar_dasha": { "planet": "Rahu", "start": "...", "end": "..." } }
       
       if (rawDashaResponse) {
         // Primary API structure: { major: { planet: "X" }, minor: { planet: "Y" } }
         if (rawDashaResponse.major && rawDashaResponse.major.planet) {
           currentMahadasha = rawDashaResponse.major.planet;
-          currentDashaEnd = rawDashaResponse.major.end || null;
+          mahadashaEnd = rawDashaResponse.major.end || null;
         }
         if (rawDashaResponse.minor && rawDashaResponse.minor.planet) {
           currentAntardasha = rawDashaResponse.minor.planet;
+          // FIX Priority 6: Use ANTARDASHA (minor) end date, not Mahadasha end
+          currentDashaEnd = rawDashaResponse.minor.end || null;
         }
         
         // Alternative structure: { major_dasha: { planet: "X" }, antar_dasha: { planet: "Y" } }
         if (!currentMahadasha && rawDashaResponse.major_dasha) {
           currentMahadasha = rawDashaResponse.major_dasha.planet || null;
-          currentDashaEnd = rawDashaResponse.major_dasha.end || null;
+          mahadashaEnd = rawDashaResponse.major_dasha.end || null;
         }
         if (!currentAntardasha && rawDashaResponse.antar_dasha) {
           currentAntardasha = rawDashaResponse.antar_dasha.planet || null;
+          currentDashaEnd = rawDashaResponse.antar_dasha.end || null;
         }
         
         // Legacy/fallback: flat structure { planet: "X", end: "..." }
         if (!currentMahadasha) {
           currentMahadasha = rawDashaResponse.planet || null;
-          currentDashaEnd = rawDashaResponse.end || null;
+          mahadashaEnd = rawDashaResponse.end || null;
+        }
+        
+        // If no antardasha end date found, fall back to mahadasha end
+        if (!currentDashaEnd) {
+          currentDashaEnd = mahadashaEnd;
         }
       }
       
-      console.log('[VedicAPI] Extracted Mahadasha:', currentMahadasha);
-      console.log('[VedicAPI] Extracted Antardasha:', currentAntardasha);
+      console.log('[VedicAPI] Extracted Mahadasha:', currentMahadasha, 'ends:', mahadashaEnd);
+      console.log('[VedicAPI] Extracted Antardasha:', currentAntardasha, 'ends:', currentDashaEnd);
       
     } catch (e) {
       console.log('[VedicAPI] current_vdasha not available, trying major_vdasha fallback');
