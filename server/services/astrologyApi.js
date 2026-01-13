@@ -1369,16 +1369,15 @@ function getPersonalGoalPlanets(goal, lagna) {
   }
   
   // Add Yogakaraka if exists (most beneficial planet for this lagna)
+  // Yogakaraka is a special case - it's universally beneficial for all goals
   const yogakaraka = YOGAKARAKA_BY_LAGNA[lagna];
   if (yogakaraka) {
     planets.add(yogakaraka);
   }
   
-  // Add Lagna lord (always relevant for any goal)
-  const lagnaLord = getHouseLord(1, lagna);
-  if (lagnaLord) {
-    planets.add(lagnaLord);
-  }
+  // NOTE: Lagna lord is NOT auto-added to goal planets
+  // Decision 5: "Lagna lord is never penalized" means benefic STATUS, not inclusion in all goals
+  // Lagna lord only appears if it naturally rules one of the goal's mapped houses
   
   const result = Array.from(planets);
   console.log(`[getPersonalGoalPlanets] ${goal} for ${lagna} Lagna → ${result.join(', ')}`);
