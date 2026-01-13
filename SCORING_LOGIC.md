@@ -53,6 +53,27 @@ The system calculates distance from the city to the nearest **goal-relevant** pl
 | 3500+ | None | 0 | ░░░░░░░░░░ |
 | No line found | None | 3 | (base fallback) |
 
+#### H1: Goal-Based Line Type Weighting (NEW)
+
+Line types (MC, AC, IC, DC) are weighted differently based on the selected goal. This reflects the astrological significance of each angle for different life areas.
+
+**Calculation Order:** Base Score → Planet Boost → Line Type Weight → Cap at 35
+
+| Line Type | Career | Wealth | Love | Education | Settlement |
+|-----------|--------|--------|------|-----------|------------|
+| **MC** (Midheaven) | ×1.25 | ×1.15 | ×0.95 | ×1.15 | ×1.00 |
+| **AC** (Ascendant) | ×1.10 | ×1.10 | ×1.10 | ×1.15 | ×1.05 |
+| **IC** (Imum Coeli) | ×0.95 | ×1.00 | ×1.00 | ×1.00 | ×1.25 |
+| **DC** (Descendant) | ×0.90 | ×0.95 | ×1.25 | ×0.95 | ×1.10 |
+
+**Example (Wealth, Mercury-MC at 347km):**
+```
+Base: 347km = 22 (Very Strong orb)
+Boost: Mercury 11th lord (×1.15) × Func.Malefic (×0.90) = ×1.035 → 22.8
+LineType: MC for Wealth = ×1.15 → 26.2
+Cap: min(26.2, 35) = 26
+```
+
 #### Goal-Relevant Planets
 
 Only lines from goal-relevant planets are considered for scoring:
@@ -199,6 +220,33 @@ Measures how well the current Mahadasha lord supports the selected goal. This is
 | **Ketu** | 8 | 6 | 8 | 12 | 10 | 9 |
 
 **Score Range: 6-15 points**
+
+#### H3: Dasha-Goal Synergy Bonus (NEW)
+
+When the Mahadasha or Antardasha lord IS one of the dynamically-derived goal planets, a multiplicative synergy bonus is applied. This uses 50/50 weighting between Mahadasha and Antardasha.
+
+**Formula:**
+```
+mahaSynergy = (Mahadasha lord ∈ goalPlanets) ? 1.10 : 1.00
+antarSynergy = (Antardasha lord ∈ goalPlanets) ? 1.10 : 1.00
+avgSynergy = (mahaSynergy + antarSynergy) / 2
+dashaScore = min(15, round(baseAffinity × avgSynergy))
+```
+
+**Example (Scorpio Wealth, Mercury Mahadasha, Rahu Antardasha):**
+```
+Goal planets: Jupiter, Mercury, Moon (derived from 2nd, 5th, 11th, 9th houses)
+Mercury IS goal planet (11th lord) → mahaSynergy = 1.10
+Rahu NOT goal planet → antarSynergy = 1.00
+avgSynergy = (1.10 + 1.00) / 2 = 1.05
+baseAffinity = 14 (Mercury + Wealth from table)
+dashaScore = min(15, round(14 × 1.05)) = 15
+```
+
+**Benefits:**
+- 50/50 weight maintains Decision 6 balance
+- Multiplicative approach prevents wasted bonus at high base scores
+- Synergy scales proportionally with base affinity
 
 ---
 
@@ -486,6 +534,9 @@ Planet boosts personalize scores based on the user's natal chart. Boosts are mul
 | Jan 2026 | Added Dasha-Goal affinity table |
 | Jan 2026 | Removed fabricated line fallbacks |
 | Jan 2026 | Added proximity-dependent paran scoring |
+| Jan 2026 | H1: Added goal-based line type weighting (MC/AC/IC/DC) |
+| Jan 2026 | H2: Verified Nakshatra uses Moon's birth star |
+| Jan 2026 | H3: Added Dasha-Goal synergy (50/50 Maha/Antar) |
 
 ---
 

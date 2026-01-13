@@ -1473,13 +1473,22 @@ function calculatePlanetBoost(planet, birthData, goal = 'Wealth') {
   };
 }
 
-// H1: Line Type Weighting - MC (career apex) > AC (identity) > IC (roots) > DC (partnerships)
-const LINE_TYPE_WEIGHTS = {
-  'MC': 1.15,   // Midheaven - strongest influence on career/public life
-  'AC': 1.10,   // Ascendant - strong identity/self expression  
-  'IC': 1.05,   // Imum Coeli - roots, home, inner foundation
-  'DC': 1.00    // Descendant - partnerships, baseline influence
+// H1: Goal-Based Line Type Weighting
+// MC = Midheaven (career/public), AC = Ascendant (identity), IC = Imum Coeli (home), DC = Descendant (relationships)
+const GOAL_LINE_TYPE_WEIGHTS = {
+  'Career':     { 'MC': 1.25, 'AC': 1.10, 'IC': 0.95, 'DC': 0.90 },
+  'Wealth':     { 'MC': 1.15, 'AC': 1.10, 'IC': 1.00, 'DC': 0.95 },
+  'Love':       { 'MC': 0.95, 'AC': 1.10, 'IC': 1.00, 'DC': 1.25 },
+  'Education':  { 'MC': 1.15, 'AC': 1.15, 'IC': 1.00, 'DC': 0.95 },
+  'Settlement': { 'MC': 1.00, 'AC': 1.05, 'IC': 1.25, 'DC': 1.10 },
+  'Complete':   { 'MC': 1.10, 'AC': 1.10, 'IC': 1.05, 'DC': 1.05 }
 };
+
+function getLineTypeWeight(lineType, goal) {
+  const goalKey = goal.charAt(0).toUpperCase() + goal.slice(1).toLowerCase();
+  const weights = GOAL_LINE_TYPE_WEIGHTS[goalKey] || GOAL_LINE_TYPE_WEIGHTS['Complete'];
+  return weights[lineType] || 1.0;
+}
 
 // CREDIBILITY SCORING: Calculate 50/50 Western + Vedic breakdown
 function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Career') {
@@ -1529,28 +1538,39 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
     }
   }
   
-  // H1: Apply line type weight (MC > AC > IC > DC)
-  if (nearestLineType) {
-    const lineTypeWeight = LINE_TYPE_WEIGHTS[nearestLineType] || 1.0;
-    lineProximityScore = Math.round(lineProximityScore * lineTypeWeight);
-  }
-  
   // Apply personalized planet boost to line score (works for all goals)
+  // Order: Base → PlanetBoost → LineTypeWeight → Cap
   let boostedLineScore = lineProximityScore;
+  let lineTypeWeight = 1.0;
   let hasBoost = false;
+  let hasLineTypeWeight = false;
+  
   if (nearestPlanet) {
     planetBoostInfo = calculatePlanetBoost(nearestPlanet, birthData, goal);
-    // Apply boost (>1.0) or penalty (<1.0)
+    // Step 1: Apply planet boost (>1.0) or penalty (<1.0)
     if (planetBoostInfo.boost !== 1.0) {
       hasBoost = true;
-      if (planetBoostInfo.boost > 1.0) {
-        // Boost: can go up to 35 max
-        boostedLineScore = Math.min(35, Math.round(lineProximityScore * planetBoostInfo.boost));
-      } else {
-        // Penalty: reduce score (min 5)
-        boostedLineScore = Math.max(5, Math.round(lineProximityScore * planetBoostInfo.boost));
-      }
+      boostedLineScore = lineProximityScore * planetBoostInfo.boost;
     }
+  }
+  
+  // H1: Apply goal-based line type weight (MC > AC > IC > DC varies by goal)
+  if (nearestLineType) {
+    lineTypeWeight = getLineTypeWeight(nearestLineType, goal);
+    if (lineTypeWeight !== 1.0) {
+      hasLineTypeWeight = true;
+      boostedLineScore = boostedLineScore * lineTypeWeight;
+    }
+  }
+  
+  // Step 3: Apply caps
+  // Floor of 5 ONLY when penalty was applied (to prevent excessive reduction)
+  // Distant lines (base 0-2) preserve their low scores even with positive weights
+  const hasPenalty = (planetBoostInfo?.boost || 1.0) < 1.0;
+  if (hasPenalty) {
+    boostedLineScore = Math.max(5, Math.min(35, Math.round(boostedLineScore)));
+  } else {
+    boostedLineScore = Math.min(35, Math.round(boostedLineScore));
   }
   
   // 2. Paran Lines Score (25 points max) - now proximity-dependent
@@ -1605,8 +1625,9 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   
   // 5. Dasha Timing Score (15 points max)
   // This measures "is this a good time for your goal" based on Dasha-Goal affinity
-  // NOT whether the city has your Dasha lord's line (that's already in Line Proximity)
+  // H3: Add multiplicative synergy when Dasha lord IS a goal planet (50/50 Maha/Antar weight)
   const currentDasha = birthData.currentDashaLord || 'Jupiter';
+  const currentAntardasha = birthData.currentAntardashaLord || null;
   
   // Dasha-Goal affinity table: how well each Dasha lord supports each goal
   const dashaGoalAffinity = {
@@ -1624,7 +1645,19 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
   // Get Dasha-Goal affinity score (same for all cities - it's a timing factor, not location)
   const goalKey = goal.charAt(0).toUpperCase() + goal.slice(1).toLowerCase();
   const dashaAffinity = dashaGoalAffinity[currentDasha] || dashaGoalAffinity['Jupiter'];
-  const dashaScore = dashaAffinity[goalKey] || dashaAffinity['Complete'] || 10;
+  let baseDashaScore = dashaAffinity[goalKey] || dashaAffinity['Complete'] || 10;
+  
+  // H3: Dasha-Goal Synergy - multiplicative bonus when Dasha lord IS a goal planet
+  // 50/50 weight: (mahaSynergy + antarSynergy) / 2
+  const goalPlanetsForDasha = getPersonalGoalPlanets(goal, lagnaClean);
+  const mahaIsGoalPlanet = goalPlanetsForDasha.includes(currentDasha);
+  const antarIsGoalPlanet = currentAntardasha ? goalPlanetsForDasha.includes(currentAntardasha) : false;
+  
+  const mahaSynergy = mahaIsGoalPlanet ? 1.10 : 1.00;
+  const antarSynergy = antarIsGoalPlanet ? 1.10 : 1.00;
+  const avgDashaSynergy = (mahaSynergy + antarSynergy) / 2;
+  
+  const dashaScore = Math.min(15, Math.round(baseDashaScore * avgDashaSynergy));
   
   const vedicTotal = Math.min(50, nakshatraRashiScore + lagnaVastuScore + dashaScore);
   
@@ -1642,6 +1675,8 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
           boostedScore: boostedLineScore,
           boost: planetBoostInfo?.boost || 1.0,
           boostReasons: planetBoostInfo?.reasons || [],
+          lineTypeWeight: lineTypeWeight,
+          lineType: nearestLineType,
           max: 25,
           boostedMax: 35,
           nearestLine,
@@ -1680,9 +1715,16 @@ function calculateCredibilityScore(cityData, birthData, astroLines, goal = 'Care
         },
         dashaTiming: {
           score: dashaScore,
+          baseScore: baseDashaScore,
           max: 15,
-          planet: currentDasha,
+          mahadasha: currentDasha,
+          antardasha: currentAntardasha,
           goal: goalKey,
+          synergy: {
+            mahaIsGoalPlanet,
+            antarIsGoalPlanet,
+            multiplier: avgDashaSynergy
+          },
           affinity: dashaScore >= 14 ? 'Excellent' : dashaScore >= 10 ? 'Good' : 'Moderate'
         }
       }
