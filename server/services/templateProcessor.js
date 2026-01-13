@@ -759,12 +759,26 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
     data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 70 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-moderate') : '';
     
-    // FIX C: Prefer nearestLine (goal-filtered) over generic lines array
-    // This ensures ranking table matches city page planetary line display
+    // FIX D: Use credibility.western.lineProximity.nearestLine (Lagna-aware from Analysis Engine)
+    // This is the SAME source as city pages, ensuring consistency
     let formattedLines = [];
     
-    // Priority 1: Use nearestLine (goal-relevant, same as city page)
-    if (city.nearestLine) {
+    // Priority 1: Use credibility nearestLine (Lagna-aware, same as city page)
+    const credNearestLine = city.credibility?.western?.lineProximity?.nearestLine;
+    const credDistanceKm = city.credibility?.western?.lineProximity?.distanceKm;
+    
+    // DEBUG: Log actual values being used
+    if (i < 3 && hasCity) {
+      console.log(`[RANKING DEBUG] ${city.name}: credNearestLine=${credNearestLine}, city.nearestLine=${city.nearestLine}`);
+    }
+    
+    if (credNearestLine) {
+      const [planet, type] = (credNearestLine || '').split('-');
+      const distKm = credDistanceKm ? `${Math.round(credDistanceKm)}km` : '';
+      formattedLines = [formatPlanetLine(planet, type) + (distKm ? ` (${distKm})` : '')];
+    }
+    // Priority 2: Fall back to city.nearestLine (from astrologyApi.getScoresForAllCities)
+    else if (city.nearestLine) {
       const [planet, type] = (city.nearestLine || '').split('-');
       const distKm = city.lineDistanceKm ? `${Math.round(city.lineDistanceKm)}km` : '';
       formattedLines = [formatPlanetLine(planet, type) + (distKm ? ` (${distKm})` : '')];

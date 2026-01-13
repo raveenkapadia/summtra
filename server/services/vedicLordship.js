@@ -30,6 +30,27 @@ const SIGNS_ORDER = [
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
+const HINDI_TO_ENGLISH = {
+  'Mesha': 'Aries',
+  'Vrishabha': 'Taurus',
+  'Mithuna': 'Gemini',
+  'Karka': 'Cancer',
+  'Simha': 'Leo',
+  'Kanya': 'Virgo',
+  'Tula': 'Libra',
+  'Vrishchika': 'Scorpio',
+  'Dhanu': 'Sagittarius',
+  'Makara': 'Capricorn',
+  'Kumbha': 'Aquarius',
+  'Meena': 'Pisces'
+};
+
+function normalizeSign(sign) {
+  if (!sign) return null;
+  const clean = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
+  return HINDI_TO_ENGLISH[clean] || clean;
+}
+
 const GOAL_HOUSES = {
   'career': [10, 6],
   'wealth': [2, 11, 5],
@@ -44,12 +65,12 @@ const GOAL_HOUSES = {
 
 /**
  * Get the ruling planet (lord) of a zodiac sign
- * @param {string} sign - Zodiac sign name
+ * @param {string} sign - Zodiac sign name (English or Hindi)
  * @returns {string|null} - Planet name or null
  */
 function getSignLord(sign) {
   if (!sign) return null;
-  const normalized = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
+  const normalized = normalizeSign(sign);
   return SIGN_LORDS[normalized] || null;
 }
 
@@ -65,13 +86,13 @@ function getLagnaLord(lagna) {
 /**
  * Get the sign occupying a specific house based on Lagna
  * @param {number} houseNumber - House number (1-12)
- * @param {string} lagna - Lagna/Ascendant sign
+ * @param {string} lagna - Lagna/Ascendant sign (English or Hindi)
  * @returns {string|null} - Sign name or null
  */
 function getHouseSign(houseNumber, lagna) {
   if (!lagna || houseNumber < 1 || houseNumber > 12) return null;
   
-  const normalized = lagna.charAt(0).toUpperCase() + lagna.slice(1).toLowerCase();
+  const normalized = normalizeSign(lagna);
   const lagnaIndex = SIGNS_ORDER.indexOf(normalized);
   if (lagnaIndex === -1) return null;
   

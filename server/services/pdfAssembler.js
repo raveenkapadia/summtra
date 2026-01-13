@@ -1491,11 +1491,13 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     longitude: city.lng || city.longitude,
     score: city.score || 60,
     direction: city.direction || getDirectionFromCoords(parseFloat(testBirthData.latitude), parseFloat(testBirthData.longitude), city.lat || city.latitude, city.lng || city.longitude),
-    nakshatraMatch: city.nakshatraMatch ?? false,  // Bug 4 Fix: Use actual nakshatra match, not score proxy
+    nakshatraMatch: city.nakshatraMatch ?? false,
     verdict: city.score >= 70 ? 'Highly Favorable' : city.score >= 60 ? 'Favorable' : city.score >= 52 ? 'Moderate' : 'Challenging',
     lines: (city.lines || []).map(l => typeof l === 'string' ? { planet: l.split('-')[0], line_type: l.split('-')[1] || 'AC' } : l),
     avoidReasons: city.score < 52 ? ['Low compatibility score', 'Challenging planetary influences'] : undefined,
-    credibility: city.credibility || null
+    credibility: city.credibility || null,
+    nearestLine: city.nearestLine || null,
+    lineDistanceKm: city.lineDistanceKm || null
   })).sort((a, b) => b.score - a.score) : generateTestCities(scope);
   
   if (useAI && process.env.ANTHROPIC_API_KEY) {
