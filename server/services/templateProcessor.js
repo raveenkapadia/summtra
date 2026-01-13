@@ -759,25 +759,31 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
     data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 70 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-moderate') : '';
     
-    const lines = city.lines || [];
+    // FIX C: Prefer nearestLine (goal-filtered) over generic lines array
+    // This ensures ranking table matches city page planetary line display
     let formattedLines = [];
     
-    if (lines.length > 0) {
-      formattedLines = lines.slice(0, 3).map(l => {
-        if (typeof l === 'string') {
-          const [planet, type] = l.split('-');
-          return formatPlanetLine(planet, type);
-        } else if (l && l.planet) {
-          return formatPlanetLine(l.planet, l.line_type || l.type);
-        }
-        return '';
-      }).filter(Boolean);
+    // Priority 1: Use nearestLine (goal-relevant, same as city page)
+    if (city.nearestLine) {
+      const [planet, type] = (city.nearestLine || '').split('-');
+      const distKm = city.lineDistanceKm ? `${Math.round(city.lineDistanceKm)}km` : '';
+      formattedLines = [formatPlanetLine(planet, type) + (distKm ? ` (${distKm})` : '')];
     }
     
-    if (formattedLines.length === 0 && city.nearestLine) {
-      const [planet, type] = (city.nearestLine || '').split('-');
-      const distKm = city.lineDistanceKm || '';
-      formattedLines = [`${formatPlanetLine(planet, type)} (${distKm}km)`];
+    // Priority 2: Fall back to lines array if nearestLine not available
+    if (formattedLines.length === 0) {
+      const lines = city.lines || [];
+      if (lines.length > 0) {
+        formattedLines = lines.slice(0, 3).map(l => {
+          if (typeof l === 'string') {
+            const [planet, type] = l.split('-');
+            return formatPlanetLine(planet, type);
+          } else if (l && l.planet) {
+            return formatPlanetLine(l.planet, l.line_type || l.type);
+          }
+          return '';
+        }).filter(Boolean);
+      }
     }
     
     if (formattedLines.length === 0) {
@@ -845,27 +851,43 @@ const HOUSE_LORDS_BY_LAGNA = {
   Pisces: ['Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn']
 };
 
+// Extended house mapping for each goal - used when primary houses yield fewer than 4 unique planets
+const GOAL_HOUSE_MAPPING_EXTENDED = {
+  Career: [10, 6, 2, 11, 1, 7],      // Add 1st (self) and 7th (partnerships)
+  Wealth: [2, 11, 5, 9, 1, 10],      // Add 1st (self) and 10th (profession for income)
+  Love: [7, 5, 1, 4, 2, 11],         // Add 2nd (family) and 11th (desires)
+  Education: [4, 5, 9, 1, 3, 10],    // Add 3rd (skills) and 10th (career application)
+  Settlement: [4, 7, 2, 12, 1, 9],   // Add 1st (self) and 9th (fortune/long journeys)
+  Complete: [1, 9, 10, 5, 2, 7]      // Add 2nd and 7th
+};
+
 function getPersonalGoalPlanetsForDisplay(goal, lagna) {
   if (!lagna || !HOUSE_LORDS_BY_LAGNA[lagna]) {
     return GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
   }
   
-  const houses = GOAL_HOUSE_MAPPING[goal] || GOAL_HOUSE_MAPPING.Complete;
+  // FIX A: Use extended house list to always derive 4 Lagna-relevant planets
+  // This prevents Venus appearing for Scorpio+Wealth where it's NOT relevant
+  const houses = GOAL_HOUSE_MAPPING_EXTENDED[goal] || GOAL_HOUSE_MAPPING_EXTENDED.Complete;
   const houseLords = HOUSE_LORDS_BY_LAGNA[lagna];
   const planets = new Set();
   
+  // Iterate through extended house list until we have 4 unique planets
   for (const house of houses) {
     const lord = houseLords[house - 1];
     if (lord) planets.add(lord);
     if (planets.size >= 4) break;
   }
   
-  // Fill remaining slots with fallback planets
   const result = Array.from(planets);
-  const fallback = GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
-  for (const p of fallback) {
-    if (result.length >= 4) break;
-    if (!result.includes(p)) result.push(p);
+  
+  // Fallback only if extended houses still don't yield 4 planets (rare edge case)
+  if (result.length < 4) {
+    const fallback = GOAL_KEY_PLANETS[goal] || GOAL_KEY_PLANETS.Complete;
+    for (const p of fallback) {
+      if (result.length >= 4) break;
+      if (!result.includes(p)) result.push(p);
+    }
   }
   
   return result.slice(0, 4);

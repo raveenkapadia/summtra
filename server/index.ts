@@ -623,13 +623,32 @@ async function startServer() {
       
       // Check for custom birth data in query params (accept both naming conventions)
       const hasCustomData = req.query.date || req.query.birthDate;
+      const lat = (req.query.latitude as string) || (req.query.lat as string) || '19.076';
+      const lng = (req.query.longitude as string) || (req.query.lng as string) || '72.8777';
+      
+      // FIX B: Derive birthPlace from coordinates if not explicitly provided
+      const deriveBirthPlace = (latitude: string, longitude: string): string => {
+        const latNum = parseFloat(latitude);
+        const lngNum = parseFloat(longitude);
+        // Common Indian city coordinates
+        if (Math.abs(latNum - 23.0225) < 0.1 && Math.abs(lngNum - 72.5714) < 0.1) return 'Ahmedabad, India';
+        if (Math.abs(latNum - 19.076) < 0.1 && Math.abs(lngNum - 72.8777) < 0.1) return 'Mumbai, India';
+        if (Math.abs(latNum - 28.6139) < 0.1 && Math.abs(lngNum - 77.209) < 0.1) return 'Delhi, India';
+        if (Math.abs(latNum - 12.9716) < 0.1 && Math.abs(lngNum - 77.5946) < 0.1) return 'Bangalore, India';
+        if (Math.abs(latNum - 13.0827) < 0.1 && Math.abs(lngNum - 80.2707) < 0.1) return 'Chennai, India';
+        if (Math.abs(latNum - 22.5726) < 0.1 && Math.abs(lngNum - 88.3639) < 0.1) return 'Kolkata, India';
+        if (Math.abs(latNum - 17.385) < 0.1 && Math.abs(lngNum - 78.4867) < 0.1) return 'Hyderabad, India';
+        if (Math.abs(latNum - 18.52) < 0.1 && Math.abs(lngNum - 73.8567) < 0.1) return 'Pune, India';
+        return `${latitude}, ${longitude}`;
+      };
+      
       const customBirthData = hasCustomData ? {
         name: (req.query.name as string) || 'User',
         birthDate: (req.query.birthDate as string) || (req.query.date as string),
         birthTime: (req.query.birthTime as string) || (req.query.time as string) || '12:00 PM',
-        birthPlace: (req.query.birthPlace as string) || (req.query.place as string) || 'Mumbai, India',
-        latitude: (req.query.latitude as string) || (req.query.lat as string) || '19.076',
-        longitude: (req.query.longitude as string) || (req.query.lng as string) || '72.8777'
+        birthPlace: (req.query.birthPlace as string) || (req.query.place as string) || deriveBirthPlace(lat, lng),
+        latitude: lat,
+        longitude: lng
       } : null;
       
       const useAI = req.query.ai === 'true' || req.query.ai === '1';

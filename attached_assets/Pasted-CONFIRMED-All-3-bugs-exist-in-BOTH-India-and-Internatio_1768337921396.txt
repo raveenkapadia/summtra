@@ -1,0 +1,80 @@
+CONFIRMED: All 3 bugs exist in BOTH India and International reports. These are CORE CODE bugs.
+
+Before fixing, answer ONE more critical question:
+
+GENERALIZATION TEST - Will the fix work for ANY user?
+
+Currently testing with:
+- Lagna: Scorpio
+- Goal: Wealth
+- Expected Goal Planets: Jupiter, Mercury, Moon
+
+Please run getPersonalGoalPlanetsForDisplay() with these OTHER test cases and show output:
+
+TEST 1: Aries Lagna + Wealth
+- Houses 2,5,9,11 lords for Aries
+- Expected: Venus (2nd), Sun (5th), Jupiter (9th), Saturn (11th)
+- What does function return?
+
+TEST 2: Scorpio Lagna + Career
+- Houses 1,2,6,10 lords for Scorpio  
+- Expected: Mars (1st), Jupiter (2nd), Mars (6th), Sun (10th)
+- What does function return?
+
+TEST 3: Cancer Lagna + Love
+- Houses 5,7,11 lords for Cancer
+- Expected: Mars (5th), Saturn (7th), Venus (11th)
+- What does function return?
+
+If ANY of these return wrong planets or fall back to static lists, the fix will fail for other users.
+
+---
+
+THEN fix in this order:
+
+FIX A: Venus in Goal Planets
+1. Ensure LAGNA is passed to getPersonalGoalPlanetsForDisplay()
+2. Remove Venus from static fallback OR
+3. Make fallback derive dynamically from Lagna
+
+FIX B: Birth Place Mumbai
+1. Remove hardcoded 'Mumbai, India' default
+2. Require explicit place parameter OR derive from lat/lng
+
+FIX C: Ranking Table Mismatch
+1. Use SAME data source (city.nearestLine) for both ranking table and city page
+2. OR ensure city.lines array is goal-filtered same as nearestLine
+
+---
+
+After fixes, generate 3 PDFs to prove universal fix:
+
+PDF 1: Original Test - INTERNATIONAL
+- Lagna: Scorpio
+- Goal: Wealth
+- Birth Place: Ahmedabad, India
+- Scope: International
+- Expected Goal Planets: Jupiter, Mercury, Moon (NO Venus)
+
+PDF 2: Different Lagna - INDIA
+- Lagna: Aries
+- Goal: Wealth
+- Birth Place: Delhi, India
+- Scope: India
+- Expected Goal Planets: Venus, Sun, Jupiter, Saturn (derived from Aries lordship)
+
+PDF 3: Different Goal - INTERNATIONAL
+- Lagna: Scorpio
+- Goal: Career
+- Birth Place: Ahmedabad, India
+- Scope: International
+- Expected Goal Planets: Mars, Jupiter, Sun (derived from houses 1,2,6,10)
+
+For PDF 2 and 3, use any valid birth date/time that produces the required Lagna, or use test override if available.
+
+This proves the fix works:
+✓ Across different Lagnas
+✓ Across different Goals
+✓ Across India and International scopes
+
+Share all 3 PDF links for verification.
