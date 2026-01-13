@@ -1,0 +1,73 @@
+Good audit. Let's compile a MASTER FIX LIST before making any changes.
+
+First, document these STRATEGIC DECISIONS:
+
+DECISION 1: SSUMITRA'S USP - LAGNA-AWARE VEDIC INTERPRETATION
+- Western API (RapidAPI) is "Lagna-blind" - uses generic planet meanings
+- Example: API ignores Mercury for Wealth, but for Scorpio Lagna Mercury is 11th Lord (Gains)
+- Our value-add: We know WHICH planets matter for WHICH Lagna for WHICH goal
+- Decision: Use API for line DISTANCES only, apply our own Lagna-aware planet weighting
+
+From Western API, USE:
+- Line coordinates and distances (accurate)
+- Power zones locations
+
+From Western API, DO NOT USE:
+- life_area_ratings (Lagna-blind)
+- Generic planet-to-goal mappings
+
+DECISION 2: NO HARDCODING - ALL DATA FROM API
+- Current problem: Many values are hardcoded in lookup tables
+- Decision: Derive ALL classifications dynamically from API data
+- House lords: Calculate from Lagna (API provides Lagna)
+- Benefic/Malefic: Derive from house rulerships, not hardcoded tables
+- Goal-relevant planets: Determine from house lords for that user's Lagna
+- Dasha: Use actual API response, not defaults
+
+DECISION 3: GOAL-RELEVANT PLANETS MUST BE LAGNA-SPECIFIC
+- Current: Wealth planets hardcoded as ['Jupiter', 'Venus', 'Mercury', 'Sun'] for ALL Lagnas
+- Problem: Misses Lagna-specific wealth indicators (e.g., 9th lord varies by Lagna)
+- Decision: Goal-relevant planets dynamically determined by user's Lagna house lords
+- For Wealth: Include rulers of 2nd, 5th, 9th, 11th houses for THAT user's Lagna
+
+DECISION 4: HOUSE LORD BOOST SHOULD OVERRIDE FUNCTIONAL MALEFIC PENALTY
+- Current: A planet can get boost AND penalty simultaneously (net wash)
+- Decision: For goal-specific scoring, relevant house lordship overrides malefic status
+- Example: If a planet is 11th Lord for Wealth goal, no malefic penalty applies for Wealth scoring
+
+DECISION 5: LAGNA LORD IS ALWAYS BENEFIC
+- Rule: Lagna lord is ALWAYS beneficial regardless of other houses ruled
+- Decision: Code must dynamically identify Lagna lord and ensure it's never penalized
+
+DECISION 6: ADD NEUTRAL CATEGORY
+- Current: Only Benefic and Malefic categories
+- Decision: Add "Neutrals" - planets ruling mixed houses get no boost or penalty
+- Derive dynamically based on house rulerships
+
+DECISION 7: ANTARDASHA SHOULD INFLUENCE SCORING
+- Current: Only Mahadasha lord used
+- Decision: Factor Antardasha lord into timing score or planet boosts
+
+DECISION 8: USE AVAILABLE VEDIC API ENHANCEMENTS
+- Use `/planets/extended` for: Retrograde detection, Planet speed
+- Use `/astro_details` for: Nakshatra Lord boost, Pada-based direction
+- Use `/manglik` for: Love/Relationship goal adjustment
+- Future: Inquire about premium tier for Shadbala and Yoga detection
+
+IMPORTANT NOTE:
+The Raveen Kapadia example (Scorpio Lagna, Vishakha Nakshatra, Mercury Dasha) was used only to ILLUSTRATE the logic during audit. All fixes must work DYNAMICALLY for ANY user based on their unique chart data from API - not hardcoded for this specific example.
+
+---
+
+Now list ALL BUGS found, categorized by priority:
+
+CRITICAL:
+HIGH:
+MEDIUM:
+
+For each bug include:
+1. What's wrong
+2. What file/function needs change  
+3. What the fix should be (dynamic, not hardcoded)
+
+I want to review this complete list before any code changes.

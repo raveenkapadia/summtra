@@ -1,0 +1,79 @@
+Before finalizing MASTER_FIX_LIST.md, I need you to:
+
+PART 1: Quick VedicAstroAPI Check (5 minutes)
+Does VedicAstroAPI provide:
+1. Dhana Yoga (wealth combinations)
+2. Raj Yoga (power/authority combinations)
+3. Shadbala (planetary strength)
+
+Just check availability and pricing tier. Don't implement - inform the decision only.
+
+PART 2: Verify ALL Bugs Are Captured
+
+Review and confirm these items:
+
+A) 5th House Lord for Wealth Goal
+- Currently WEALTH_LORDS_BY_LAGNA only has 2nd and 11th lords
+- 5th house = speculation, investments, sudden gains
+- Should 5th lord be added to wealth-relevant house lords?
+- Is this covered in C2 or needs separate item?
+
+B) All 12 Lagna Classifications
+- C1 mentions "hardcoded tables" but confirm it includes SPECIFIC fixes:
+
+  | Lagna | Planet | Current | Should Be |
+  |-------|--------|---------|-----------|
+  | Scorpio | Mars | Malefic | Benefic |
+  | Virgo | Saturn | Missing | Benefic |
+  | Aquarius | Mercury | Missing | Benefic |
+  | Aries | Moon | Benefic | Neutral |
+  | Taurus | Moon | Malefic | Neutral |
+  | Gemini | Moon | Malefic | Neutral |
+  | Libra | Moon | Malefic | Neutral |
+  | Leo | Venus | Malefic | Neutral |
+
+C) Verify Decisions Are Correctly Documented
+
+DECISION 1 must clearly state what we USE vs DON'T USE from Western API:
+
+USE from RapidAPI:
+- Line coordinates and distances (accurate geographic data)
+- Power zones locations (where lines intersect)
+
+DO NOT USE from RapidAPI:
+- life_area_ratings (Lagna-blind, generic planet meanings)
+- Astrodynes (Western planetary strength, doesn't account for Lagna)
+- Any pre-calculated goal scores
+
+Reason: Our USP is Lagna-aware Vedic interpretation. API doesn't know Mercury is 11th Lord for Scorpio. WE provide that intelligence.
+
+D) Verify Vedic API Enhancements (H4-H6)
+
+From AstrologyAPI.com, we SHOULD use:
+- /planets/extended → Retrograde detection, speed
+- /astro_details → Nakshatra Lord boost
+- /manglik → Love/Settlement adjustment
+
+Confirm these are in H4, H5, H6.
+
+PART 3: Remove Any Incorrect Items
+
+If the bug list includes "Astrodynes not used" as a bug - REMOVE IT.
+We intentionally don't use Astrodynes because it's Lagna-blind Western calculation.
+
+PART 4: Save Complete Document
+
+Save MASTER_FIX_LIST.md with:
+- All 9 Decisions (D1-D9) with D1 clearly showing USE vs DON'T USE
+- All Critical bugs (C1-C5)
+- All High priority (H1-H6)
+- All Medium priority (M1-M6) - NOT including Astrodynes
+- Implementation note about dynamic logic for ANY user's chart
+- The 5 core functions needed:
+  - deriveFunctionalStatus(lagna)
+  - getGoalPlanets(goal, lagna)
+  - getLagnaLord(lagna)
+  - getHouseLord(houseNumber, lagna)
+  - isRelevantHouseLord(planet, goal, lagna)
+
+Show me the final document for approval before any code changes.
