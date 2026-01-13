@@ -10,11 +10,11 @@ function getAuthHeader() {
 }
 
 const RAVEEN_BIRTH_DATA = {
-  day: 7,
-  month: 12,
-  year: 1992,
-  hour: 9,
-  min: 15,
+  day: 15,
+  month: 11,
+  year: 1982,
+  hour: 8,
+  min: 20,
   lat: 23.0225,
   lon: 72.5714,
   tzone: 5.5
@@ -49,7 +49,7 @@ async function callAPI(endpoint) {
 async function runTest() {
   console.log('\n' + '▓'.repeat(70));
   console.log('  REAL API TEST - Raveen Kapadia');
-  console.log('  Dec 7, 1992, 9:15 AM, Ahmedabad');
+  console.log('  Nov 15, 1982, 08:20 AM, Ahmedabad');
   console.log('▓'.repeat(70));
 
   if (!ASTROLOGY_API_USER_ID || !ASTROLOGY_API_KEY) {
