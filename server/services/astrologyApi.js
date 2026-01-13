@@ -980,19 +980,47 @@ async function getScoresForAllCities(birthData, cities, astroLines = null, goal 
   });
   console.log('===============================================================\n');
   
+  // Get goal planets for this user's Lagna (used for global fallback search)
+  const userLagna = (birthData.lagna || birthData.lagnaSign || 'Scorpio').split(' ')[0].replace(/[()]/g, '');
+  const goalPlanets = getPersonalGoalPlanets(goal, userLagna);
+  
+  console.log(`   🎯 Goal planets for ${goal} + ${userLagna} Lagna: [${goalPlanets.join(', ')}]`);
+  
   // FIX: Propagate goal-filtered nearestLine from credibility to top-level for ranking table
+  // When credibility.nearestLine is null (no goal-relevant line within radius), use global search
   const citiesWithNearestLine = scoredCities.map(city => {
-    const goalFilteredLine = city.credibility?.western?.lineProximity?.nearestLine;
-    const goalFilteredDistance = city.credibility?.western?.lineProximity?.distanceKm;
+    const credNearestLine = city.credibility?.western?.lineProximity?.nearestLine;
+    const credDistance = city.credibility?.western?.lineProximity?.distanceKm;
+    
+    // If credibility found a goal-relevant line, use it
+    if (credNearestLine) {
+      return {
+        ...city,
+        nearestLine: credNearestLine,
+        lineDistanceKm: credDistance
+      };
+    }
+    
+    // FALLBACK: Use global search to find closest goal-relevant line anywhere on Earth
+    // This ensures ranking table NEVER falls back to unfiltered city.lines[0]
+    const globalResult = findGlobalNearestLine(
+      city.lat || city.latitude, 
+      city.lng || city.longitude, 
+      astroLines, 
+      goalPlanets
+    );
     
     return {
       ...city,
-      nearestLine: goalFilteredLine || city.nearestLine || null,
-      lineDistanceKm: goalFilteredDistance || city.lineDistanceKm || null
+      nearestLine: globalResult.nearestLine,
+      lineDistanceKm: globalResult.distanceKm
     };
   });
   
-  console.log(`   ✅ Propagated nearestLine to top-level for ${citiesWithNearestLine.filter(c => c.nearestLine).length}/${citiesWithNearestLine.length} cities`);
+  // Debug: Log how many cities used fallback
+  const credibilityCount = scoredCities.filter(c => c.credibility?.western?.lineProximity?.nearestLine).length;
+  const fallbackCount = scoredCities.length - credibilityCount;
+  console.log(`   ✅ NearestLine: ${credibilityCount} from credibility, ${fallbackCount} from global fallback`);
   
   return {
     success: true,
@@ -1194,6 +1222,105 @@ function calculateLineDistanceKm(cityLat, cityLng, linePoints) {
   }
   
   return minDistance === Infinity ? null : { distance: Math.round(minDistance), nearestLat, nearestLng };
+}
+
+// GLOBAL SEARCH: Find the closest goal-relevant planetary line anywhere on Earth
+// Unlike calculateLineDistanceKm which works on a single line, this searches ALL lines
+// and returns the closest point on any goal-relevant line, regardless of distance
+function findGlobalNearestLine(cityLat, cityLng, astroLines, goalPlanets) {
+  if (!astroLines || !goalPlanets || goalPlanets.length === 0) {
+    return { nearestLine: null, distanceKm: null };
+  }
+  
+  const linesData = astroLines.lines || astroLines;
+  if (!Array.isArray(linesData)) {
+    return { nearestLine: null, distanceKm: null };
+  }
+  
+  let minDistance = Infinity;
+  let nearestLine = null;
+  let nearestLineType = null;
+  let nearestPlanet = null;
+  
+  for (const line of linesData) {
+    // CRITICAL: Only consider goal-relevant planets (Lagna-aware)
+    if (!goalPlanets.includes(line.planet)) continue;
+    
+    const lineType = (line.line_type || line.type || line.angle || 'AC').toUpperCase();
+    const points = line.points;
+    
+    if (!points || !Array.isArray(points)) continue;
+    
+    // Check each point on the line
+    for (const point of points) {
+      let pLat, pLng;
+      
+      if (Array.isArray(point)) {
+        pLng = point[0];
+        pLat = point[1];
+      } else if (point && typeof point === 'object') {
+        pLat = point.latitude ?? point.lat ?? null;
+        pLng = point.longitude ?? point.lng ?? point.lon ?? null;
+      } else {
+        continue;
+      }
+      
+      if (typeof pLat !== 'number' || typeof pLng !== 'number') continue;
+      
+      const dist = haversineDistanceKm(cityLat, cityLng, pLat, pLng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestPlanet = line.planet;
+        nearestLineType = lineType;
+        nearestLine = `${line.planet}-${lineType}`;
+      }
+    }
+    
+    // Also interpolate to find the line's position at the city's latitude
+    const sorted = [...points].filter(p => {
+      const lat = Array.isArray(p) ? p[1] : (p?.latitude ?? p?.lat);
+      return typeof lat === 'number';
+    }).sort((a, b) => {
+      const latA = Array.isArray(a) ? a[1] : (a?.latitude ?? a?.lat);
+      const latB = Array.isArray(b) ? b[1] : (b?.latitude ?? b?.lat);
+      return latA - latB;
+    });
+    
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const p1 = sorted[i];
+      const p2 = sorted[i + 1];
+      
+      const lat1 = Array.isArray(p1) ? p1[1] : (p1?.latitude ?? p1?.lat);
+      const lat2 = Array.isArray(p2) ? p2[1] : (p2?.latitude ?? p2?.lat);
+      const lng1 = Array.isArray(p1) ? p1[0] : (p1?.longitude ?? p1?.lng ?? p1?.lon);
+      const lng2 = Array.isArray(p2) ? p2[0] : (p2?.longitude ?? p2?.lng ?? p2?.lon);
+      
+      if (lat1 <= cityLat && cityLat <= lat2) {
+        const t = (cityLat - lat1) / (lat2 - lat1);
+        const lineLng = lng1 + t * (lng2 - lng1);
+        const dist = haversineDistanceKm(cityLat, cityLng, cityLat, lineLng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestPlanet = line.planet;
+          nearestLineType = lineType;
+          nearestLine = `${line.planet}-${lineType}`;
+        }
+      }
+    }
+  }
+  
+  if (minDistance === Infinity) {
+    // Ultimate fallback: return first goal planet with default line type
+    return { 
+      nearestLine: `${goalPlanets[0]}-MC`, 
+      distanceKm: 9999 
+    };
+  }
+  
+  return { 
+    nearestLine, 
+    distanceKm: Math.round(minDistance) 
+  };
 }
 
 // Get orb strength category based on distance in km

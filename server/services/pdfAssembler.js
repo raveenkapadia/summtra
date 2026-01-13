@@ -624,8 +624,9 @@ export class PDFAssembler {
               boostedScore: western.lineProximity?.boostedScore || displayLineProximity, // After planet boost (0-35)
               boost: western.lineProximity?.boost || 1.0, // Planet boost multiplier
               boostReasons: western.lineProximity?.boostReasons || [], // Reasons for boost
-              nearestLine: western.lineProximity?.nearestLine || 'N/A',
-              distanceKm: Math.round(western.lineProximity?.distanceKm || 0),
+              // FIX: Use city.nearestLine (from global search) when credibility.nearestLine is null
+              nearestLine: western.lineProximity?.nearestLine || city.nearestLine || 'N/A',
+              distanceKm: Math.round(western.lineProximity?.distanceKm || city.lineDistanceKm || 0),
               direction: city.direction || 'N/A',
               orbBars: western.lineProximity?.orbBars || '░░░░░░░░░░',
               orbStrength: western.lineProximity?.orbStrength || 'None'
