@@ -603,8 +603,22 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
   const verdictLabel = score >= 70 ? 'Highly Favorable' : score >= 60 ? 'Favorable' : score >= 52 ? 'Moderate' : 'Challenging';
   const verdictPotential = score >= 70 ? 'excellent' : score >= 60 ? 'good' : score >= 52 ? 'moderate' : 'challenging';
   
-  const fallbackInterpretation = generateFallbackInterpretation(city, goal, verdictPotential);
-  const interpretation = city.aiInterpretation || city.analysis || city.interpretation || fallbackInterpretation;
+  // PHASE 4 B1: Use personalized interpretation when Lagna/Nakshatra available
+  const lagna = baseData?.LAGNA || null;
+  const nakshatra = baseData?.NAKSHATRA || null;
+  const primaryPlanet = city.lines?.[0]?.planet || city.nearestLine?.split('-')[0] || null;
+  const lineType = city.lines?.[0]?.line_type || city.nearestLine?.split('-')[1] || null;
+  
+  let interpretation;
+  if (lagna && nakshatra) {
+    // Use personalized verdict with Lagna/Nakshatra context
+    interpretation = city.aiInterpretation || city.analysis || city.interpretation || 
+      generatePersonalizedVerdict(city, goal, score, lagna, nakshatra, primaryPlanet, lineType, city.direction);
+  } else {
+    // Fallback to original generic interpretation
+    const fallbackInterpretation = generateFallbackInterpretation(city, goal, verdictPotential);
+    interpretation = city.aiInterpretation || city.analysis || city.interpretation || fallbackInterpretation;
+  }
   
   const cred = credibilityData || {};
   const western = cred.breakdown?.western || {};
@@ -732,8 +746,18 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     LAGNA_VASTU_SCORE: lagnaVastuScore,
     DASHA_SCORE: dashaScore,
     
+    // PHASE 4 B4: Star ratings for humanizing score breakdown
+    WESTERN_STARS: getStarRating(westernAdjusted, 50),
+    VEDIC_STARS: getStarRating(vedicTotal, 50),
+    TOTAL_STARS: getStarRating(score, 100),
+    
     DIRECTION_ADJUSTMENT_ROW: directionAdjustmentRow,
     SCORE_TOTAL_CALC: calcString,
+    
+    // PHASE 4 B2: Personalized timing insight with fallback for when Lagna unavailable
+    PERSONALIZED_TIMING_INSIGHT: lagna ? 
+      generatePersonalizedTimingInsight(baseData?.CURRENT_DASHA_LORD || 'Jupiter', goal, city.name, lagna) : 
+      `The planetary lines at this location combined with your current ${baseData?.CURRENT_DASHA_LORD || 'planetary'} period create specific opportunities for ${goal || 'personal growth'} pursuits.`,
     
     // Bug 4 Fix: Add Lagna-specific goal planets from baseData
     GOAL_PLANETS: baseData?.GOAL_PLANETS || getPersonalGoalPlanets(goal, baseData?.LAGNA || 'Scorpio').join(', '),
@@ -1136,6 +1160,147 @@ export function generateVedicTraitsData(birthData, baseData) {
   data.LAGNA_MEANING = getLagnaMeaning(birthData.lagna || '');
   
   return data;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PHASE 4 PART B: PERSONALIZATION DATA MAPPINGS
+// ═══════════════════════════════════════════════════════════════
+
+// B1: Lagna qualities - warm, personal descriptions of each Lagna's core nature
+const LAGNA_QUALITIES = {
+  Aries: 'pioneering spirit and natural courage',
+  Taurus: 'steady determination and practical wisdom',
+  Gemini: 'intellectual curiosity and adaptable nature',
+  Cancer: 'intuitive depth and nurturing instincts',
+  Leo: 'natural charisma and creative leadership',
+  Virgo: 'analytical precision and helpful nature',
+  Libra: 'diplomatic grace and harmony-seeking nature',
+  Scorpio: 'penetrating insight and transformative power',
+  Sagittarius: 'adventurous optimism and philosophical outlook',
+  Capricorn: 'ambitious discipline and patient endurance',
+  Aquarius: 'innovative vision and humanitarian ideals',
+  Pisces: 'intuitive sensitivity and compassionate wisdom'
+};
+
+// B1: Nakshatra gifts - what each nakshatra brings as a natural talent
+const NAKSHATRA_GIFTS = {
+  Ashwini: 'healing abilities and swift action',
+  Bharani: 'creative transformation and patience',
+  Krittika: 'purifying determination and sharp intellect',
+  Rohini: 'artistic creativity and magnetic charm',
+  Mrigashira: 'curious exploration and gentle persistence',
+  Ardra: 'transformative insight and intellectual depth',
+  Punarvasu: 'renewing optimism and harmonious wisdom',
+  Pushya: 'nourishing care and spiritual protection',
+  Ashlesha: 'mystical perception and hypnotic influence',
+  Magha: 'royal dignity and ancestral wisdom',
+  'Purva Phalguni': 'romantic creativity and artistic flair',
+  'Uttara Phalguni': 'generous helpfulness and loyal friendship',
+  Hasta: 'skillful craftsmanship and clever resourcefulness',
+  Chitra: 'brilliant creativity and aesthetic vision',
+  Swati: 'independent diplomacy and flexible adaptation',
+  Vishakha: 'determined ambition and goal-oriented focus',
+  Anuradha: 'devoted friendship and strategic success',
+  Jyeshtha: 'protective authority and elder wisdom',
+  Moola: 'investigative depth and root-seeking transformation',
+  'Purva Ashadha': 'invincible confidence and philosophical independence',
+  'Uttara Ashadha': 'universal victory and righteous penetration',
+  Shravana: 'attentive learning and traditional connection',
+  Dhanishta: 'wealth creation and musical versatility',
+  Shatabhisha: 'healing mystery and independent insight',
+  'Purva Bhadrapada': 'intense transformation and fiery passion',
+  'Uttara Bhadrapada': 'deep wisdom and spiritual control',
+  Revati: 'nurturing protection and safe abundance'
+};
+
+// B4: Star rating function for humanizing scores
+function getStarRating(score, maxScore = 50) {
+  const percentage = (score / maxScore) * 100;
+  if (percentage >= 90) return '⭐⭐⭐⭐⭐';
+  if (percentage >= 70) return '⭐⭐⭐⭐';
+  if (percentage >= 50) return '⭐⭐⭐';
+  if (percentage >= 30) return '⭐⭐';
+  return '⭐';
+}
+
+// B2: Mahadasha themes for timing insights
+const MAHADASHA_THEMES = {
+  Sun: { theme: 'recognition and authority', advice: 'This is a time when your leadership potential can shine. Career moves made now carry extra weight.' },
+  Moon: { theme: 'emotional growth and comfort', advice: 'Focus on creating emotional security and strengthening family bonds in new locations.' },
+  Mars: { theme: 'action and achievement', advice: 'Your drive and energy are heightened. Bold moves can pay off, but choose battles wisely.' },
+  Mercury: { theme: 'communication and commerce', advice: 'Networking and skill-building are favored. Consider locations that offer learning opportunities.' },
+  Jupiter: { theme: 'expansion and wisdom', advice: 'This is an auspicious period for growth. New locations can bring unexpected blessings and opportunities.' },
+  Venus: { theme: 'harmony and relationships', advice: 'Relationships formed now carry special significance. Seek locations that nurture your heart.' },
+  Saturn: { theme: 'discipline and long-term building', advice: 'Patience is key. Success comes through sustained effort. Choose stable locations for lasting foundations.' },
+  Rahu: { theme: 'ambition and unconventional paths', advice: 'Foreign lands and new experiences are favored. Embrace the unfamiliar for rapid growth.' },
+  Ketu: { theme: 'spiritual insight and letting go', advice: 'This is a period of inner transformation. Locations that support reflection may be most beneficial.' }
+};
+
+// B1: Personalized verdict templates by goal and score tier
+function generatePersonalizedVerdict(city, goal, score, lagna, nakshatra, primaryPlanet, lineType, direction) {
+  const lagnaQuality = LAGNA_QUALITIES[lagna] || 'unique cosmic nature';
+  const nakshatraGift = NAKSHATRA_GIFTS[nakshatra] || NAKSHATRA_GIFTS[nakshatra?.replace(/\s/g, '')] || 'natural talents';
+  const cityName = city.name || 'This location';
+  const country = city.country ? `, ${city.country}` : '';
+  
+  // Score tiers: High (70%+), Medium (60-69%), Lower (52-59%)
+  if (goal === 'Career') {
+    if (score >= 70) {
+      return `As a ${lagna} rising with your ${lagnaQuality}, ${cityName}${country} aligns powerfully with your career ambitions. The ${primaryPlanet || 'planetary'} energy at the ${lineType || 'key angles'} here amplifies your professional potential and brings recognition for your contributions. Your ${nakshatra} nakshatra's ${nakshatraGift} will find exceptional opportunities in this environment.`;
+    } else if (score >= 60) {
+      return `${cityName}${country} offers solid career potential for your ${lagna} ascendant. While not your strongest placement, the ${primaryPlanet || 'planetary'} influence here supports steady professional growth. Your ${nakshatraGift} can help you build a meaningful career presence here with consistent effort.`;
+    } else {
+      return `For a ${lagna} like you, ${cityName}${country} requires more conscious effort for career success. The planetary energies here are moderate, but your ${nakshatra}'s ${nakshatraGift} can help you navigate and create your own opportunities.`;
+    }
+  } else if (goal === 'Love') {
+    if (score >= 70) {
+      return `Your ${lagna}'s natural desire for ${lagnaQuality} finds beautiful expression in ${cityName}${country}. The ${primaryPlanet || 'planetary'} energy at the ${lineType || 'key angles'} here opens your heart to meaningful connections that honor your ${nakshatra} sensitivity and capacity for ${nakshatraGift}.`;
+    } else if (score >= 60) {
+      return `${cityName}${country} brings moderate romantic potential for your ${lagna} nature. Relationships here may develop gradually, but your ${nakshatraGift} will attract compatible partners who appreciate your authentic self.`;
+    } else {
+      return `Romance in ${cityName}${country} may require patience for a ${lagna} like you. Focus on building genuine connections through your ${nakshatraGift}, and meaningful relationships can blossom over time.`;
+    }
+  } else if (goal === 'Wealth') {
+    if (score >= 70) {
+      return `Financial abundance flows naturally for your ${lagna} rising in ${cityName}${country}. The ${primaryPlanet || 'planetary'} energy here amplifies your ${nakshatraGift}, creating opportunities for prosperity that align with your values and ${lagnaQuality}.`;
+    } else if (score >= 60) {
+      return `${cityName}${country} offers moderate wealth potential for your ${lagna} approach to finances. The ${primaryPlanet || 'planetary'} influence supports building wealth, though it requires disciplined effort. Your ${nakshatraGift} can open unexpected doors.`;
+    } else {
+      return `Building wealth in ${cityName}${country} will require strategic planning for a ${lagna} like you. Leverage your ${nakshatraGift} and focus on long-term growth rather than quick gains.`;
+    }
+  } else if (goal === 'Education') {
+    if (score >= 70) {
+      return `Your ${lagna}'s ${lagnaQuality} thrives in the learning environment of ${cityName}${country}. The ${primaryPlanet || 'planetary'} energy here expands your intellectual horizons and supports academic excellence. Your ${nakshatra}'s ${nakshatraGift} will be recognized and developed.`;
+    } else if (score >= 60) {
+      return `${cityName}${country} provides a supportive atmosphere for educational pursuits. Your ${lagna} nature benefits from the structured learning opportunities, and your ${nakshatraGift} can help you excel in specialized areas.`;
+    } else {
+      return `Education in ${cityName}${country} may require extra dedication for a ${lagna} like you. Focus on subjects that align with your ${nakshatraGift} for the best results.`;
+    }
+  } else if (goal === 'Settlement') {
+    if (score >= 70) {
+      return `${cityName}${country} offers an ideal environment for your ${lagna} rising to put down roots. The ${primaryPlanet || 'planetary'} energy here supports building a stable, fulfilling home life that honors your ${lagnaQuality}. Your ${nakshatra}'s ${nakshatraGift} will help you create lasting community connections.`;
+    } else if (score >= 60) {
+      return `Settling in ${cityName}${country} can work well for your ${lagna} nature with some adjustment. The environment supports building a comfortable life, and your ${nakshatraGift} will help you adapt and thrive over time.`;
+    } else {
+      return `Long-term settlement in ${cityName}${country} may feel challenging initially for a ${lagna} like you. Consider visiting first and leveraging your ${nakshatraGift} to build a support network.`;
+    }
+  }
+  
+  // Default/Complete goal
+  if (score >= 70) {
+    return `${cityName}${country} resonates powerfully with your ${lagna} rising nature. The planetary energies here support multiple life areas, amplifying your ${lagnaQuality} and giving your ${nakshatra}'s ${nakshatraGift} room to flourish.`;
+  } else if (score >= 60) {
+    return `${cityName}${country} offers balanced potential across life areas for your ${lagna} ascendant. Your ${nakshatraGift} can help you maximize the opportunities available here.`;
+  }
+  return `${cityName}${country} presents moderate overall alignment for a ${lagna} like you. Focus on areas where your ${nakshatraGift} naturally excels for the best results.`;
+}
+
+// B2: Generate personalized timing insight based on Mahadasha
+function generatePersonalizedTimingInsight(dashaLord, goal, cityName, lagna) {
+  const dashaInfo = MAHADASHA_THEMES[dashaLord] || MAHADASHA_THEMES.Jupiter;
+  const goalLower = (goal || 'success').toLowerCase();
+  
+  return `Your ${dashaLord} period is a time of ${dashaInfo.theme}. ${dashaInfo.advice} ${cityName}'s energies harmonize well with this planetary timing for ${goalLower} pursuits.`;
 }
 
 function getRashiHindi(rashi) {

@@ -615,9 +615,10 @@
                         <div class="card-icon">📊</div>
                         <div class="card-title">Score Breakdown</div>
                     </div>
+                    <!-- PHASE 4 B4: Score breakdown with star ratings -->
                     <div class="score-breakdown">
                         <div class="score-category">
-                            <div class="category-label">☉ WESTERN</div>
+                            <div class="category-label">☉ WESTERN {{WESTERN_STARS}}</div>
                             <div class="category-score">{{WESTERN_SCORE}}/50</div>
                         </div>
                         <div class="score-item">
@@ -630,7 +631,7 @@
                             <span>{{PARAN_SCORE}}/25</span>
                         </div>
                         <div class="score-category">
-                            <div class="category-label">ॐ VEDIC</div>
+                            <div class="category-label">ॐ VEDIC {{VEDIC_STARS}}</div>
                             <div class="category-score">{{VEDIC_SCORE}}/50</div>
                         </div>
                         <div class="score-item">
@@ -688,8 +689,9 @@
                         <div class="timing-label">Nakshatra Aligned</div>
                         <div class="timing-value">{{CITY_NAKSHATRA_MATCH}}</div>
                     </div>
+                    <!-- PHASE 4 B2: Personalized timing insight with Mahadasha theme -->
                     <div class="timing-note">
-                        <strong>💡 Timing Insight:</strong> The planetary lines at this location combined with your current {{CURRENT_DASHA_LORD}} period create specific opportunities for {{GOAL}} pursuits.
+                        <strong>💡 Timing Insight:</strong> {{PERSONALIZED_TIMING_INSIGHT}}
                     </div>
                 </div>
             </div>
