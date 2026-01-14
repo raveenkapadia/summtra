@@ -1,0 +1,96 @@
+PHASE 2: Bug Fixes & Polish
+
+⚠️ CRITICAL: DO NOT MODIFY THESE FILES/LOGIC ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The following were fixed in previous phases and MUST NOT be changed:
+
+1. SCORING ALGORITHM (DO NOT TOUCH):
+   - Distance tiers: >1600km=5, >2500km=2, >3500km=0
+   - Paran scores: proximity-dependent (100% at <500km scaling to 20% at >3500km)
+   - Planet boost calculations
+   - Western + Vedic score breakdown logic
+   
+2. VEDIC CALCULATIONS (DO NOT TOUCH):
+   - Lagna determination (uses Vedic rising sign, NOT Western sun sign)
+   - Benefics/malefics by Lagna
+   - Yogakaraka, combustion, exaltation checks
+   - Nakshatra/Rashi compatibility
+
+3. PHASE 1 FIXES (PRESERVE):
+   - Hindi font in glossary (Noto Sans Devanagari)
+   - Active Lines 4-tier fallback system
+   - Date formatting in city pages ("6 Mar 2026 at 3:09 AM")
+   - Single India map (no regional north/south/west/east/central)
+   - Separate India/International sections in combined reports
+   - Map height 520px
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BUG FIXES TO IMPLEMENT:
+
+BUG 7 - Cover Page Date Format:
+- File: Cover page template
+- Change: "1985 December 25" → "25 December 1985"
+- Use existing formatDate helper or create formatBirthDate helper
+- Format: DD MMMM YYYY
+
+BUG 8 - Cover Page Time Format:
+- File: Cover page template  
+- Change: "12:00" → "12:00 PM"
+- Create formatBirthTime helper to add AM/PM
+- Handle 24hr to 12hr conversion (14:30 → 2:30 PM)
+
+BUG 9 - Origin Direction Label:
+- File: City analysis template (verdict/description section)
+- When direction === "Origin", change text from:
+  "Located to the Origin of your birthplace" 
+  TO:
+  "This is your birthplace"
+- Also update the direction badge if applicable
+
+BUG 10 - Southern Hemisphere Latitude:
+- File: Paran lines display in city analysis
+- Current: "-34°N" (incorrect)
+- Fix: "34°S" (correct)
+- Logic: 
+  if (latitude < 0) {
+    display: Math.abs(latitude) + "°S"
+  } else {
+    display: latitude + "°N"
+  }
+
+BUG 11 - Glossary Cut-off:
+- File: Glossary template
+- Ensure "Vastu & Direction Terms" section has complete definitions:
+  - Vastu (वास्तु): Ancient Indian science of architecture and spatial arrangement
+  - Favorable Direction: Direction that harmonizes with your Lagna for maximum benefit
+- Check page break logic to prevent cut-off
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICATION CHECKLIST (Run after fixes):
+
+□ Run full test suite - must maintain 55/55 passing
+□ Generate test PDFs:
+  - India Career (Chennai birthplace)
+  - International Love (Delhi birthplace)
+  - Both Wealth (Chennai birthplace)
+
+□ Verify Phase 1 fixes still work:
+  - [ ] Hindi text renders (मेष, वृषभ, etc.)
+  - [ ] Active Lines populated
+  - [ ] City page dates formatted correctly
+  - [ ] India report has single map
+  - [ ] Both report has separate sections
+
+□ Verify Phase 2 fixes:
+  - [ ] Cover page date: "25 December 1985"
+  - [ ] Cover page time: "12:00 PM" or "2:30 PM"
+  - [ ] Chennai shows "This is your birthplace"
+  - [ ] Sydney shows "34°S" not "-34°N"
+  - [ ] Glossary Vastu section complete
+
+□ Verify scoring unchanged:
+  - [ ] Visakhapatnam still #1 for India Career at 92%
+  - [ ] Seoul still #1 for Both Wealth International at 92%
+  - [ ] Sydney still #1 for International Love at 80%
