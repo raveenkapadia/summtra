@@ -1,0 +1,282 @@
+PHASE 4: Hindi Fix + Personalized Interpretations
+
+⚠️ CRITICAL: DO NOT MODIFY ⚠️
+- Scoring algorithm (distance tiers, paran scores, planet boosts)
+- Vedic calculations (Lagna, benefics/malefics, yogakaraka)
+- All Phase 1, 2, & 3 fixes
+
+═══════════════════════════════════════════════════════════════
+PART A: FIX HINDI TRUNCATION IN GLOSSARY
+═══════════════════════════════════════════════════════════════
+
+BUG 15 - Hindi Planet Names Truncated:
+- File: Glossary template, Planetary Influences section
+- Issue: Hindi text is cut off in the two-column layout
+
+CURRENT (BROKEN):
+  Moon (चं)
+  Venus (शु)
+  Jupiter (गु)
+  Saturn (श )
+  Rahu (रा )
+
+EXPECTED (FIXED):
+  Moon (चंद्र)
+  Venus (शुक्र)
+  Jupiter (गुरु)
+  Saturn (शनि)
+  Rahu (राहु)
+
+FIX OPTIONS:
+1. Increase column width for Planetary Influences section
+2. Use smaller font size for Hindi text
+3. Move Hindi to separate line below English
+4. Shorten the English definitions slightly
+
+═══════════════════════════════════════════════════════════════
+PART B: MAKE INTERPRETATIONS MORE PERSONAL & LESS TECHNICAL
+═══════════════════════════════════════════════════════════════
+
+GOAL: Transform robotic, generic text into warm, personalized guidance
+that feels like advice from a trusted astrologer friend.
+
+────────────────────────────────────────────────────────────────
+B1. CITY ANALYSIS - "OUR VERDICT" SECTION
+────────────────────────────────────────────────────────────────
+
+CURRENT (Generic/Technical):
+"Visakhapatnam, India demonstrates excellent potential for professional 
+growth and career advancement. Located to the Northeast of your birthplace, 
+the planetary configurations at this location offer opportunities for 
+growth and development in your chosen area of focus."
+
+PROBLEMS:
+❌ Doesn't mention user's Lagna, Rashi, or Nakshatra
+❌ "planetary configurations" is too technical
+❌ "chosen area of focus" is vague
+❌ Sounds like a template, not personal advice
+
+IMPROVED (Personal/Warm):
+"As a Pisces rising with your intuitive nature, Visakhapatnam aligns 
+beautifully with your career ambitions. The Sun's powerful presence at 
+your Midheaven here amplifies your natural leadership qualities and 
+brings recognition for your creative contributions. Your Rohini 
+nakshatra's artistic gifts will find appreciation in this culturally 
+rich environment."
+
+TEMPLATE VARIABLES TO USE:
+- {{LAGNA_NAME}} (Pisces, Libra, etc.)
+- {{LAGNA_QUALITY}} (intuitive nature, diplomatic approach, etc.)
+- {{NAKSHATRA_NAME}} (Rohini, Purva Bhadrapad, etc.)
+- {{NAKSHATRA_GIFT}} (artistic gifts, spiritual wisdom, etc.)
+- {{PRIMARY_PLANET}} (Sun, Moon, Venus, etc.)
+- {{LINE_TYPE}} (MC, AC, DC, IC)
+- {{GOAL_NAME}} (Career, Love, Wealth)
+- {{CITY_NAME}}
+- {{DIRECTION}}
+
+CREATE VERDICT TEMPLATES FOR EACH GOAL:
+
+CAREER VERDICTS (samples):
+- High Score (80%+): "Your {{LAGNA_NAME}} rising combined with {{PRIMARY_PLANET}} 
+  at the {{LINE_TYPE}} creates a powerful career catalyst in {{CITY_NAME}}. 
+  This is where your {{NAKSHATRA_GIFT}} can truly shine professionally."
+  
+- Medium Score (60-79%): "{{CITY_NAME}} offers solid career potential for your 
+  {{LAGNA_NAME}} ascendant. While not your strongest placement, the 
+  {{PRIMARY_PLANET}} influence here supports steady professional growth."
+  
+- Lower Score (52-59%): "For a {{LAGNA_NAME}} like you, {{CITY_NAME}} requires 
+  more conscious effort for career success. Focus on your {{NAKSHATRA_GIFT}} 
+  to navigate the challenges here."
+
+LOVE VERDICTS (samples):
+- High Score: "Your {{LAGNA_NAME}}'s natural desire for {{LAGNA_QUALITY}} finds 
+  beautiful expression in {{CITY_NAME}}. The {{PRIMARY_PLANET}}-{{LINE_TYPE}} 
+  line here opens your heart to meaningful connections that honor your 
+  {{NAKSHATRA_NAME}} sensitivity."
+  
+- Medium Score: "{{CITY_NAME}} brings moderate romantic potential for your 
+  {{LAGNA_NAME}} nature. Relationships here may require patience, but your 
+  {{NAKSHATRA_GIFT}} will attract compatible partners."
+
+WEALTH VERDICTS (samples):
+- High Score: "Financial abundance flows naturally for your {{LAGNA_NAME}} 
+  rising in {{CITY_NAME}}. The {{PRIMARY_PLANET}} energy here amplifies your 
+  {{NAKSHATRA_GIFT}}, creating opportunities for prosperity that align with 
+  your values."
+  
+- Medium Score: "{{CITY_NAME}} offers moderate wealth potential. Your 
+  {{LAGNA_NAME}} approach to money benefits from the {{PRIMARY_PLANET}} 
+  influence, though building wealth here requires disciplined effort."
+
+────────────────────────────────────────────────────────────────
+B2. TIMING INSIGHT SECTION
+────────────────────────────────────────────────────────────────
+
+CURRENT (Generic):
+"The planetary lines at this location combined with your current Jupiter 
+period create specific opportunities for Career pursuits."
+
+PROBLEMS:
+❌ "specific opportunities" is meaningless
+❌ Doesn't explain WHY this timing matters
+❌ No actionable advice
+
+IMPROVED (Actionable/Personal):
+"Your Jupiter-Venus period until March 2026 is ideal for exploring 
+{{CITY_NAME}}. Jupiter expands opportunities while Venus smooths 
+relationships—perfect timing for a {{LAGNA_NAME}} to establish 
+professional roots here. Consider visiting or making key career 
+moves before your Jupiter-Sun period begins."
+
+TIMING TEMPLATES BY MAHADASHA:
+
+JUPITER MAHADASHA:
+"Your Jupiter period amplifies growth and luck. {{CITY_NAME}}'s 
+{{PRIMARY_PLANET}} energy harmonizes with Jupiter's expansive 
+nature, making this an auspicious window for {{GOAL_NAME_LOWER}} 
+pursuits. Trust your intuition when opportunities arise here."
+
+SATURN MAHADASHA:
+"During your Saturn period, success comes through discipline and 
+patience. {{CITY_NAME}} rewards your {{LAGNA_NAME}} persistence—
+expect gradual but lasting {{GOAL_NAME_LOWER}} achievements here."
+
+MERCURY MAHADASHA:
+"Your Mercury period enhances communication and networking. In 
+{{CITY_NAME}}, leverage your {{NAKSHATRA_GIFT}} through writing, 
+speaking, or building strategic connections for {{GOAL_NAME_LOWER}} 
+success."
+
+VENUS MAHADASHA:
+"Venus period brings harmony and attraction. {{CITY_NAME}}'s energy 
+supports your {{LAGNA_NAME}} desire for beauty and balance in 
+{{GOAL_NAME_LOWER}} matters. Relationships formed here carry 
+special significance."
+
+────────────────────────────────────────────────────────────────
+B3. CAUTION ZONE INTERPRETATIONS (ALREADY GOOD - MINOR TWEAKS)
+────────────────────────────────────────────────────────────────
+
+Current caution zone text is already personalized. Keep the structure 
+but ensure:
+
+✅ Always reference user's Lagna by name
+✅ Explain the SPECIFIC challenge (not generic "difficulties")
+✅ End with actionable advice, not just warnings
+✅ Mention the Regional Alternative with enthusiasm
+
+ADD TO CAUTION ZONE:
+"If you must be in {{CITY_NAME}}, your {{NAKSHATRA_NAME}}'s 
+{{NAKSHATRA_GIFT}} can help you navigate these challenges. 
+Focus on [specific advice based on nakshatra]."
+
+────────────────────────────────────────────────────────────────
+B4. SCORE BREAKDOWN - HUMANIZE THE NUMBERS
+────────────────────────────────────────────────────────────────
+
+CURRENT (Too Technical):
+☉ WESTERN 50/50
+Line Proximity 25/25
+→ Planet Boost (Sun) +6
+Paran Lines 20/25
+
+ VEDIC 42/50
+Nakshatra + Rashi 12/20
+Lagna-Vastu 15/15
+Dasha Timing 15/15
+
+IMPROVED (Keep numbers but add human context):
+
+☉ WESTERN ASTROLOGY 50/50 ⭐⭐⭐⭐⭐
+Your planetary lines pass directly through this region—this is 
+as strong as it gets!
+
+ VEDIC ASTROLOGY 42/50 ⭐⭐⭐⭐
+Strong alignment with your birth chart. Your Pisces Lagna and 
+Rohini nakshatra resonate well with this direction.
+
+TOTAL: 92% — EXCELLENT MATCH
+
+OR simpler approach - add star ratings:
+- 45-50 points: ⭐⭐⭐⭐⭐ (Exceptional)
+- 35-44 points: ⭐⭐⭐⭐ (Strong)
+- 25-34 points: ⭐⭐⭐ (Moderate)
+- 15-24 points: ⭐⭐ (Weak)
+- Below 15: ⭐ (Minimal)
+
+────────────────────────────────────────────────────────────────
+B5. INTRODUCTION PAGE - ADD PERSONAL WELCOME
+────────────────────────────────────────────────────────────────
+
+After the standard intro, add a personalized section:
+
+"ABOUT YOUR COSMIC BLUEPRINT
+
+{{USER_NAME}}, as a {{LAGNA_NAME}} rising born under {{NAKSHATRA_NAME}} 
+nakshatra with Moon in {{RASHI_NAME}}, you possess a unique combination 
+of {{LAGNA_QUALITY}} and {{NAKSHATRA_GIFT}}. 
+
+This report reveals which locations on Earth amplify these natural 
+gifts for your {{GOAL_NAME}} goals, and which places may require 
+extra effort to achieve success.
+
+Currently in your {{MAHADASHA_LORD}} Mahadasha ({{MAHADASHA_START}} - 
+{{MAHADASHA_END}}), this is a period of {{MAHADASHA_THEME}}. The 
+cities recommended in this report are especially potent during 
+this planetary period."
+
+═══════════════════════════════════════════════════════════════
+PART C: EDGE CASE TESTING
+═══════════════════════════════════════════════════════════════
+
+After implementing Parts A & B, generate test PDFs for:
+
+1. MIDNIGHT BIRTH: 
+   - Date: 1990-06-15, Time: 00:00, Place: Mumbai
+   - Verify: Time displays as "12:00 AM" not "00:00"
+
+2. NOON BIRTH:
+   - Date: 1985-12-25, Time: 12:00, Place: Chennai
+   - Verify: Time displays as "12:00 PM" not "12:00"
+
+3. SOUTHERN HEMISPHERE BIRTHPLACE:
+   - Date: 1988-03-20, Time: 14:30, Place: Sydney
+   - Verify: Direction calculations work correctly
+
+4. Y2K DATE:
+   - Date: 2000-01-01, Time: 06:00, Place: Delhi
+   - Verify: Date parses correctly
+
+5. OLDER DATE:
+   - Date: 1955-08-15, Time: 09:30, Place: Kolkata
+   - Verify: Dasha calculations work for older charts
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+□ All 55 tests still pass
+□ Hindi planet names display fully in glossary
+□ City verdicts mention user's Lagna by name
+□ City verdicts mention user's Nakshatra qualities
+□ Timing insights give actionable advice
+□ Score breakdown feels understandable to non-astrologers
+□ Caution zones end with positive/actionable guidance
+□ All 5 edge case test PDFs generate without errors
+□ Southern hemisphere latitudes still show °S correctly
+□ Origin cities still show "This is your birthplace."
+
+═══════════════════════════════════════════════════════════════
+IMPLEMENTATION ORDER
+═══════════════════════════════════════════════════════════════
+
+1. Fix Hindi truncation in glossary (15 min)
+2. Update verdict templates with personalization (1-2 hours)
+3. Update timing insight templates (30 min)
+4. Add star ratings to score breakdown (30 min)
+5. Run edge case tests (30 min)
+6. Generate final test PDFs and verify (30 min)
+
+Total estimated time: 3-4 hours
