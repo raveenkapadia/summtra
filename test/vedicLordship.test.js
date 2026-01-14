@@ -46,6 +46,15 @@ describe('Hindi Zodiac Name Normalization', () => {
       expect(normalizeSign(null)).toBeNull();
       expect(normalizeSign(undefined)).toBeNull();
     });
+
+    it('handles unknown Hindi signs gracefully', () => {
+      expect(normalizeSign('UnknownSign')).toBe('Unknownsign');
+      expect(normalizeSign('Xyz')).toBe('Xyz');
+    });
+
+    it('handles empty string as falsy input', () => {
+      expect(normalizeSign('')).toBeNull();
+    });
   });
 
   describe('getSignLord()', () => {
