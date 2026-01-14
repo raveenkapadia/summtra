@@ -309,6 +309,7 @@ function testAllLagnas() {
 }
 
 module.exports = {
+  normalizeSign,
   getSignLord,
   getLagnaLord,
   getHouseSign,
@@ -322,5 +323,6 @@ module.exports = {
   testAllLagnas,
   SIGN_LORDS,
   SIGNS_ORDER,
-  GOAL_HOUSES
+  GOAL_HOUSES,
+  HINDI_TO_ENGLISH
 };
