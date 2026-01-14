@@ -1361,6 +1361,7 @@ const PLANET_COLORS = {
 };
 
 export async function generateTestPDF(reportType, scope, goal, customBirthData = null, options = {}) {
+  console.time('⏱️ Total PDF Generation');
   const useAI = options.useAI || false;
   const useRealAPI = options.useRealAPI !== false;
   
@@ -1400,6 +1401,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
   
   if (customBirthData && process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
     console.log('   🔮 Fetching Vedic profile from AstrologyAPI...');
+    console.time('⏱️ Vedic API Call');
     try {
       const vedicBirthData = convertBirthDataForVedicAPI(testBirthData);
       const vedicProfile = await vedicApi.getVedicProfile(vedicBirthData);
@@ -1442,7 +1444,9 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
         console.log(`   ✅ Vedic Profile: Rashi=${testBirthData.rashi}, Lagna=${testBirthData.lagna}, Nakshatra=${testBirthData.nakshatra}, Dasha=${testBirthData.currentDashaLord}`);
         console.log(`   ✅ H4-H6 Data: Retrograde planets=${retroCount}, Manglik=${hasManglik ? 'Yes' : 'No'}`);
       }
+      console.timeEnd('⏱️ Vedic API Call');
     } catch (error) {
+      console.timeEnd('⏱️ Vedic API Call');
       console.warn('   ⚠️ Vedic API fetch failed, using defaults:', error.message);
     }
   }
@@ -1452,6 +1456,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
   
   if (useRealAPI && process.env.RAPIDAPI_KEY) {
     console.log('   📡 Fetching REAL astrology data from API...');
+    console.time('⏱️ Astrocartography API Call');
     try {
       const apiBirthData = convertBirthDataForAPI(testBirthData);
       
@@ -1478,7 +1483,9 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
         scoredCities = scoresResult.data;
         console.log(`   ✅ Scored ${scoredCities.length} cities using transparent 50/50 methodology`);
       }
+      console.timeEnd('⏱️ Astrocartography API Call');
     } catch (error) {
+      console.timeEnd('⏱️ Astrocartography API Call');
       console.error('   ⚠️ API fetch failed, using fallback data:', error.message);
     }
   }
@@ -1547,6 +1554,7 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
     reportType: reportType
   });
   
+  console.time('⏱️ PDF Assembly');
   await assembler.assemble();
   
   const outputDir = path.join(process.cwd(), 'public', 'test-pdfs');
@@ -1558,6 +1566,8 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
   const outputPath = path.join(outputDir, filename);
   
   await assembler.generatePDF(outputPath);
+  console.timeEnd('⏱️ PDF Assembly');
+  console.timeEnd('⏱️ Total PDF Generation');
   
   return {
     path: outputPath,
