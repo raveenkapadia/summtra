@@ -1,0 +1,294 @@
+PHASE 4.2: Comprehensive Test Coverage Expansion
+
+⚠️ CRITICAL RULES ⚠️
+1. DO NOT modify any existing code except test files
+2. All 55 existing tests MUST continue to pass
+3. Run tests after EVERY change to verify no regressions
+4. DO NOT modify: scoring algorithm, Vedic calculations, PDF templates
+
+═══════════════════════════════════════════════════════════════
+STEP 1: SHARE CURRENT TEST STRUCTURE
+═══════════════════════════════════════════════════════════════
+
+First, please show me:
+
+1. List all test files:
+```bash
+   find . -name "*.test.js" -o -name "*.spec.js" | head -20
+```
+
+2. Show the content of each test file (or at least the first 100 lines)
+
+3. Show package.json test configuration:
+```bash
+   cat package.json | grep -A 10 '"scripts"'
+```
+
+4. Show any test fixtures/mock data:
+```bash
+   ls -la test/ tests/ __tests__/ fixtures/ mocks/ 2>/dev/null
+```
+
+═══════════════════════════════════════════════════════════════
+STEP 2: ADD INPUT VALIDATION TESTS
+═══════════════════════════════════════════════════════════════
+
+Create new test file: __tests__/inputValidation.test.js
+
+Test cases to add:
+
+describe('Input Validation', () => {
+  
+  describe('Date Validation', () => {
+    test('rejects future dates')
+    test('rejects invalid date format')
+    test('rejects impossible dates (Feb 30)')
+    test('accepts valid historical dates (1950-2025)')
+    test('handles Y2K dates correctly')
+  });
+
+  describe('Time Validation', () => {
+    test('accepts 00:00 (midnight)')
+    test('accepts 12:00 (noon)')
+    test('accepts 23:59')
+    test('rejects 24:00')
+    test('rejects 25:00')
+    test('rejects negative times')
+  });
+
+  describe('Name Validation', () => {
+    test('accepts normal names')
+    test('handles names with special characters')
+    test('handles very long names (truncates gracefully)')
+    test('handles empty name (uses default)')
+  });
+
+  describe('Location Validation', () => {
+    test('accepts valid Indian cities')
+    test('accepts valid international cities')
+    test('handles unknown city gracefully')
+    test('handles coordinates if provided')
+  });
+
+});
+
+═══════════════════════════════════════════════════════════════
+STEP 3: ADD ALL 12 LAGNAS COVERAGE
+═══════════════════════════════════════════════════════════════
+
+Create new test file: __tests__/lagnaPersonalization.test.js
+
+const ALL_LAGNAS = [
+  'Aries', 'Taurus', 'Gemini', 'Cancer', 
+  'Leo', 'Virgo', 'Libra', 'Scorpio',
+  'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
+
+describe('Lagna Personalization', () => {
+
+  describe('Lagna Qualities', () => {
+    ALL_LAGNAS.forEach(lagna => {
+      test(`${lagna} has defined quality text`, () => {
+        const quality = LAGNA_QUALITIES[lagna];
+        expect(quality).toBeDefined();
+        expect(quality.length).toBeGreaterThan(10);
+      });
+    });
+  });
+
+  describe('Grammar - a/an Article', () => {
+    test('Aries uses "an" article', () => {
+      const verdict = getPersonalizedVerdict({lagnaName: 'Aries', ...});
+      expect(verdict).toContain('an Aries');
+      expect(verdict).not.toContain('a Aries');
+    });
+    
+    test('Aquarius uses "an" article', () => {
+      const verdict = getPersonalizedVerdict({lagnaName: 'Aquarius', ...});
+      expect(verdict).toContain('an Aquarius');
+      expect(verdict).not.toContain('a Aquarius');
+    });
+    
+    test('Pisces uses "a" article', () => {
+      const verdict = getPersonalizedVerdict({lagnaName: 'Pisces', ...});
+      expect(verdict).toContain('a Pisces');
+    });
+  });
+
+  describe('Benefics/Malefics by Lagna', () => {
+    test('Aries Lagna has correct benefics', () => {
+      const benefics = getBeneficsForLagna('Aries');
+      expect(benefics).toContain('Jupiter');
+      expect(benefics).toContain('Sun');
+    });
+    
+    // Add for each Lagna...
+  });
+
+});
+
+═══════════════════════════════════════════════════════════════
+STEP 4: ADD ALL 5 GOALS COVERAGE
+═══════════════════════════════════════════════════════════════
+
+Create new test file: __tests__/goalReports.test.js
+
+const ALL_GOALS = ['Career', 'Love', 'Wealth', 'Education', 'Spiritual'];
+
+describe('Goal-Specific Reports', () => {
+
+  ALL_GOALS.forEach(goal => {
+    describe(`${goal} Report`, () => {
+      
+      test(`${goal} has correct key planets`, () => {
+        const planets = getKeyPlanetsForGoal(goal);
+        expect(planets).toBeDefined();
+        expect(planets.length).toBeGreaterThan(0);
+      });
+      
+      test(`${goal} verdict templates exist`, () => {
+        const templates = getVerdictTemplatesForGoal(goal);
+        expect(templates.high).toBeDefined();
+        expect(templates.medium).toBeDefined();
+        expect(templates.lower).toBeDefined();
+      });
+      
+      test(`${goal} generates valid PDF data`, async () => {
+        const data = await generateReportData({
+          goal: goal,
+          // ... other required params
+        });
+        expect(data.cities.length).toBeGreaterThan(0);
+      });
+      
+    });
+  });
+
+});
+
+═══════════════════════════════════════════════════════════════
+STEP 5: ADD ERROR HANDLING TESTS
+═══════════════════════════════════════════════════════════════
+
+Create new test file: __tests__/errorHandling.test.js
+
+describe('Error Handling', () => {
+
+  describe('API Failures', () => {
+    test('handles API timeout gracefully', async () => {
+      // Mock timeout
+      const result = await generateReport({ /* params */ });
+      expect(result.error).toBeDefined();
+      expect(result.error.type).toBe('TIMEOUT');
+    });
+    
+    test('handles empty API response', async () => {
+      // Mock empty response
+    });
+    
+    test('handles malformed API JSON', async () => {
+      // Mock bad JSON
+    });
+  });
+
+  describe('Missing Data Graceful Degradation', () => {
+    test('works without Lagna data', () => {
+      const verdict = getPersonalizedVerdict({ lagnaName: null, ... });
+      expect(verdict).toBeDefined();
+      expect(verdict).not.toContain('undefined');
+      expect(verdict).not.toContain('null');
+    });
+    
+    test('works without Nakshatra data', () => {
+      const verdict = getPersonalizedVerdict({ nakshatraName: null, ... });
+      expect(verdict).toBeDefined();
+    });
+    
+    test('works without Dasha data', () => {
+      const timing = getTimingInsight({ mahadasha: null, ... });
+      expect(timing).toBeDefined();
+    });
+  });
+
+});
+
+═══════════════════════════════════════════════════════════════
+STEP 6: ADD SCORING EDGE CASE TESTS
+═══════════════════════════════════════════════════════════════
+
+Add to existing scoring test file or create new:
+
+describe('Scoring Edge Cases', () => {
+
+  test('city exactly on line (0km) gets maximum score', () => {
+    const score = calculateLineProximityScore(0);
+    expect(score).toBe(25); // max
+  });
+
+  test('city at 700km gets minimum direct orb score', () => {
+    const score = calculateLineProximityScore(700);
+    expect(score).toBeGreaterThan(0);
+  });
+
+  test('city at 701km gets reduced score', () => {
+    const score = calculateLineProximityScore(701);
+    expect(score).toBeLessThan(calculateLineProximityScore(700));
+  });
+
+  test('city at 3500km+ gets near-zero score', () => {
+    const score = calculateLineProximityScore(3500);
+    expect(score).toBeLessThanOrEqual(2);
+  });
+
+  test('origin city has correct handling', () => {
+    const cityData = prepareCityPageData({
+      city: { name: 'Mumbai' },
+      origin: { name: 'Mumbai' },
+      // ...
+    });
+    expect(cityData.direction).toBe('Origin');
+  });
+
+  test('paran-only city scores correctly', () => {
+    // City with no direct lines but good parans
+  });
+
+});
+
+═══════════════════════════════════════════════════════════════
+STEP 7: RUN ALL TESTS AND REPORT
+═══════════════════════════════════════════════════════════════
+
+After adding new tests:
+
+1. Run full test suite:
+```bash
+   npm test
+```
+
+2. Report results in this format:
+   
+   ORIGINAL TESTS: 55 passing
+   NEW TESTS ADDED: XX
+   TOTAL TESTS: XX
+   
+   NEW TEST BREAKDOWN:
+   - inputValidation.test.js: XX tests
+   - lagnaPersonalization.test.js: XX tests  
+   - goalReports.test.js: XX tests
+   - errorHandling.test.js: XX tests
+   - scoringEdgeCases.test.js: XX tests
+
+3. If any test fails, fix the TEST (not the code) unless 
+   it reveals a genuine bug
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION BEFORE COMPLETING
+═══════════════════════════════════════════════════════════════
+
+□ All 55 original tests still pass
+□ No modifications to non-test files
+□ New tests follow existing code style
+□ Each new test has meaningful assertions
+□ Test file names follow existing convention
+□ Report total test count when complete

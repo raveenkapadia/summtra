@@ -578,6 +578,8 @@ export function prepareReportData(birthData, astroData, options = {}) {
     NAKSHATRA_PADA: birthData.nakshatraPada || '',
     LAGNA: birthData.lagna || '',
     LAGNA_LORD: birthData.lagnaLord || '',
+    // BUG 16a FIX: Add LAGNA_ARTICLE for intro page grammar (a/an before vowel Lagnas)
+    LAGNA_ARTICLE: getArticle(birthData.lagna || ''),
     SUN_SIGN: birthData.sunSign || '',
     MAHADASHA: birthData.currentDashaLord || '',
     CURRENT_DASHA_LORD: birthData.currentDashaLord || '',
