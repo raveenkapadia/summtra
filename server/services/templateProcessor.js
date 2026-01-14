@@ -162,22 +162,70 @@ function flattenData(data, prefix = '') {
   return result;
 }
 
+// BUG 7 Fix: Format date as "DD MMMM YYYY" with support for multiple input formats
 export function formatDate(dateStr) {
   if (!dateStr) return '';
   
   const parts = dateStr.split(/[\/\-]/);
   if (parts.length !== 3) return dateStr;
   
-  const [day, month, year] = parts.map(Number);
+  let day, month, year;
+  const first = parseInt(parts[0], 10);
+  const second = parseInt(parts[1], 10);
+  const third = parseInt(parts[2], 10);
+  
+  // Detect format: if first part is 4 digits, it's YYYY-MM-DD
+  if (parts[0].length === 4 || first > 31) {
+    // YYYY-MM-DD format (e.g., "1985-12-25")
+    year = first;
+    month = second;
+    day = third;
+  } else if (parts[2].length === 4 || third > 31) {
+    // DD/MM/YYYY or DD-MM-YYYY format (e.g., "25/12/1985")
+    day = first;
+    month = second;
+    year = third;
+  } else {
+    // Assume DD/MM/YYYY for ambiguous cases
+    day = first;
+    month = second;
+    year = third;
+  }
+  
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                   'July', 'August', 'September', 'October', 'November', 'December'];
   
+  // BUG 7 Fix: Return format "25 December 1985" (DD MMMM YYYY)
   return `${day} ${months[month - 1]} ${year}`;
 }
 
+// BUG 8 Fix: Convert time to 12-hour format with AM/PM
 export function formatTime(timeStr) {
   if (!timeStr) return 'Unknown';
-  return timeStr;
+  
+  // Parse time string (formats: "HH:MM", "H:M", "HH:MM:SS")
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1].padStart(2, '0');
+  
+  if (isNaN(hours)) return timeStr;
+  
+  const period = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+  
+  return `${hours}:${minutes} ${period}`;
+}
+
+// BUG 10 Fix: Format latitude with proper N/S hemisphere display
+export function formatLatitudeDisplay(latitude) {
+  const lat = parseFloat(latitude);
+  if (isNaN(lat)) return '0°N';
+  
+  const absLat = Math.abs(lat);
+  const hemisphere = lat < 0 ? 'S' : 'N';
+  return `${Math.round(absLat)}°${hemisphere}`;
 }
 
 export function generateGoalBadges(goals) {
@@ -652,6 +700,8 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     CITY_SCORE: score,
     CITY_RANK: rank,
     CITY_LATITUDE: Math.round(city.latitude || city.lat || 0),
+    // BUG 10 Fix: Display latitude with proper N/S hemisphere
+    CITY_LATITUDE_DISPLAY: formatLatitudeDisplay(city.latitude || city.lat || 0),
     CITY_LONGITUDE: city.longitude || city.lng || '',
     CITY_DIRECTION: city.direction || '',
     CITY_NAKSHATRA_MATCH: city.nakshatraMatch ? 'Yes' : 'No',
@@ -757,7 +807,13 @@ function generateFallbackInterpretation(city, goal, scoreClass) {
     return `${cityName}${country ? ', ' + country : ''} shows ${scoreClass.toLowerCase()} compatibility for ${goalText}. The cosmic energies here particularly support ${lineDescriptions[0].toLowerCase()}, which aligns well with your aspirations in this area.`;
   }
   
-  const directionText = city.direction ? ` Located to the ${city.direction} of your birthplace,` : '';
+  // BUG 9 Fix: Handle "Origin" direction - this is the birthplace
+  let directionText = '';
+  if (city.direction === 'Origin') {
+    directionText = ' This is your birthplace.';
+  } else if (city.direction) {
+    directionText = ` Located to the ${city.direction} of your birthplace,`;
+  }
   return `${cityName}${country ? ', ' + country : ''} demonstrates ${scoreClass.toLowerCase()} potential for ${goalText}.${directionText} the planetary configurations at this location offer opportunities for growth and development in your chosen area of focus.`;
 }
 
