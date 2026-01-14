@@ -1,0 +1,424 @@
+PHASE 5.1: Visual Design Overhaul (CSS Only)
+
+Make the PDF visually stunning and premium. 
+ONLY modify CSS/styling in HTML templates.
+
+═══════════════════════════════════════════════════════════════
+RULES
+═══════════════════════════════════════════════════════════════
+✅ CHANGE: CSS styles, colors, spacing, fonts, backgrounds
+❌ DON'T TOUCH: JavaScript, calculations, text content, logic
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 1: COLOR PALETTE (Cosmic & Premium)
+═══════════════════════════════════════════════════════════════
+
+Replace current colors with this premium palette:
+
+PRIMARY COLORS:
+--deep-navy: #0f0f23;        /* Dark backgrounds */
+--cosmic-blue: #1a1a3e;      /* Section backgrounds */
+--midnight: #141432;         /* Cards/boxes */
+
+ACCENT COLORS:
+--gold: #d4a574;             /* Primary accent, scores */
+--bright-gold: #f4c87a;      /* Highlights, stars */
+--cosmic-purple: #6b5b95;    /* Secondary accent */
+
+TEXT COLORS:
+--text-light: #e8e6e3;       /* Primary text on dark */
+--text-muted: #9a9a9a;       /* Secondary text */
+--text-gold: #d4a574;        /* Emphasized text */
+
+SCORE COLORS:
+--score-excellent: #4ade80;  /* 70%+ green */
+--score-good: #fbbf24;       /* 60-69% amber */
+--score-moderate: #fb923c;   /* 52-59% orange */
+--score-caution: #f87171;    /* Below 52% soft red */
+
+Apply to:
+- Page backgrounds: gradient from --deep-navy to --cosmic-blue
+- Section headers: --gold text
+- Score percentages: --bright-gold
+- Star ratings: --bright-gold
+- Cards/boxes: --midnight with subtle border
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 2: SPACING & BREATHING ROOM
+═══════════════════════════════════════════════════════════════
+
+Current problem: Everything feels cramped and dense.
+
+FIXES:
+
+1. PAGE MARGINS
+   - Increase page padding: 60px on all sides (was ~30px)
+   - Content should not touch edges
+
+2. SECTION SPACING
+   - Add 40px margin between major sections
+   - Add 24px padding inside section boxes
+
+3. LINE HEIGHT
+   - Body text: line-height: 1.7 (was ~1.4)
+   - Headers: line-height: 1.3
+
+4. PARAGRAPH SPACING
+   - margin-bottom: 16px between paragraphs
+   - Don't stack text blocks without breathing room
+
+5. TABLE/GRID SPACING
+   - Cell padding: 16px (was ~8px)
+   - Row spacing: 12px gap
+
+CSS Example:
+```css
+.section {
+  margin-bottom: 48px;
+  padding: 32px;
+}
+
+.content-block {
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.city-card {
+  padding: 24px;
+  margin-bottom: 20px;
+}
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 3: SCORE DISPLAY REDESIGN
+═══════════════════════════════════════════════════════════════
+
+CURRENT (Too technical):
+┌────────────────────────────────────┐
+│ ☉ WESTERN ★★★★★ 45/50            │
+│ Line Proximity 22/25              │
+│ → Planet Boost (Mercury) +3       │
+│ Paran Lines 20/25                 │
+│                                    │
+│ ॰ VEDIC ★★★★ 41/50               │
+│ Nakshatra + Rashi 20/20           │
+│ Lagna-Vastu 10/15                 │
+│ Dasha Timing 11/15                │
+│                                    │
+│ TOTAL 45 + 41 = 86%               │
+└────────────────────────────────────┘
+
+REDESIGN TO:
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│                         86%                                │
+│                    ━━━━━━━━━━━━                            │
+│                   COSMIC ALIGNMENT                         │
+│                                                            │
+│     ┌─────────────────┐    ┌─────────────────┐           │
+│     │   ☉ WESTERN     │    │    ॰ VEDIC      │           │
+│     │                 │    │                 │           │
+│     │    45/50        │    │    41/50        │           │
+│     │   ★★★★★        │    │    ★★★★☆        │           │
+│     │                 │    │                 │           │
+│     │  ▓▓▓▓▓▓▓▓▓░    │    │  ▓▓▓▓▓▓▓▓░░    │           │
+│     └─────────────────┘    └─────────────────┘           │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+
+CSS Implementation:
+```css
+.score-main {
+  font-size: 72px;
+  font-weight: 300;
+  color: var(--bright-gold);
+  text-align: center;
+  letter-spacing: -2px;
+}
+
+.score-label {
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.score-cards {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.score-card {
+  background: var(--midnight);
+  border: 1px solid rgba(212, 165, 116, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  min-width: 160px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--bright-gold));
+  border-radius: 3px;
+}
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 4: CITY RANKING CARDS
+═══════════════════════════════════════════════════════════════
+
+CURRENT: Dense table rows
+
+REDESIGN TO: Visual cards with hierarchy
+```css
+.city-rank-card {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, var(--midnight), var(--cosmic-blue));
+  border: 1px solid rgba(212, 165, 116, 0.15);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  transition: transform 0.2s;
+}
+
+.city-rank-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+}
+
+/* Top 3 cities get special treatment */
+.city-rank-card.top-3 {
+  background: linear-gradient(135deg, 
+    rgba(212, 165, 116, 0.1), 
+    rgba(107, 91, 149, 0.1));
+  border-color: var(--gold);
+  padding: 28px 32px;
+}
+
+.city-rank-card.rank-1 {
+  border-width: 2px;
+  box-shadow: 0 4px 24px rgba(212, 165, 116, 0.2);
+}
+
+.city-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.city-country {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.city-score {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--bright-gold);
+  margin-left: auto;
+}
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 5: TYPOGRAPHY HIERARCHY
+═══════════════════════════════════════════════════════════════
+
+Create clear visual hierarchy:
+```css
+/* Page titles */
+.page-title {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Section headers */
+.section-header {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(212, 165, 116, 0.3);
+}
+
+/* Subsection headers */
+.subsection-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+/* Body text */
+.body-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-light);
+}
+
+/* Caption/small text */
+.caption {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* Emphasized text */
+.highlight {
+  color: var(--gold);
+  font-weight: 500;
+}
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 6: SECTION DIVIDERS
+═══════════════════════════════════════════════════════════════
+
+Replace plain lines with elegant dividers:
+```css
+.section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 48px 0;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(212, 165, 116, 0.4), 
+    transparent);
+}
+
+.section-divider .divider-icon {
+  margin: 0 24px;
+  color: var(--gold);
+  font-size: 18px;
+}
+
+/* Use: <div class="section-divider"><span class="divider-icon">✦</span></div> */
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 7: COVER PAGE ENHANCEMENT
+═══════════════════════════════════════════════════════════════
+```css
+.cover-page {
+  background: linear-gradient(180deg, 
+    var(--deep-navy) 0%, 
+    var(--cosmic-blue) 50%,
+    var(--midnight) 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle star pattern overlay */
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+    1px 1px at 20px 30px, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.3), transparent);
+  background-size: 200px 200px;
+  opacity: 0.5;
+}
+
+.cover-title {
+  font-size: 14px;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+
+.cover-name {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text-light);
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+
+.cover-subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.cover-logo {
+  margin-top: 60px;
+  opacity: 0.7;
+}
+```
+
+═══════════════════════════════════════════════════════════════
+PRIORITY 8: STAR RATINGS ENHANCEMENT
+═══════════════════════════════════════════════════════════════
+
+Make stars more elegant:
+```css
+.star-rating {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 18px;
+}
+
+.star-filled {
+  color: var(--bright-gold);
+  text-shadow: 0 0 8px rgba(244, 200, 122, 0.5);
+}
+
+.star-empty {
+  color: rgba(255, 255, 255, 0.2);
+}
+```
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After changes:
+□ npm test → All 285 tests pass
+□ Generate PDF → Review visual improvements
+□ All data/scores identical → Only styling changed
+□ No JavaScript modified
+
+Generate 2 test PDFs and share links for review.
