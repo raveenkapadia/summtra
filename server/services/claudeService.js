@@ -841,7 +841,24 @@ async function generateAllInterpretations(astrologyData, userData, reportType) {
 
 async function generateAvoidCityInterpretation(city, userData) {
   const anthropic = getAnthropicClient();
-  const zodiac = getZodiacSign(userData.birthDate);
+  
+  // CRITICAL FIX: Use Vedic Lagna from API, NOT Western Sun Sign from birth date
+  // The Lagna is the user's Vedic ascendant, which is the primary factor in astrocartography
+  let zodiac;
+  if (userData.lagna) {
+    // Extract English sign name from Lagna (e.g., "Pisces" from "Meena (Pisces)" or just "Pisces")
+    const lagnaStr = String(userData.lagna);
+    const parenMatch = lagnaStr.match(/\(([^)]+)\)/);
+    const signName = parenMatch ? parenMatch[1] : lagnaStr.split(' ')[0];
+    
+    // Find the zodiac info for this sign
+    const signInfo = ZODIAC_SIGNS.find(z => z.name.toLowerCase() === signName.toLowerCase());
+    zodiac = signInfo ? { ...signInfo, monthName: 'Vedic' } : { name: signName, symbol: '♈', element: 'Unknown', monthName: 'Vedic' };
+  } else {
+    // Fallback to Western Sun Sign only if Lagna not available
+    zodiac = getZodiacSign(userData.birthDate);
+  }
+  
   const goal = (userData.reportGoal || 'complete').toLowerCase();
   
   const cityName = city.name || city.city;
@@ -962,12 +979,20 @@ async function generateAvoidCityInterpretations(cities, userData) {
             avoidInterpretation: result
           };
         } catch (error) {
-          const zodiac = getZodiacSign(userData.birthDate);
+          // Use Lagna if available, otherwise fall back to Western Sun Sign
+          let signName = 'Unknown';
+          if (userData.lagna) {
+            const lagnaStr = String(userData.lagna);
+            const parenMatch = lagnaStr.match(/\(([^)]+)\)/);
+            signName = parenMatch ? parenMatch[1] : lagnaStr.split(' ')[0];
+          } else {
+            signName = getZodiacSign(userData.birthDate).name;
+          }
           const goal = userData.reportGoal || 'complete';
           const fallbackLine = city.nearestLine || 'Saturn-IC';
           return {
             ...city,
-            avoidInterpretation: `${city.name || city.city} may present some challenges for your ${goal} objectives due to ${fallbackLine} influences. As a ${zodiac.name}, careful consideration is advised.`,
+            avoidInterpretation: `${city.name || city.city} may present some challenges for your ${goal} objectives due to ${fallbackLine} influences. As a ${signName} Lagna, careful consideration is advised.`,
             challengingLine: fallbackLine
           };
         }

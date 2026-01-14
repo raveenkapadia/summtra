@@ -985,6 +985,9 @@ export class PDFAssembler {
       const userData = {
         name: this.birthData.name || 'User',
         birthDate: this.birthData.birthDate || this.birthData.birth_date,
+        birthPlace: this.birthData.birthPlace || 'India',
+        lagna: this.birthData.lagna || null,
+        rashi: this.birthData.rashi || null,
         reportGoal: goal.toLowerCase()
       };
       
