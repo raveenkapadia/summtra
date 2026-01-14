@@ -1,0 +1,163 @@
+# Ssumitra Phase 1: Bug Fixes + Layout Improvements
+
+## ⚠️ IMPORTANT: CONFIRM BEFORE STARTING
+
+Before making any changes, please confirm:
+
+1. **These changes are DISPLAY/TEMPLATE ONLY** - No modifications to:
+   - Scoring algorithms (`credibilityScoring.js`)
+   - Vedic calculations (`vedicLordship.js`, `vedicApi.js`)
+   - Data flow or transformations (`astrologyApi.js`)
+   - City ranking logic
+   
+2. **Recently fixed bugs must NOT regress:**
+   - ✅ Ranking table ↔ City page consistency (28% → 100% match)
+   - ✅ Caution zone now uses Vedic Lagna (not Western Sun Sign)
+   - ✅ Hindi zodiac name normalization (Tula → Libra, etc.)
+   - ✅ nearestLine field preservation
+
+3. **Run the test suite BEFORE and AFTER changes:**
+   npm test
+   All 55 tests must pass before deployment.
+
+**Please confirm you understand these constraints before proceeding.**
+
+---
+
+## PHASE 1: Critical Bug Fixes + Quick Wins
+
+---
+
+### 🔴 BUG FIX 1: Hindi Font Not Rendering
+
+**Problem:** Glossary page shows Hindi text as boxes (□□□□) instead of actual characters
+
+**Location:** Glossary page → "Planetary Influences" section
+
+**Expected Display:**
+- Sun (सूर्य)
+- Moon (चंद्र)
+- Mercury (बुध)
+- Venus (शुक्र)
+- Mars (मंगल)
+- Jupiter (गुरु)
+- Saturn (शनि)
+- Rahu (राहु)
+
+**Fix:** Embed Noto Sans Devanagari font in the PDF generation HTML template.
+
+---
+
+### 🔴 BUG FIX 2: "Active Lines" Field is Empty
+
+**Problem:** In "Optimal Timing for Relocation" section, the "ACTIVE LINES" field shows nothing
+
+**Location:** City Analysis page → Timing section
+
+**Expected:** Should show planetary lines passing through/near the city, e.g., "Jupiter-MC, Mars-DS"
+
+**Fix:** Find where city timing data is assembled and ensure activeLines is populated and passed to template.
+
+---
+
+### 🟡 BUG FIX 3: Date Format Inconsistent
+
+**Problem:** Date shows as "6-3-2026 3:9" instead of readable format
+
+**Location:** "CURRENT PERIOD ENDS" field in timing section
+
+**Current:** 6-3-2026 3:9
+
+**Expected:** 6 Mar 2026 03:09 or March 6, 2026 at 3:09 AM
+
+**Fix:** Use proper date formatting with moment.js or date-fns.
+
+---
+
+### 🔴 LAYOUT FIX 4: Remove India Regional Maps
+
+**Applies to:** India-only reports (scope: "india")
+
+**Current State:** Shows 6 separate maps (Full, North, South, East, West, Central India)
+
+**New State:** Single full-page India map only
+
+**Savings:** ~5 pages removed from India reports
+
+---
+
+### 🔴 LAYOUT FIX 5: Separate India vs International Sections
+
+**Applies to:** Combined reports where user selects BOTH India AND International
+
+**Current State:** All cities mixed in one ranked list (Mumbai next to Tokyo)
+
+**New State:** Two distinct sections:
+
+**Section A: "Your Top Cities in India"**
+- India map (full page)
+- Top 12 Indian cities ranked
+- Indian cities caution zones
+
+**Section B: "Your Top International Cities"**
+- World map (full page)  
+- Top 12 International cities ranked
+- International cities caution zones
+
+**Key:** Don't mix Mumbai with Tokyo in same list - separate rankings per region.
+
+---
+
+### 🔴 LAYOUT FIX 6: Full Page Maps
+
+**Problem:** Maps are currently half-page, making them cluttered
+
+**New Requirement:** 
+- All maps should be full page with proper aspect ratio
+- One map per page, not cramped alongside text
+- Applies to: World, regional, and city maps
+
+---
+
+## 📋 IMPLEMENTATION ORDER
+
+1. Confirm understanding of constraints (no scoring logic changes)
+2. Run npm test - confirm all 55 tests pass
+3. Fix BUG 1: Hindi font
+4. Fix BUG 2: Active Lines empty
+5. Fix BUG 3: Date format
+6. Layout Fix 4: Remove India regional maps
+7. Layout Fix 5: Separate India vs International
+8. Layout Fix 6: Full page maps
+9. Run npm test again - confirm all 55 tests still pass
+10. Generate test PDFs for verification:
+    - India-only Career report
+    - International-only Love report
+    - Both (India + International) Wealth report
+
+---
+
+## ✅ EXPECTED RESULTS AFTER PHASE 1
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Report pages (India) | ~47 | ~30-35 |
+| Hindi text display | Boxes | Correct (सूर्य) |
+| Active Lines field | Empty | Shows lines |
+| Date format | 6-3-2026 3:9 | 6 Mar 2026 03:09 |
+| India maps | 6 regional | 1 full page |
+| Both reports | Mixed list | Separate sections |
+| Map size | Half page | Full page |
+
+---
+
+## 🚨 FINAL REMINDER
+
+Before committing changes, verify:
+- npm test passes (all 55 tests)
+- Scoring logic untouched
+- Caution zone still uses Vedic Lagna
+- Ranking table matches city pages
+- No new console errors
+
+Please confirm completion of each step before moving to next.
