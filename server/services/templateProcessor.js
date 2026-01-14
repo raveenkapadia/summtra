@@ -57,6 +57,67 @@ const LINE_TYPES = [
   { type: 'IC', name: 'Imum Coeli', style: 'fine-dotted', meaning: 'Home, roots, private life' }
 ];
 
+function getActiveLines(city, lineProx) {
+  // Priority 1: Use city.lines array if populated
+  if (city.lines && city.lines.length > 0) {
+    return city.lines.map(l => typeof l === 'string' ? l : `${l.planet}-${l.line_type}`).join(', ');
+  }
+  
+  // Priority 2: Use nearestLine from lineProx (credibility scoring)
+  if (lineProx && lineProx.nearestLine) {
+    return lineProx.nearestLine;
+  }
+  
+  // Priority 3: Use city.nearestLine (from astrologyApi scoring)
+  if (city.nearestLine) {
+    return city.nearestLine;
+  }
+  
+  // Priority 4: Extract from credibility data
+  const credNearestLine = city.credibility?.western?.lineProximity?.nearestLine;
+  if (credNearestLine) {
+    return credNearestLine;
+  }
+  
+  return 'N/A';
+}
+
+export function formatDashaDate(dateStr) {
+  if (!dateStr) return '';
+  
+  // Handle formats like "6-3-2026 3:9" or "6-3-2026  3:9" (with double space)
+  const cleanStr = dateStr.replace(/\s+/g, ' ').trim();
+  const parts = cleanStr.split(' ');
+  
+  if (parts.length < 1) return dateStr;
+  
+  const datePart = parts[0];
+  const timePart = parts[1] || '';
+  
+  // Parse date (D-M-YYYY format from Vedic API)
+  const dateParts = datePart.split('-');
+  if (dateParts.length !== 3) return dateStr;
+  
+  const [day, month, year] = dateParts.map(Number);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // Parse time if available (H:M format)
+  let timeFormatted = '';
+  if (timePart) {
+    const timeParts = timePart.split(':');
+    if (timeParts.length >= 2) {
+      const hour = parseInt(timeParts[0], 10);
+      const minute = parseInt(timeParts[1], 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      timeFormatted = ` at ${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+    }
+  }
+  
+  return `${day} ${months[month - 1]} ${year}${timeFormatted}`;
+}
+
 export function loadTemplate(templateName) {
   const templatePath = path.join(TEMPLATES_DIR, templateName);
   if (!fs.existsSync(templatePath)) {
@@ -465,10 +526,10 @@ export function prepareReportData(birthData, astroData, options = {}) {
     SUN_SIGN: birthData.sunSign || '',
     MAHADASHA: birthData.currentDashaLord || '',
     CURRENT_DASHA_LORD: birthData.currentDashaLord || '',
-    CURRENT_DASHA_END: birthData.currentDashaEnd || '',
+    CURRENT_DASHA_END: formatDashaDate(birthData.currentDashaEnd) || '',
     // Bug 5 Fix: Add Antardasha end date for period display
     ANTARDASHA: birthData.currentAntardasha || '',
-    ANTARDASHA_END: birthData.antardashaEnd || birthData.currentDashaEnd || '',
+    ANTARDASHA_END: formatDashaDate(birthData.antardashaEnd || birthData.currentDashaEnd) || '',
     // Bug 4 Fix: Add Lagna-specific goal planets
     GOAL_PLANETS: getPersonalGoalPlanets(goals[0] || 'Wealth', birthData.lagna || 'Scorpio').join(', '),
     DASHA_TIMELINE: generateDashaTimeline(birthData.antardashaTimeline),
@@ -598,7 +659,7 @@ export function prepareCityPageData(city, rank, goal, baseData, credibilityData 
     CITY_SCORE_CLASS: verdictPotential,
     CITY_ANALYSIS: interpretation,
     CITY_INTERPRETATION: interpretation,
-    CITY_ACTIVE_LINES: (city.lines || []).map(l => typeof l === 'string' ? l : `${l.planet} ${l.line_type}`).join(', '),
+    CITY_ACTIVE_LINES: getActiveLines(city, lineProx),
     CITY_PLANETARY_INFLUENCES: generateCityPlanetaryInfluences(city.lines || []),
     GOAL: goal,
     GOAL_ICON: GOAL_ICONS[goal] || '✨',

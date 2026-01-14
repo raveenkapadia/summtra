@@ -26,7 +26,8 @@ const { INDIAN_CITIES, INTERNATIONAL_CITIES } = require('./geocodingService.js')
 
 const GOALS_ORDER = ['Career', 'Wealth', 'Love', 'Education', 'Settlement'];
 
-const REGIONAL_VIEWS_INDIA = ['india', 'india_north', 'india_south', 'india_west', 'india_east', 'india_central'];
+// LAYOUT FIX 4: India-only reports show single full India map (removed regional views)
+const REGIONAL_VIEWS_INDIA = ['india'];
 const REGIONAL_VIEWS_INTERNATIONAL = ['europe', 'middle_east', 'southeast_asia', 'east_asia', 'australia', 'north_america', 'south_america', 'africa', 'world'];
 
 export class PDFAssembler {
@@ -273,18 +274,34 @@ export class PDFAssembler {
   }
   
   async addGoalSection(goal) {
-    await this.addGoalDividerPage(goal);
-    await this.addCityRankingPages(goal);
-    await this.addNotableCitiesPage(goal);
-    await this.addBestCityPages(goal);
-    await this.addAvoidCityPages(goal);
+    // LAYOUT FIX 5: Separate India vs International sections for combined reports
+    if (this.scope === 'Both') {
+      // Section A: India
+      await this.addGoalDividerPage(goal, 'India');
+      await this.addCityRankingPages(goal, 'India');
+      await this.addBestCityPages(goal, 'India');
+      await this.addAvoidCityPages(goal, 'India');
+      
+      // Section B: International  
+      await this.addGoalDividerPage(goal, 'International');
+      await this.addCityRankingPages(goal, 'International');
+      await this.addNotableCitiesPage(goal);
+      await this.addBestCityPages(goal, 'International');
+      await this.addAvoidCityPages(goal, 'International');
+    } else {
+      await this.addGoalDividerPage(goal);
+      await this.addCityRankingPages(goal);
+      await this.addNotableCitiesPage(goal);
+      await this.addBestCityPages(goal);
+      await this.addAvoidCityPages(goal);
+    }
   }
   
-  async addGoalDividerPage(goal) {
+  async addGoalDividerPage(goal, regionScope = null) {
     const template = loadTemplate('goal-divider-page.html');
     
-    const cities = this.getCitiesForGoal(goal, 'best');
-    const avoidCities = this.getCitiesForGoal(goal, 'avoid');
+    const cities = this.getCitiesForGoal(goal, 'best', regionScope);
+    const avoidCities = this.getCitiesForGoal(goal, 'avoid', regionScope);
     
     const baseWithCounts = {
       ...this.baseData,
@@ -299,6 +316,15 @@ export class PDFAssembler {
     goalData.GOAL_ICON = this.getGoalIcon(goal);
     goalData.GOAL_COLOR = this.getGoalColor(goal);
     goalData.GOAL_DESCRIPTION = this.getGoalDescription(goal);
+    
+    // LAYOUT FIX 5: Add region label for separate sections
+    if (regionScope) {
+      goalData.SECTION_REGION = regionScope === 'India' ? 'Your Top Cities in India' : 'Your Top International Cities';
+      goalData.REGION_LABEL = regionScope;
+    } else {
+      goalData.SECTION_REGION = '';
+      goalData.REGION_LABEL = '';
+    }
     
     this.pages.push({ html: processTemplate(template, goalData), type: 'divider' });
   }
@@ -325,9 +351,9 @@ export class PDFAssembler {
     return desc[goal] || '';
   }
   
-  async addCityRankingPages(goal) {
+  async addCityRankingPages(goal, regionScope = null) {
     const template = loadTemplate('city-ranking-table.html');
-    const allBestCities = this.getCitiesForGoal(goal, 'best');
+    const allBestCities = this.getCitiesForGoal(goal, 'best', regionScope);
     
     const citiesPerPage = 9;
     const totalPages = Math.ceil(allBestCities.length / citiesPerPage);
@@ -340,7 +366,7 @@ export class PDFAssembler {
       const pageData = generateRankingTableData(pageCities, this.baseData, startRank, allBestCities.length);
       pageData.GOAL = goal;
       pageData.GOAL_ICON = this.getGoalIcon(goal);
-      pageData.SCOPE = this.scope;
+      pageData.SCOPE = regionScope || this.scope;
       pageData.CITY_ROWS = generateCityRows(pageCities, startRank);
       pageData.RANKING_PAGE = i + 1;
       pageData.RANKING_TOTAL_PAGES = totalPages;
@@ -348,7 +374,8 @@ export class PDFAssembler {
       this.pages.push({ html: processTemplate(template, pageData), type: 'ranking' });
     }
     
-    console.log(`   📊 Added ${totalPages} ranking pages for ${goal}`);
+    const regionLabel = regionScope ? ` (${regionScope})` : '';
+    console.log(`   📊 Added ${totalPages} ranking pages for ${goal}${regionLabel}`);
   }
   
   async addNotableCitiesPage(goal) {
@@ -458,14 +485,17 @@ export class PDFAssembler {
     return directionMap[lagna] || { favorable: 'East', challenging: 'West' };
   }
   
-  getCitiesForGoal(goal, type = 'best') {
+  getCitiesForGoal(goal, type = 'best', regionScope = null) {
     const allCities = this.astroData?.topCities || [];
     const lines = this.astroData?.planetaryLines || [];
     
+    // LAYOUT FIX 5: Support filtering by regionScope for separated sections
     let filteredCities = allCities;
-    if (this.scope === 'India') {
+    const effectiveScope = regionScope || this.scope;
+    
+    if (effectiveScope === 'India') {
       filteredCities = allCities.filter(c => c.country === 'India');
-    } else if (this.scope === 'International') {
+    } else if (effectiveScope === 'International') {
       filteredCities = allCities.filter(c => c.country !== 'India');
     }
     
@@ -490,8 +520,9 @@ export class PDFAssembler {
       return scoreB - scoreA;
     });
     
-    const bestCount = this.scope === 'Both' ? 18 : 12;
-    const avoidCount = this.scope === 'Both' ? 10 : 5;
+    // LAYOUT FIX 5: For separated sections, use 12 cities per section (same as single-scope)
+    const bestCount = (regionScope || this.scope !== 'Both') ? 12 : 18;
+    const avoidCount = (regionScope || this.scope !== 'Both') ? 5 : 10;
     
     if (type === 'best') {
       return sorted.slice(0, bestCount);
@@ -524,10 +555,10 @@ export class PDFAssembler {
     }
   }
   
-  async addBestCityPages(goal) {
+  async addBestCityPages(goal, regionScope = null) {
     const template = loadTemplate('city-page.html');
     const mapTemplate = loadTemplate('map-page.html');
-    const cities = this.getCitiesForGoal(goal, 'best');
+    const cities = this.getCitiesForGoal(goal, 'best', regionScope);
     
     const lines = this.astroData?.planetaryLines || [];
     const birthLocation = {
@@ -535,13 +566,16 @@ export class PDFAssembler {
       longitude: parseFloat(this.birthData.longitude) || 0
     };
     
+    // LAYOUT FIX 5: For separated sections, show fewer maps per section (3 each)
+    const mapCount = regionScope ? 3 : 6;
+    
     for (let i = 0; i < cities.length; i++) {
       const city = cities[i];
       const credibilityData = this.calculateCredibilityData(city, lines, goal, this.birthData);
       const cityData = prepareCityPageData(city, i + 1, goal, this.baseData, credibilityData);
       this.pages.push({ html: processTemplate(template, cityData), type: 'city-best' });
       
-      if (i < 6) {
+      if (i < mapCount) {
         try {
           const cityRegion = this.getCityRegionView(city);
           const mapBuffer = await this.mapRenderer.renderMap({
@@ -561,7 +595,8 @@ export class PDFAssembler {
       }
     }
     
-    console.log(`   🌟 Added ${cities.length} best city pages for ${goal} (with ${Math.min(6, cities.length)} maps)`);
+    const regionLabel = regionScope ? ` (${regionScope})` : '';
+    console.log(`   🌟 Added ${cities.length} best city pages for ${goal}${regionLabel} (with ${Math.min(mapCount, cities.length)} maps)`);
   }
   
   getCityRegionView(city) {
@@ -952,10 +987,10 @@ export class PDFAssembler {
     return result;
   }
   
-  async addAvoidCityPages(goal) {
+  async addAvoidCityPages(goal, regionScope = null) {
     const template = loadTemplate('city-avoid-page.html');
-    let avoidCities = this.getCitiesForGoal(goal, 'avoid');
-    const bestCities = this.getCitiesForGoal(goal, 'best');
+    let avoidCities = this.getCitiesForGoal(goal, 'avoid', regionScope);
+    const bestCities = this.getCitiesForGoal(goal, 'best', regionScope);
     
     // Get all ranked cities for finding regional alternatives
     const allCities = this.astroData?.topCities || [];
@@ -1012,7 +1047,8 @@ export class PDFAssembler {
       this.pages.push({ html: processTemplate(template, pageData), type: 'city-avoid' });
     }
     
-    console.log(`   ⚠️ Added ${avoidCities.length} avoid city pages for ${goal}`);
+    const regionLabel = regionScope ? ` (${regionScope})` : '';
+    console.log(`   ⚠️ Added ${avoidCities.length} avoid city pages for ${goal}${regionLabel}`);
   }
   
   async addVedicProfilePage() {
