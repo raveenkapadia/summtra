@@ -1,0 +1,77 @@
+## Phase 1 Complete ✅ - Test Suite Verified
+
+55 tests passing - excellent work!
+
+---
+
+## PHASE 2: Edge Case & Performance Testing
+
+### Task 1: Edge Case PDF Generation
+
+Please generate test PDFs for these edge cases and share the download links:
+
+| # | Birth Date | Birth Time | Birth Place | Lagna | Goal | Scope |
+|---|------------|------------|-------------|-------|------|-------|
+| 1 | 1990-06-21 | 00:00 | Mumbai | (auto) | Career | International |
+| 2 | 1985-12-21 | 12:00 | Chennai | (auto) | Wealth | India |
+| 3 | 1978-03-15 | 05:30 | Sydney, Australia | (auto) | Love | International |
+| 4 | 1992-08-10 | 18:45 | São Paulo, Brazil | (auto) | Career | International |
+| 5 | 2000-01-01 | 00:01 | Auckland, New Zealand | (auto) | Wealth | International |
+
+For each PDF, verify:
+- Lagna detected correctly
+- All 12 cities have matching ranking table and city page lines
+- Score breakdown adds up correctly (Western + Vedic = Total)
+
+### Task 2: Performance Baseline
+
+Add temporary logging to measure and report:
+```javascript
+console.time('Total PDF Generation');
+console.time('Vedic API Call');
+// ... vedic API call
+console.timeEnd('Vedic API Call');
+
+console.time('Astro API Call');
+// ... astro API call  
+console.timeEnd('Astro API Call');
+
+console.time('PDF Assembly');
+// ... PDF generation
+console.timeEnd('PDF Assembly');
+
+console.timeEnd('Total PDF Generation');
+```
+
+Share the timing results for one typical PDF generation.
+
+**Target benchmarks:**
+- Total time: < 30 seconds
+- API calls: < 10 seconds each
+- PDF assembly: < 5 seconds
+
+### Task 3: Error Handling Audit
+
+Please document what happens when:
+
+| Scenario | Current Behavior | Graceful? |
+|----------|------------------|-----------|
+| Vedic API returns invalid/empty data | ? | ? |
+| Astro API is unavailable (timeout) | ? | ? |
+| City not found in database | ? | ? |
+| Invalid birth date format | ? | ? |
+| Invalid birth time format | ? | ? |
+
+If any scenario causes a crash or unclear error, please add proper error handling.
+
+---
+
+## Deliverables
+
+Please share:
+1. Download links for 5 edge case PDFs
+2. Performance timing results
+3. Error handling audit table (filled in)
+4. Any fixes made for error handling
+
+This completes our pre-production validation.
