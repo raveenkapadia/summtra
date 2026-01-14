@@ -1,0 +1,149 @@
+PHASE 4.1: Bug Fixes for Grammar, Star Ratings, and Hindi
+
+⚠️ DO NOT MODIFY ⚠️
+- Scoring algorithm (distance tiers, paran scores)
+- Vedic calculations (Lagna, benefics/malefics)
+- All Phase 1, 2, & 3 fixes
+
+═══════════════════════════════════════════════════════════════
+BUG 16 FIX: Grammar - "a" vs "an" before vowel Lagnas
+═══════════════════════════════════════════════════════════════
+
+SEVERITY: HIGH (appears in every city verdict for vowel Lagnas)
+
+CURRENT OUTPUT:
+- "As a Aquarius rising..."  ❌
+- "As a Aries rising..."     ❌
+
+EXPECTED OUTPUT:
+- "As an Aquarius rising..." ✅
+- "As an Aries rising..."    ✅
+
+FILE: templateProcessor.js
+
+ADD HELPER FUNCTION (near top of file with other helpers):
+```javascript
+// Helper function for a/an grammar
+function getArticle(word) {
+  if (!word) return 'a';
+  const vowels = ['A', 'E', 'I', 'O', 'U'];
+  return vowels.includes(word.charAt(0).toUpperCase()) ? 'an' : 'a';
+}
+```
+
+THEN UPDATE all verdict template strings that use Lagna:
+
+FIND patterns like:
+- `As a ${lagnaName} rising`
+- `for a ${lagnaName}`
+- `a ${lagnaName} like you`
+
+REPLACE with:
+- `As ${getArticle(lagnaName)} ${lagnaName} rising`
+- `for ${getArticle(lagnaName)} ${lagnaName}`
+- `${getArticle(lagnaName)} ${lagnaName} like you`
+
+AFFECTED TEMPLATES (check getPersonalizedVerdict function):
+1. Career verdicts - high/medium/lower tiers
+2. Love verdicts - all tiers
+3. Wealth verdicts - all tiers
+4. Education verdicts - all tiers
+5. Caution zone text
+6. Any other place Lagna name appears with "a/an"
+
+═══════════════════════════════════════════════════════════════
+BUG 17 FIX: Star Ratings Not Displaying
+═══════════════════════════════════════════════════════════════
+
+SEVERITY: MEDIUM (personalization feature not visible)
+
+INVESTIGATION STEPS:
+
+1. Check if starRatingWestern/starRatingVedic/starRatingTotal 
+   are being generated in prepareCityPageData():
+```javascript
+   console.log('Star ratings:', {
+     western: data.starRatingWestern,
+     vedic: data.starRatingVedic,
+     total: data.starRatingTotal
+   });
+```
+
+2. Check if they're being passed to the template properly
+   (look at the data object returned by prepareCityPageData)
+
+3. Check city-page.html template for the star rating placeholders:
+   - Should have {{starRatingWestern}} or similar
+   - Verify the HTML structure around them
+
+4. If star ratings ARE being generated but not showing:
+   - Check CSS - stars might be hidden or zero-width
+   - Check if the font supports star emoji
+   - Consider using HTML entities: &#9733; (★) instead of ⭐
+
+POSSIBLE FIX if stars aren't rendering:
+Use text-based stars or Unicode symbols that render in PDF:
+```javascript
+function getStarRating(score, maxScore) {
+  const percentage = (score / maxScore) * 100;
+  if (percentage >= 90) return '★★★★★';
+  if (percentage >= 70) return '★★★★';
+  if (percentage >= 50) return '★★★';
+  if (percentage >= 30) return '★★';
+  return '★';
+}
+```
+
+═══════════════════════════════════════════════════════════════
+BUG 18 FIX: Hindi Sun Truncation in Glossary
+═══════════════════════════════════════════════════════════════
+
+SEVERITY: LOW (cosmetic in glossary)
+
+FILE: templates/glossary-page-2.html
+
+FIND:
+Sun (सूर्)
+
+REPLACE WITH:
+Sun (सूर्य)
+
+NOTE: The word "सूर्य" (Surya) should have the final य character.
+If still truncating, may need CSS adjustment:
+- Increase column width
+- Use word-wrap: break-word
+- Or move Hindi to new line
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After fixes, generate test PDFs and verify:
+
+□ All 55 existing tests still pass
+□ "As an Aquarius rising" (not "a Aquarius")
+□ "As an Aries rising" (not "a Aries")  
+□ "for an Aquarius" / "for a Pisces" correct throughout
+□ Star ratings visible in score breakdown section
+□ Sun shows सूर्य in glossary (not सूर्)
+□ No regressions in other personalization features
+
+TEST COMMANDS:
+1. npm test (verify 55 tests pass)
+2. Generate test PDF with Aquarius Lagna
+3. Generate test PDF with Aries Lagna
+4. Check score breakdown section for stars
+5. Check glossary page 2 for Hindi names
+
+═══════════════════════════════════════════════════════════════
+IMPLEMENTATION ORDER
+═══════════════════════════════════════════════════════════════
+
+1. Add getArticle() helper function (5 min)
+2. Update all verdict templates with grammar fix (15 min)
+3. Debug star ratings - check generation & template (15 min)
+4. Fix Hindi Sun in glossary (2 min)
+5. Run tests (5 min)
+6. Generate verification PDFs (10 min)
+
+Total estimated time: 45-60 minutes
