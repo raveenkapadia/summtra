@@ -360,30 +360,31 @@
         }
         
         /* Explanation Section */
+        /* BUG 13 Fix: Reduced padding to prevent Regional Alternative cutoff */
         .explanation-section {
             background: var(--soft-white);
             border: 1px solid rgba(153, 27, 27, 0.1);
             border-radius: 6px;
-            padding: 25px;
+            padding: 18px;
         }
         
         .explanation-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
         
         .explanation-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 600;
             color: var(--deep-purple);
         }
         
         .explanation-text {
-            font-size: 12px;
-            line-height: 1.8;
+            font-size: 11px;
+            line-height: 1.6;
             color: var(--text-dark);
         }
         
@@ -391,10 +392,10 @@
             color: var(--danger);
         }
         
-        /* Alternative Suggestion Box */
+        /* Alternative Suggestion Box - BUG 13 Fix: Ensure full text displays */
         .alternative-box {
-            margin-top: 20px;
-            padding: 15px 20px;
+            margin-top: 12px;
+            padding: 12px 16px;
             background: linear-gradient(135deg, rgba(45, 27, 78, 0.04) 0%, rgba(74, 28, 107, 0.06) 100%);
             border: 1px solid rgba(212, 175, 55, 0.2);
             border-radius: 6px;
@@ -402,19 +403,19 @@
         
         .alternative-header {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--deep-purple);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .alternative-text {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-dark);
-            line-height: 1.6;
+            line-height: 1.5;
         }
         
         /* Footer */

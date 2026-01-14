@@ -84,9 +84,9 @@
             color: var(--gold-light);
         }
         
-        /* Content */
+        /* Content - BUG 12 Fix: Reduced padding to prevent Vastu section cutoff */
         .content {
-            padding: 30px 40px;
+            padding: 20px 40px;
         }
         
         .section-label {
@@ -94,61 +94,61 @@
             letter-spacing: 4px;
             color: var(--royal-purple);
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .section-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 600;
             color: var(--deep-purple);
-            margin-bottom: 25px;
+            margin-bottom: 18px;
         }
         
-        /* Glossary Grid */
+        /* Glossary Grid - BUG 12 Fix: Tighter spacing */
         .glossary-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 10px;
         }
         
         .glossary-item {
             background: var(--soft-white);
             border-radius: 6px;
-            padding: 15px;
+            padding: 12px;
             border: 1px solid rgba(45, 27, 78, 0.08);
             border-left: 3px solid var(--gold);
         }
         
         .glossary-term {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--deep-purple);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         
         .glossary-term .hindi {
             font-family: 'Noto Sans Devanagari', sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--royal-purple);
             font-weight: 400;
-            margin-left: 8px;
+            margin-left: 6px;
         }
         
         .glossary-definition {
-            font-size: 11px;
-            line-height: 1.5;
+            font-size: 10px;
+            line-height: 1.4;
             color: #555;
         }
         
-        /* Category Headers */
+        /* Category Headers - BUG 12 Fix: Tighter margins */
         .category-header {
             grid-column: span 2;
             background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
             border-radius: 6px;
-            padding: 12px 20px;
-            margin-top: 10px;
+            padding: 10px 18px;
+            margin-top: 8px;
         }
         
         .category-header:first-child {
@@ -293,15 +293,15 @@
                     <div class="category-title">Vastu & Direction Terms</div>
                 </div>
                 
-                <!-- BUG 11 Fix: Complete Vastu section definitions -->
+                <!-- BUG 12 Fix: Complete Vastu section definitions -->
                 <div class="glossary-item">
                     <div class="glossary-term">Vastu <span class="hindi">(वास्तु)</span></div>
-                    <div class="glossary-definition">Ancient Indian science of architecture and spatial arrangement that harmonizes living spaces with cosmic energies. In astrocartography, Vastu principles help identify directions that enhance specific life goals based on your Lagna.</div>
+                    <div class="glossary-definition">Ancient Indian science of architecture and spatial arrangement that harmonizes living spaces with cosmic energies.</div>
                 </div>
                 
                 <div class="glossary-item">
                     <div class="glossary-term">Favorable Direction</div>
-                    <div class="glossary-definition">A compass direction that harmonizes with your Lagna for maximum benefit. Each Lagna has specific directions that amplify success in different life areas like career, relationships, and wealth.</div>
+                    <div class="glossary-definition">The direction from birthplace that resonates with your Nakshatra, enhancing positive outcomes.</div>
                 </div>
             </div>
         </div>
