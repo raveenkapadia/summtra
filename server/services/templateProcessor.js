@@ -1165,6 +1165,8 @@ export function generateVedicTraitsData(birthData, baseData) {
   data.LAGNA_HINDI = getRashiHindi(birthData.lagna || '');
   data.LAGNA_LORD = birthData.lagnaLord || getRashiLord(birthData.lagna || '');
   data.LAGNA_MEANING = getLagnaMeaning(birthData.lagna || '');
+  // BUG 16a FIX: Add article for intro page grammar (a/an before vowel Lagnas)
+  data.LAGNA_ARTICLE = getArticle(birthData.lagna || '');
   
   return data;
 }
