@@ -7,7 +7,7 @@
     "start": "tsx server/index.ts",
     "dev": "tsx server/index.ts",
     "db:push": "drizzle-kit push",
-    "test": "jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "jest --watch",
     "test:legacy": "node -e \"require('./server/services/reportGenerator').testReportGeneration()\""
   },
@@ -41,6 +41,7 @@
     "openid-client": "^6.8.1",
     "passport": "^0.7.0",
     "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
     "puppeteer": "^21.6.0",
     "razorpay": "^2.9.6",
     "resend": "^2.0.0",

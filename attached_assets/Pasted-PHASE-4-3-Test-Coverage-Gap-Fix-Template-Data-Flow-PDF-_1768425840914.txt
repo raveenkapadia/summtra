@@ -1,0 +1,403 @@
+PHASE 4.3: Test Coverage Gap Fix - Template Data Flow & PDF Verification
+
+The "an" article bug slipped through because:
+1. We tested the logic (getArticle works correctly)
+2. But NOT that variables reach the templates
+3. And NOT that PDFs contain correct text
+
+Add these critical test categories to prevent similar bugs.
+
+⚠️ CRITICAL RULES ⚠️
+1. All 233 existing tests MUST continue to pass
+2. DO NOT modify any production code
+3. Run tests after EVERY change
+
+═══════════════════════════════════════════════════════════════
+PART 1: TEMPLATE DATA FLOW TESTS
+═══════════════════════════════════════════════════════════════
+
+Create new file: test/templateDataFlow.test.js
+
+This tests that prepareReportData() includes ALL variables 
+that templates need.
+```javascript
+const { prepareReportData } = require('../src/templateProcessor');
+
+describe('Template Data Flow - prepareReportData()', () => {
+  
+  const baseBirthData = {
+    name: 'TestUser',
+    date: '1990-01-15',
+    time: '06:00',
+    place: 'Delhi, India',
+    lat: 28.6139,
+    lng: 77.2090,
+    lagna: 'Aquarius',
+    nakshatra: 'Chitra',
+    rashi: 'Libra',
+    mahadasha: 'Venus',
+    antardasha: 'Saturn'
+  };
+
+  describe('LAGNA_ARTICLE Variable', () => {
+    
+    test('LAGNA_ARTICLE exists in output', () => {
+      const data = prepareReportData(baseBirthData);
+      expect(data.LAGNA_ARTICLE).toBeDefined();
+    });
+
+    test('Aquarius gets "an" article', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Aquarius' });
+      expect(data.LAGNA_ARTICLE).toBe('an');
+    });
+
+    test('Aries gets "an" article', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Aries' });
+      expect(data.LAGNA_ARTICLE).toBe('an');
+    });
+
+    test('Leo gets "a" article', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Leo' });
+      expect(data.LAGNA_ARTICLE).toBe('a');
+    });
+
+    test('Pisces gets "a" article', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Pisces' });
+      expect(data.LAGNA_ARTICLE).toBe('a');
+    });
+
+    test('Capricorn gets "a" article', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Capricorn' });
+      expect(data.LAGNA_ARTICLE).toBe('a');
+    });
+
+    test('Unknown/null lagna gets "a" article (safe default)', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: null });
+      expect(data.LAGNA_ARTICLE).toBe('a');
+    });
+
+  });
+
+  describe('All Required Template Variables Present', () => {
+    
+    test('Core identity variables exist', () => {
+      const data = prepareReportData(baseBirthData);
+      
+      expect(data.USER_NAME).toBeDefined();
+      expect(data.LAGNA_NAME).toBeDefined();
+      expect(data.LAGNA_ARTICLE).toBeDefined();
+      expect(data.NAKSHATRA_NAME).toBeDefined();
+      expect(data.RASHI_NAME).toBeDefined();
+    });
+
+    test('Dasha variables exist', () => {
+      const data = prepareReportData(baseBirthData);
+      
+      expect(data.MAHADASHA).toBeDefined();
+      expect(data.ANTARDASHA).toBeDefined();
+    });
+
+    test('Birth details variables exist', () => {
+      const data = prepareReportData(baseBirthData);
+      
+      expect(data.BIRTH_DATE).toBeDefined();
+      expect(data.BIRTH_TIME).toBeDefined();
+      expect(data.BIRTH_PLACE).toBeDefined();
+    });
+
+    test('No undefined values in critical fields', () => {
+      const data = prepareReportData(baseBirthData);
+      
+      // These should never be "undefined" string or actual undefined
+      expect(data.LAGNA_NAME).not.toBe('undefined');
+      expect(data.LAGNA_NAME).not.toBeUndefined();
+      expect(data.NAKSHATRA_NAME).not.toBe('undefined');
+      expect(data.LAGNA_ARTICLE).not.toBe('undefined');
+    });
+
+  });
+
+  describe('Variable Format Validation', () => {
+    
+    test('LAGNA_ARTICLE is lowercase', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Aquarius' });
+      expect(data.LAGNA_ARTICLE).toBe('an'); // not 'An' or 'AN'
+    });
+
+    test('LAGNA_NAME preserves capitalization', () => {
+      const data = prepareReportData({ ...baseBirthData, lagna: 'Aquarius' });
+      expect(data.LAGNA_NAME).toBe('Aquarius'); // not 'aquarius' or 'AQUARIUS'
+    });
+
+  });
+
+});
+```
+
+═══════════════════════════════════════════════════════════════
+PART 2: PDF CONTENT VERIFICATION TESTS  
+═══════════════════════════════════════════════════════════════
+
+Create new file: test/pdfContentVerification.test.js
+
+This tests that generated PDFs contain the correct text.
+```javascript
+const fs = require('fs');
+const path = require('path');
+const { generateReport } = require('../src/reportGenerator');
+// Or use pdf-parse: const pdfParse = require('pdf-parse');
+
+describe('PDF Content Verification', () => {
+
+  // Helper to extract text from PDF
+  async function extractPDFText(pdfPath) {
+    // Option 1: If using pdf-parse
+    // const dataBuffer = fs.readFileSync(pdfPath);
+    // const data = await pdfParse(dataBuffer);
+    // return data.text;
+    
+    // Option 2: If generating HTML intermediates, check those
+    const htmlPath = pdfPath.replace('.pdf', '.html');
+    if (fs.existsSync(htmlPath)) {
+      return fs.readFileSync(htmlPath, 'utf8');
+    }
+    
+    // Option 3: Use your existing text extraction method
+    return await extractTextFromPDF(pdfPath);
+  }
+
+  describe('Introduction Page Grammar', () => {
+
+    test('Aquarius Lagna shows "as an Aquarius rising"', async () => {
+      const report = await generateReport({
+        name: 'GrammarTest',
+        date: '1990-01-20',
+        time: '06:15',
+        place: 'Delhi',
+        lagna: 'Aquarius', // Force Lagna for test
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Must contain correct grammar
+      expect(text).toContain('as an Aquarius rising');
+      
+      // Must NOT contain incorrect grammar
+      expect(text).not.toContain('as a Aquarius');
+      expect(text).not.toContain('as Aquarius rising');
+    });
+
+    test('Aries Lagna shows "as an Aries rising"', async () => {
+      const report = await generateReport({
+        name: 'GrammarTest',
+        lagna: 'Aries',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      expect(text).toContain('as an Aries rising');
+      expect(text).not.toContain('as a Aries');
+    });
+
+    test('Leo Lagna shows "as a Leo rising"', async () => {
+      const report = await generateReport({
+        name: 'GrammarTest',
+        lagna: 'Leo',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      expect(text).toContain('as a Leo rising');
+      expect(text).not.toContain('as an Leo');
+    });
+
+    test('Pisces Lagna shows "as a Pisces rising"', async () => {
+      const report = await generateReport({
+        name: 'GrammarTest',
+        lagna: 'Pisces',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      expect(text).toContain('as a Pisces rising');
+    });
+
+  });
+
+  describe('Caution Zone Content', () => {
+
+    test('Caution Zone uses Vedic Lagna, not Western sun sign', async () => {
+      const report = await generateReport({
+        name: 'CautionTest',
+        lagna: 'Capricorn',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Should reference Vedic Lagna in caution text
+      expect(text).toContain('Capricorn');
+      
+      // Should NOT have Western sun sign logic errors
+      // (This depends on your specific implementation)
+    });
+
+  });
+
+  describe('Score Breakdown Accuracy', () => {
+
+    test('Score breakdown math is correct (Western + Vedic = Total)', async () => {
+      const report = await generateReport({
+        name: 'ScoreTest',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Check for score format: "TOTAL XX + YY = ZZ%"
+      const scoreMatch = text.match(/TOTAL\s+(\d+)\s*\+\s*(\d+)\s*=\s*(\d+)%/);
+      
+      if (scoreMatch) {
+        const western = parseInt(scoreMatch[1]);
+        const vedic = parseInt(scoreMatch[2]);
+        const total = parseInt(scoreMatch[3]);
+        
+        expect(western + vedic).toBe(total);
+      }
+    });
+
+  });
+
+  describe('City Verdict Grammar', () => {
+
+    test('City verdicts use correct Lagna article', async () => {
+      const report = await generateReport({
+        name: 'VerdictTest',
+        lagna: 'Aquarius',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Check city verdict format
+      expect(text).toContain('As an Aquarius rising');
+      expect(text).not.toContain('As a Aquarius rising');
+    });
+
+  });
+
+  describe('Required Sections Present', () => {
+
+    test('PDF contains all major sections', async () => {
+      const report = await generateReport({
+        name: 'SectionTest',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Check for required sections
+      expect(text).toContain('About Your Cosmic Blueprint');
+      expect(text).toContain('Top 12 Cities');
+      expect(text).toContain('Score Breakdown');
+      expect(text).toContain('Vedic Astrology Profile');
+      expect(text).toContain('Glossary');
+    });
+
+    test('Star ratings are visible (not empty)', async () => {
+      const report = await generateReport({
+        name: 'StarTest',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Check for star characters
+      expect(text).toMatch(/★+/); // At least one filled star
+      expect(text).toContain('WESTERN');
+      expect(text).toContain('VEDIC');
+    });
+
+  });
+
+  describe('Hindi Text Rendering', () => {
+
+    test('Hindi text is not truncated', async () => {
+      const report = await generateReport({
+        name: 'HindiTest',
+        goal: 'Career'
+      });
+      
+      const text = await extractPDFText(report.pdfPath);
+      
+      // Check glossary Hindi terms are complete
+      // सूर्य (Sun) - 3 characters, not सूर् (2 characters)
+      expect(text).toContain('सूर्य'); // Full word for Sun
+      expect(text).not.toMatch(/सूर्[^य]/); // Not truncated
+    });
+
+  });
+
+});
+```
+
+═══════════════════════════════════════════════════════════════
+PART 3: INSTALL DEPENDENCIES (if needed)
+═══════════════════════════════════════════════════════════════
+
+If you need PDF text extraction:
+```bash
+npm install pdf-parse --save-dev
+```
+
+═══════════════════════════════════════════════════════════════
+PART 4: RUN ALL TESTS AND REPORT
+═══════════════════════════════════════════════════════════════
+
+After adding new tests:
+```bash
+npm test
+```
+
+Report results in this format:
+
+ORIGINAL TESTS: 233 passing
+NEW TESTS ADDED: XX
+
+NEW TEST BREAKDOWN:
+- templateDataFlow.test.js: XX tests
+- pdfContentVerification.test.js: XX tests
+
+TOTAL TESTS: XXX
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+□ All 233 original tests still pass
+□ templateDataFlow.test.js tests pass
+□ pdfContentVerification.test.js tests pass  
+□ Aquarius "an" article verified in PDF output
+□ No production code modified
+
+═══════════════════════════════════════════════════════════════
+WHY THESE TESTS MATTER
+═══════════════════════════════════════════════════════════════
+
+BUG PREVENTION MAP:
+
+Current Tests (233):
+├── Logic correct? ✅ (getArticle returns "an")
+└── Calculations correct? ✅ (Vedic math works)
+
+NEW Template Data Flow Tests:
+└── Variable passed to template? ✅ (Would have caught LAGNA_ARTICLE bug!)
+
+NEW PDF Verification Tests:
+└── Final output correct? ✅ (Ultimate proof the user sees correct text)
+
+With these additions, the same bug CANNOT slip through again.

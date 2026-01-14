@@ -1,0 +1,169 @@
+PHASE 4.3 IMPLEMENTATION: Handle ES Modules + PDF Parsing
+
+You've correctly identified the challenges. Here's how to solve them:
+
+═══════════════════════════════════════════════════════════════
+CHALLENGE 1: ES Module Imports in Jest
+═══════════════════════════════════════════════════════════════
+
+OPTION A: Dynamic Import (Recommended)
+```javascript
+// test/templateDataFlow.test.js
+
+describe('Template Data Flow', () => {
+  let prepareReportData;
+  
+  beforeAll(async () => {
+    // Dynamic import for ES modules
+    const module = await import('../src/templateProcessor.js');
+    prepareReportData = module.prepareReportData;
+  });
+
+  test('LAGNA_ARTICLE exists for Aquarius', async () => {
+    const data = await prepareReportData({ lagna: 'Aquarius', ... });
+    expect(data.LAGNA_ARTICLE).toBe('an');
+  });
+});
+```
+
+OPTION B: Add Jest ESM Support
+```bash
+# In package.json, update test script:
+"scripts": {
+  "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+}
+```
+
+OPTION C: Export CommonJS alongside ESM
+```javascript
+// At end of templateProcessor.js (if you control this file)
+// This doesn't modify logic, just adds exports
+if (typeof module !== 'undefined') {
+  module.exports = { prepareReportData, getArticle };
+}
+```
+
+Pick whichever works best with your setup. Option A is safest 
+since it doesn't modify any production files.
+
+═══════════════════════════════════════════════════════════════
+CHALLENGE 2: PDF Text Extraction
+═══════════════════════════════════════════════════════════════
+
+Step 1: Install pdf-parse
+```bash
+npm install pdf-parse --save-dev
+```
+
+Step 2: Create helper utility
+```javascript
+// test/helpers/pdfHelper.js
+
+const fs = require('fs');
+const pdfParse = require('pdf-parse');
+
+async function extractTextFromPDF(pdfPath) {
+  const dataBuffer = fs.readFileSync(pdfPath);
+  const data = await pdfParse(dataBuffer);
+  return data.text;
+}
+
+module.exports = { extractTextFromPDF };
+```
+
+Step 3: Use in tests
+```javascript
+// test/pdfContentVerification.test.js
+
+const { extractTextFromPDF } = require('./helpers/pdfHelper');
+
+describe('PDF Content', () => {
+  test('Aquarius shows "as an Aquarius rising"', async () => {
+    // Generate or use existing test PDF
+    const pdfPath = './test-pdfs/aquarius-test.pdf';
+    const text = await extractTextFromPDF(pdfPath);
+    
+    expect(text).toContain('as an Aquarius rising');
+  });
+});
+```
+
+═══════════════════════════════════════════════════════════════
+CHALLENGE 3: Generate Test PDFs with Specific Lagnas
+═══════════════════════════════════════════════════════════════
+
+Since API calculates Lagna astronomically, create a test fixture 
+approach:
+
+OPTION A: Pre-generate test PDFs (Recommended)
+```javascript
+// test/fixtures/generateTestPDFs.js
+// Run once to create test fixtures
+
+async function generateTestFixtures() {
+  const lagnas = ['Aquarius', 'Aries', 'Leo', 'Pisces'];
+  
+  for (const lagna of lagnas) {
+    // Use test mode that overrides Lagna
+    await generatePDF({
+      name: `${lagna}Test`,
+      testOverrides: { lagna: lagna },
+      outputPath: `./test/fixtures/${lagna.toLowerCase()}-test.pdf`
+    });
+  }
+}
+```
+
+OPTION B: Mock the Vedic API response in tests
+```javascript
+// In test setup
+jest.mock('../src/vedicApi', () => ({
+  getVedicProfile: jest.fn().mockResolvedValue({
+    lagna: 'Aquarius',
+    nakshatra: 'Chitra',
+    rashi: 'Libra'
+  })
+}));
+```
+
+═══════════════════════════════════════════════════════════════
+RECOMMENDED FILE STRUCTURE
+═══════════════════════════════════════════════════════════════
+
+test/
+├── helpers/
+│   └── pdfHelper.js          # PDF extraction utility
+├── fixtures/
+│   ├── aquarius-test.pdf     # Pre-generated test PDFs
+│   ├── aries-test.pdf
+│   ├── leo-test.pdf
+│   └── pisces-test.pdf
+├── templateDataFlow.test.js  # NEW - tests prepareReportData()
+├── pdfContentVerification.test.js  # NEW - tests PDF output
+└── ... (existing 9 test files)
+
+═══════════════════════════════════════════════════════════════
+IMPLEMENTATION ORDER
+═══════════════════════════════════════════════════════════════
+
+1. npm install pdf-parse --save-dev
+2. Create test/helpers/pdfHelper.js
+3. Create templateDataFlow.test.js with dynamic imports
+4. Generate test fixture PDFs for each Lagna type
+5. Create pdfContentVerification.test.js
+6. Run full test suite: npm test
+7. Report results
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+□ pdf-parse installed
+□ ES module import working (no errors)
+□ Test fixtures generated for Aquarius, Aries, Leo, Pisces
+□ templateDataFlow.test.js passes
+□ pdfContentVerification.test.js passes
+□ All 233 original tests still pass
+□ Total tests: 260+ 
+
+Report final test count when complete!
