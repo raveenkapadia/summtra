@@ -583,132 +583,25 @@ async function startServer() {
     }
   });
 
-  // ===== POST endpoint for PDF generation (RECOMMENDED) =====
-  // Accepts user data in request body with proper validation
-  app.post("/api/test-pdf", async (req, res) => {
-    try {
-      const { generateTestPDF } = require('./services/pdfAssembler.js');
-      
-      const { name, birthDate, birthTime, birthPlace, lat, lng, latitude, longitude, reportType, scope, goal } = req.body;
-      
-      // ===== DATA INTEGRITY: Require all user fields =====
-      const requiredFields = ['name', 'birthDate', 'birthTime', 'birthPlace'];
-      const missingFields = requiredFields.filter(field => !req.body[field]);
-      
-      if (missingFields.length > 0) {
-        return res.status(400).json({
-          error: 'Missing required fields',
-          missing: missingFields,
-          required: requiredFields,
-          usage: 'POST /api/test-pdf with JSON body: { name, birthDate, birthTime, birthPlace, lat, lng, reportType, scope, goal }'
-        });
-      }
-      
-      // Validate coordinates
-      const coordLat = lat || latitude;
-      const coordLng = lng || longitude;
-      if (!coordLat || !coordLng) {
-        return res.status(400).json({
-          error: 'Missing required coordinates',
-          required: ['lat', 'lng'],
-          usage: 'Include lat/lng or latitude/longitude in request body'
-        });
-      }
-      
-      // ===== DATA INTEGRITY: Validate report parameters - NO silent defaults for scope =====
-      const validReportTypes = ['Single', 'Complete'];
-      const validScopes = ['India', 'International', 'Global', 'Both'];
-      const validGoals = ['Career', 'Wealth', 'Love', 'Education', 'Settlement', 'Complete'];
-      
-      // Scope is REQUIRED - no silent defaulting to India
-      if (!scope) {
-        return res.status(400).json({
-          error: 'Missing required field: scope',
-          valid: validScopes,
-          usage: 'POST /api/test-pdf with scope: "India", "International", "Global", or "Both"'
-        });
-      }
-      
-      const finalReportType = reportType || 'Single';
-      const finalScope = scope; // Use exactly what user provided - NO defaults
-      const finalGoal = goal || 'Career';
-      
-      if (!validReportTypes.includes(finalReportType)) {
-        return res.status(400).json({ error: 'Invalid reportType', valid: validReportTypes });
-      }
-      if (!validScopes.includes(finalScope)) {
-        return res.status(400).json({ error: 'Invalid scope. Must be: India, International, Global, or Both', valid: validScopes });
-      }
-      if (!validGoals.includes(finalGoal)) {
-        return res.status(400).json({ error: 'Invalid goal', valid: validGoals });
-      }
-      
-      console.log(`[PDF START] Scope requested: ${finalScope}`);
-      
-      const birthData = {
-        name,
-        birthDate,
-        birthTime,
-        birthPlace,
-        lat: String(coordLat),
-        lng: String(coordLng)
-      };
-      
-      const useAI = req.body.ai === true || req.body.ai === 'true';
-      
-      console.log(`\n📄 POST PDF Generation: ${finalReportType}/${finalScope}/${finalGoal}${useAI ? ' (with AI)' : ''}`);
-      console.log(`   👤 User: ${name}, DOB: ${birthDate}, Time: ${birthTime}, Place: ${birthPlace}`);
-      
-      const result = await generateTestPDF(finalReportType, finalScope, finalGoal, birthData, { useAI });
-      
-      res.json({
-        success: true,
-        message: `PDF generated successfully with ${result.pageCount} pages`,
-        reportType: finalReportType,
-        scope: finalScope,
-        goal: finalGoal,
-        pageCount: result.pageCount,
-        filename: result.filename,
-        downloadUrl: result.url,
-        // Include user data for verification
-        userData: {
-          name: result.userName,
-          birthDate: result.birthDate,
-          birthTime: result.birthTime,
-          birthPlace: result.birthPlace
-        }
-      });
-    } catch (error: any) {
-      console.error('PDF generation error:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate PDF', 
-        details: error.message
-      });
-    }
-  });
-
-  // ===== GET endpoint for PDF generation (requires query params) =====
-  // Birth data MUST be provided - no hardcoded defaults
+  // Test PDF generation endpoint
   app.get("/api/test-pdf/:reportType/:scope/:goal", async (req, res) => {
     try {
       const { generateTestPDF } = require('./services/pdfAssembler.js');
       
       const reportType = req.params.reportType || 'Single';
-      const scope = req.params.scope; // NO default - use exactly what URL says
+      const scope = req.params.scope || 'India';
       const goal = req.params.goal || 'Career';
       
       // Validate parameters
       const validReportTypes = ['Single', 'Complete'];
-      const validScopes = ['India', 'International', 'Global', 'Both'];
+      const validScopes = ['India', 'International', 'Both'];
       const validGoals = ['Career', 'Wealth', 'Love', 'Education', 'Settlement', 'Complete'];
-      
-      console.log(`[PDF START] Scope requested: ${scope}`);
       
       if (!validReportTypes.includes(reportType)) {
         return res.status(400).json({
           error: 'Invalid reportType',
           valid: validReportTypes,
-          usage: '/api/test-pdf/Single/India/Career?name=...&birthDate=...'
+          usage: '/api/test-pdf/Single/India/Career'
         });
       }
       
@@ -716,7 +609,7 @@ async function startServer() {
         return res.status(400).json({
           error: 'Invalid scope',
           valid: validScopes,
-          usage: '/api/test-pdf/Single/India/Career?name=...&birthDate=...'
+          usage: '/api/test-pdf/Single/India/Career'
         });
       }
       
@@ -724,44 +617,48 @@ async function startServer() {
         return res.status(400).json({
           error: 'Invalid goal',
           valid: validGoals,
-          usage: '/api/test-pdf/Single/India/Career?name=...&birthDate=...'
+          usage: '/api/test-pdf/Single/India/Career'
         });
       }
       
-      // ===== DATA INTEGRITY: Birth data is REQUIRED - no silent defaults =====
-      const name = req.query.name as string;
-      const birthDate = (req.query.birthDate as string) || (req.query.date as string);
-      const birthTime = (req.query.birthTime as string) || (req.query.time as string);
-      const birthPlace = (req.query.birthPlace as string) || (req.query.place as string);
-      const lat = (req.query.lat as string) || (req.query.latitude as string);
-      const lng = (req.query.lng as string) || (req.query.longitude as string);
+      // Check for custom birth data in query params (accept both naming conventions)
+      const hasCustomData = req.query.date || req.query.birthDate;
+      const lat = (req.query.latitude as string) || (req.query.lat as string) || '19.076';
+      const lng = (req.query.longitude as string) || (req.query.lng as string) || '72.8777';
       
-      // Require all birth data fields
-      if (!name || !birthDate || !birthTime || !birthPlace || !lat || !lng) {
-        return res.status(400).json({
-          error: 'Missing required birth data. All fields are mandatory.',
-          required: ['name', 'birthDate', 'birthTime', 'birthPlace', 'lat', 'lng'],
-          provided: { name: !!name, birthDate: !!birthDate, birthTime: !!birthTime, birthPlace: !!birthPlace, lat: !!lat, lng: !!lng },
-          usage: '/api/test-pdf/Single/India/Wealth?name=Raveen%20Kapadia&birthDate=15/11/1982&birthTime=8:20%20AM&birthPlace=Ahmedabad&lat=23.0225&lng=72.5714',
-          recommendation: 'Use POST /api/test-pdf with JSON body for easier data submission'
-        });
-      }
-      
-      const birthData = {
-        name,
-        birthDate,
-        birthTime,
-        birthPlace,
-        lat,
-        lng
+      // FIX B: Derive birthPlace from coordinates if not explicitly provided
+      const deriveBirthPlace = (latitude: string, longitude: string): string => {
+        const latNum = parseFloat(latitude);
+        const lngNum = parseFloat(longitude);
+        // Common Indian city coordinates
+        if (Math.abs(latNum - 23.0225) < 0.1 && Math.abs(lngNum - 72.5714) < 0.1) return 'Ahmedabad, India';
+        if (Math.abs(latNum - 19.076) < 0.1 && Math.abs(lngNum - 72.8777) < 0.1) return 'Mumbai, India';
+        if (Math.abs(latNum - 28.6139) < 0.1 && Math.abs(lngNum - 77.209) < 0.1) return 'Delhi, India';
+        if (Math.abs(latNum - 12.9716) < 0.1 && Math.abs(lngNum - 77.5946) < 0.1) return 'Bangalore, India';
+        if (Math.abs(latNum - 13.0827) < 0.1 && Math.abs(lngNum - 80.2707) < 0.1) return 'Chennai, India';
+        if (Math.abs(latNum - 22.5726) < 0.1 && Math.abs(lngNum - 88.3639) < 0.1) return 'Kolkata, India';
+        if (Math.abs(latNum - 17.385) < 0.1 && Math.abs(lngNum - 78.4867) < 0.1) return 'Hyderabad, India';
+        if (Math.abs(latNum - 18.52) < 0.1 && Math.abs(lngNum - 73.8567) < 0.1) return 'Pune, India';
+        return `${latitude}, ${longitude}`;
       };
+      
+      const customBirthData = hasCustomData ? {
+        name: (req.query.name as string) || 'User',
+        birthDate: (req.query.birthDate as string) || (req.query.date as string),
+        birthTime: (req.query.birthTime as string) || (req.query.time as string) || '12:00 PM',
+        birthPlace: (req.query.birthPlace as string) || (req.query.place as string) || deriveBirthPlace(lat, lng),
+        latitude: lat,
+        longitude: lng
+      } : null;
       
       const useAI = req.query.ai === 'true' || req.query.ai === '1';
       
-      console.log(`\n📄 GET PDF Generation: ${reportType}/${scope}/${goal}${useAI ? ' (with AI)' : ''}`);
-      console.log(`   👤 User: ${name}, DOB: ${birthDate}, Time: ${birthTime}, Place: ${birthPlace}`);
+      console.log(`\n📄 Test PDF Generation: ${reportType}/${scope}/${goal}${useAI ? ' (with AI)' : ''}`);
+      if (customBirthData) {
+        console.log(`   📍 Custom birth data: ${customBirthData.birthDate} ${customBirthData.birthTime}, ${customBirthData.birthPlace}`);
+      }
       
-      const result = await generateTestPDF(reportType, scope, goal, birthData, { useAI });
+      const result = await generateTestPDF(reportType, scope, goal, customBirthData, { useAI });
       
       res.json({
         success: true,
@@ -772,18 +669,20 @@ async function startServer() {
         pageCount: result.pageCount,
         filename: result.filename,
         downloadUrl: result.url,
-        userData: {
-          name: result.userName,
-          birthDate: result.birthDate,
-          birthTime: result.birthTime,
-          birthPlace: result.birthPlace
+        expectedPages: {
+          'Single/India': '~50 pages',
+          'Single/International': '~55 pages',
+          'Single/Both': '~80 pages',
+          'Complete/India': '~120 pages',
+          'Complete/Both': '~205 pages'
         }
       });
     } catch (error: any) {
       console.error('PDF generation error:', error);
       res.status(500).json({ 
         error: 'Failed to generate PDF', 
-        details: error.message
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });
@@ -1045,19 +944,7 @@ async function startServer() {
       };
       
       const goal = (req.query.goal as string) || 'Career';
-      const scope = (req.query.scope as string);
-      
-      // Scope is required for validation endpoint
-      const validScopes = ['India', 'International', 'Global', 'Both'];
-      if (!scope || !validScopes.includes(scope)) {
-        return res.status(400).json({
-          error: 'Missing or invalid scope parameter',
-          valid: validScopes,
-          usage: '/api/validate-report?scope=India&name=...&date=...'
-        });
-      }
-      
-      console.log(`[VALIDATE] Scope requested: ${scope}`);
+      const scope = (req.query.scope as string) || 'India';
       
       console.log('\n=== VALIDATION REPORT ===');
       console.log(`Birth: ${birthData.name}, ${birthData.date} ${birthData.time}`);

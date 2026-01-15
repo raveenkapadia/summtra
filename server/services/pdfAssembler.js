@@ -15,7 +15,6 @@ import {
   generateVedicTraitsData,
   prepareAvoidCityData,
   getPowerZonesCount,
-  formatDashaDate,
   PLANET_DATA
 } from './templateProcessor.js';
 
@@ -239,49 +238,34 @@ export class PDFAssembler {
   async addPlanetaryLinesPages() {
     const template = loadTemplate('planetary-lines-page.html');
     
-    // Show only the 10 main planets (exclude Chiron and North Node for simplicity)
-    const mainPlanets = PLANET_DATA.slice(0, 10);
-    const planetsPerPage = 5;
-    const totalPages = Math.ceil(mainPlanets.length / planetsPerPage);
+    const planetsPerPage = 3;
+    const totalPages = Math.ceil(PLANET_DATA.length / planetsPerPage);
     
     for (let i = 0; i < totalPages; i++) {
       const startIdx = i * planetsPerPage;
-      const pagePlanets = mainPlanets.slice(startIdx, startIdx + planetsPerPage);
-      
-      // Generate dynamic planet cards HTML
-      const planetCardsHTML = pagePlanets.map(planet => {
-        const hindiNames = {
-          Sun: 'सूर्य', Moon: 'चंद्र', Mercury: 'बुध', Venus: 'शुक्र',
-          Mars: 'मंगल', Jupiter: 'गुरु', Saturn: 'शनि',
-          Uranus: 'अरुण', Neptune: 'वरुण', Pluto: 'यम'
-        };
-        const hindiName = hindiNames[planet.name] || '';
-        const description = `${planet.name} lines influence ${planet.keywords.join(', ').toLowerCase()}.`;
-        
-        return `
-          <div class="planet-card">
-            <div class="planet-header">
-              <span class="planet-symbol" style="color: ${planet.color}">${planet.symbol}</span>
-              <div><div class="planet-name">${planet.name}</div><div class="planet-hindi">${hindiName}</div></div>
-            </div>
-            <p class="body-text">${description}</p>
-            <div class="planet-keywords">${planet.keywords.map(k => `<span class="planet-keyword">${k}</span>`).join('')}</div>
-            <div class="planet-lines">
-              <div class="planet-line-type"><span class="planet-line-label">MC</span><br>Career</div>
-              <div class="planet-line-type"><span class="planet-line-label">IC</span><br>Home</div>
-              <div class="planet-line-type"><span class="planet-line-label">AC</span><br>Self</div>
-              <div class="planet-line-type"><span class="planet-line-label">DC</span><br>Others</div>
-            </div>
-          </div>
-        `;
-      }).join('');
+      const pagePlanets = PLANET_DATA.slice(startIdx, startIdx + planetsPerPage);
       
       const pageData = {
         ...this.baseData,
-        PLANET_CARDS: planetCardsHTML,
+        PLANET_CARDS: generatePlanetCards(pagePlanets, startIdx),
         PLANETS_PAGE: i + 1,
         PLANETS_TOTAL_PAGES: totalPages
       };
+      
+      // Add numbered planet placeholders for each planet on this page
+      pagePlanets.forEach((planet, idx) => {
+        const num = idx + 1;
+        pageData[`PLANET${num}_NAME`] = planet.name;
+        pageData[`PLANET${num}_SYMBOL`] = planet.symbol;
+        pageData[`PLANET${num}_CLASS`] = `planet-${planet.name.toLowerCase()}`;
+        pageData[`PLANET${num}_HEADLINE`] = `${planet.name} lines influence your ${planet.keywords[0]?.toLowerCase() || 'life'}`;
+        pageData[`PLANET${num}_KEY1`] = planet.keywords[0] || '';
+        pageData[`PLANET${num}_KEY2`] = planet.keywords[1] || '';
+        pageData[`PLANET${num}_KEY3`] = planet.keywords[2] || '';
+        pageData[`PLANET${num}_KEY4`] = planet.keywords[3] || '';
+        pageData[`PLANET${num}_DESC`] = `When ${planet.name} lines pass through a location, they enhance ${planet.keywords.join(', ').toLowerCase()}.`;
+        pageData[`PLANET${num}_LINE_CLASS`] = `line-${planet.name.toLowerCase()}`;
+      });
       
       this.pages.push({ html: processTemplate(template, pageData), type: 'planets' });
     }
@@ -371,7 +355,7 @@ export class PDFAssembler {
     const template = loadTemplate('city-ranking-table.html');
     const allBestCities = this.getCitiesForGoal(goal, 'best', regionScope);
     
-    const citiesPerPage = 6;
+    const citiesPerPage = 9;
     const totalPages = Math.ceil(allBestCities.length / citiesPerPage);
     
     for (let i = 0; i < totalPages; i++) {
@@ -1052,7 +1036,7 @@ export class PDFAssembler {
       
       const pageData = prepareAvoidCityData(city, goal, bestCities, this.baseData, allRankedCities);
       pageData.GOAL_ICON = this.getGoalIcon(goal);
-      pageData.AVOID_CITIES_CARDS = generateAvoidCityCard(city, i + 1);
+      pageData.AVOID_CITY_CARDS = generateAvoidCityCard(city, i + 1);
       pageData.AVOID_PAGE = i + 1;
       pageData.AVOID_TOTAL_PAGES = avoidCities.length;
       
@@ -1176,35 +1160,16 @@ export class PDFAssembler {
       ? dashaSequence[(currentAntarIndex + 1) % dashaSequence.length] 
       : 'Saturn';
     
-    const goal = this.options.goal || 'Wealth';
-    const goalWindowBest = {
-      Career: 'Career advancement, promotions, recognition',
-      Wealth: 'Financial growth, investments, prosperity',
-      Love: 'Relationships, partnerships, emotional bonds',
-      Education: 'Learning, certifications, academic pursuits',
-      Settlement: 'Relocation, property, establishing roots',
-      Complete: 'All-round growth and opportunities'
-    };
-    
     const dashaData = {
       ...this.baseData,
       MAHADASHA: mahadasha,
-      CURRENT_DASHA_LORD: mahadasha,
       ANTARDASHA: antardasha,
       PRATYANTAR: pratyantar,
       CURRENT_THEME: this.getDashaTheme(mahadasha),
-      DASHA_THEME: this.getDashaTheme(mahadasha),
-      CURRENT_DASHA_END: formatDashaDate(rawDasha?.sub_minor?.end) || formattedAntardashaEnd,
       ANTARDASHA_END: formattedAntardashaEnd,
       MAHADASHA_PERIOD: calculateMahadashaPeriod() || this.birthData.mahadashaPeriod || '2014 - 2031',
       NEXT_ANTARDASHA: nextAntardasha,
-      NEXT_ANTARDASHA_THEME: this.getDashaTheme(nextAntardasha),
-      CURRENT_WINDOW_TITLE: `${mahadasha}-${antardasha}`,
-      CURRENT_WINDOW_DATES: formattedAntardashaEnd ? `Now until ${formattedAntardashaEnd}` : 'Current Period',
-      CURRENT_WINDOW_BEST: goalWindowBest[goal] || goalWindowBest.Complete,
-      UPCOMING_WINDOW_TITLE: `${mahadasha}-${nextAntardasha}`,
-      UPCOMING_WINDOW_DATES: `After ${formattedAntardashaEnd || 'current period'}`,
-      UPCOMING_WINDOW_BEST: this.getNextWindowBest(nextAntardasha, goal)
+      NEXT_ANTARDASHA_THEME: this.getDashaTheme(nextAntardasha)
     };
     
     console.log(`   📅 Dasha Timeline: ${mahadasha}-${antardasha}-${pratyantar}, ends ${formattedAntardashaEnd}`);
@@ -1227,22 +1192,6 @@ export class PDFAssembler {
       'Ketu': 'Spirituality, Detachment & Past-life Karma'
     };
     return themes[dashaLord] || 'Personal Growth & Transformation';
-  }
-  
-  getNextWindowBest(planet, goal) {
-    const planetStrengths = {
-      Sun: { Career: 'Leadership roles, authority positions', Wealth: 'Government contracts, gold investments', default: 'Self-expression, recognition' },
-      Moon: { Love: 'Emotional connections, family bonds', Settlement: 'Home buying, domestic harmony', default: 'Comfort, emotional wellbeing' },
-      Mars: { Career: 'Competitive fields, technical roles', Wealth: 'Real estate, construction', default: 'Physical energy, initiatives' },
-      Mercury: { Education: 'Academic pursuits, skill development', Career: 'Communication roles, networking', default: 'Learning, commerce' },
-      Jupiter: { Wealth: 'Investments, abundance, expansion', Education: 'Higher education, spiritual studies', default: 'Growth, wisdom, good fortune' },
-      Venus: { Love: 'Romantic relationships, partnerships', Wealth: 'Arts, luxury goods, finance', default: 'Harmony, beauty, pleasure' },
-      Saturn: { Career: 'Long-term positions, management', Settlement: 'Property, permanent establishments', default: 'Discipline, structure, karma' },
-      Rahu: { Career: 'Unconventional paths, foreign opportunities', Wealth: 'Technology, stocks, crypto', default: 'Innovation, ambition' },
-      Ketu: { Education: 'Research, occult studies', default: 'Spiritual growth, letting go' }
-    };
-    const p = planetStrengths[planet] || planetStrengths.Jupiter;
-    return p[goal] || p.default;
   }
   
   async addGlossaryPages() {
@@ -1306,8 +1255,8 @@ export class PDFAssembler {
             const tempFile = path.join(tempDir, `page_${i}.html`);
             fs.writeFileSync(tempFile, pageData.html, 'utf8');
             
-            await page.goto(`file://${tempFile}`, { waitUntil: 'networkidle0', timeout: 30000 });
-            await new Promise(r => setTimeout(r, 500));
+            await page.goto(`file://${tempFile}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await new Promise(r => setTimeout(r, 200));
             
             const pdfBuffer = await page.pdf({
               format: 'A4',
@@ -1450,60 +1399,46 @@ const PLANET_COLORS = {
   'Chiron': '#FFA07A', 'Vertex': '#87CEEB', 'PartOfFortune': '#F0E68C'
 };
 
-export async function generateTestPDF(reportType, scope, goal, birthData, options = {}) {
+export async function generateTestPDF(reportType, scope, goal, customBirthData = null, options = {}) {
   console.time('⏱️ Total PDF Generation');
-  
-  // ===== DATA INTEGRITY: STRICT INPUT VALIDATION =====
-  // PDF generation MUST fail if user data is missing - never use hardcoded defaults
-  if (!birthData) {
-    throw new Error('CRITICAL: User birth data is required for PDF generation. birthData cannot be null.');
-  }
-  
-  const requiredFields = ['name', 'birthDate', 'birthTime', 'birthPlace'];
-  for (const field of requiredFields) {
-    if (!birthData[field]) {
-      throw new Error(`Missing required field: ${field}. All birth data fields are mandatory.`);
-    }
-  }
-  
-  // Validate coordinates - accept lat/lng or latitude/longitude
-  const lat = birthData.lat || birthData.latitude;
-  const lng = birthData.lng || birthData.longitude;
-  if (!lat || !lng) {
-    throw new Error('Missing required field: lat/lng coordinates. Both latitude and longitude are required.');
-  }
-  
-  // ===== AUDIT LOG: PDF GENERATION START =====
-  console.log(`\n[PDF START] User: ${birthData.name}, DOB: ${birthData.birthDate}, Goal: ${goal}, Scope: ${scope}`);
-  console.log(`[PDF START] Birth: ${birthData.birthTime} at ${birthData.birthPlace} (${lat}, ${lng})`);
-  
   const useAI = options.useAI || false;
   const useRealAPI = options.useRealAPI !== false;
   
-  // Initialize birth data with user-provided values (NO hardcoded defaults for user identity)
-  let testBirthData = {
-    name: birthData.name,
-    birthDate: birthData.birthDate,
-    birthTime: birthData.birthTime,
-    birthPlace: birthData.birthPlace,
-    latitude: String(lat),
-    longitude: String(lng),
-    // Vedic defaults - will be overwritten by API if available
-    rashi: birthData.rashi || 'Unknown',
-    rashiLord: birthData.rashiLord || 'Unknown',
-    nakshatra: birthData.nakshatra || 'Unknown',
-    nakshatraLord: birthData.nakshatraLord || 'Unknown',
-    nakshatraPada: birthData.nakshatraPada || 1,
-    lagna: birthData.lagna || 'Unknown',
-    lagnaLord: birthData.lagnaLord || 'Unknown',
-    sunSign: birthData.sunSign || 'Unknown',
-    currentDashaLord: birthData.currentDashaLord || 'Unknown',
-    currentDashaEnd: birthData.currentDashaEnd || null,
-    antardashaTimeline: birthData.antardashaTimeline || null
+  const defaultBirthData = {
+    name: 'Arjun Sharma',
+    birthDate: '15/08/1990',
+    birthTime: '10:30 AM',
+    birthPlace: 'Mumbai, Maharashtra, India',
+    latitude: '19.076',
+    longitude: '72.8777',
+    rashi: 'Simha (Leo)',
+    rashiLord: 'Sun',
+    nakshatra: 'Magha',
+    nakshatraLord: 'Ketu',
+    nakshatraPada: 2,
+    lagna: 'Tula (Libra)',
+    lagnaLord: 'Venus',
+    sunSign: 'Leo',
+    currentDashaLord: 'Jupiter',
+    currentDashaEnd: '2027-03-15',
+    antardashaTimeline: JSON.stringify([
+      { mahadasha: 'Jupiter', antardasha: 'Saturn', startDate: '2024-01', endDate: '2026-06', theme: 'Career consolidation', isCurrent: true },
+      { mahadasha: 'Jupiter', antardasha: 'Mercury', startDate: '2026-06', endDate: '2028-09', theme: 'Educational pursuits' },
+      { mahadasha: 'Jupiter', antardasha: 'Ketu', startDate: '2028-09', endDate: '2029-08', theme: 'Spiritual growth' }
+    ])
   };
   
-  // Fetch Vedic profile from API if credentials available
-  if (process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
+  let testBirthData = customBirthData ? {
+    ...defaultBirthData,
+    name: customBirthData.name || 'User',
+    birthDate: customBirthData.birthDate,
+    birthTime: customBirthData.birthTime,
+    birthPlace: customBirthData.birthPlace,
+    latitude: customBirthData.latitude,
+    longitude: customBirthData.longitude
+  } : defaultBirthData;
+  
+  if (customBirthData && process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
     console.log('   🔮 Fetching Vedic profile from AstrologyAPI...');
     console.time('⏱️ Vedic API Call');
     try {
@@ -1673,21 +1608,11 @@ export async function generateTestPDF(reportType, scope, goal, birthData, option
   console.timeEnd('⏱️ PDF Assembly');
   console.timeEnd('⏱️ Total PDF Generation');
   
-  // ===== AUDIT LOG: PDF GENERATION COMPLETE =====
-  console.log(`\n[PDF COMPLETE] Generated ${assembler.pages.length} pages for: ${testBirthData.name}`);
-  console.log(`[PDF COMPLETE] File: ${filename}`);
-  console.log(`[PDF COMPLETE] Verified User Data: ${testBirthData.name}, ${testBirthData.birthDate}, ${testBirthData.birthPlace}`);
-  
   return {
     path: outputPath,
     filename: filename,
     pageCount: assembler.pages.length,
-    url: `/test-pdfs/${filename}`,
-    // Return user data for verification
-    userName: testBirthData.name,
-    birthDate: testBirthData.birthDate,
-    birthTime: testBirthData.birthTime,
-    birthPlace: testBirthData.birthPlace
+    url: `/test-pdfs/${filename}`
   };
 }
 

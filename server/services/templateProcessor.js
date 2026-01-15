@@ -210,21 +210,14 @@ export function formatDate(dateStr) {
 export function formatTime(timeStr) {
   if (!timeStr) return 'Unknown';
   
-  const str = timeStr.trim();
-  
-  // Check if time already has AM/PM suffix - return as-is to avoid duplication
-  if (/\s*(AM|PM|am|pm)\s*$/i.test(str)) {
-    return str;
-  }
-  
   // Parse time string (formats: "HH:MM", "H:M", "HH:MM:SS")
-  const parts = str.split(':');
-  if (parts.length < 2) return str;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
   
   let hours = parseInt(parts[0], 10);
-  const minutes = parts[1].replace(/[^\d]/g, '').padStart(2, '0').substring(0, 2);
+  const minutes = parts[1].padStart(2, '0');
   
-  if (isNaN(hours)) return str;
+  if (isNaN(hours)) return timeStr;
   
   const period = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12; // Convert 0 to 12 for midnight
@@ -915,7 +908,6 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     data[`CITY${slotNum}_RANK`] = hasCity ? rank : '';
     data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
     data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 70 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-moderate') : '';
-    data[`CITY${slotNum}_DISPLAY`] = hasCity ? 'flex' : 'none';
     
     // FIX D: Use credibility.western.lineProximity.nearestLine (Lagna-aware from Analysis Engine)
     // This is the SAME source as city pages, ensuring consistency
@@ -1161,7 +1153,6 @@ export function generateVedicTraitsData(birthData, baseData) {
   data.RASHI_MEANING = getRashiMeaning(rashi);
   
   data.NAKSHATRA = birthData.nakshatra || '';
-  data.NAKSHATRA_HINDI = getNakshatraHindi(nakshatra);
   // Bug 3 Fix: Use getNakshatraLord() fallback when API doesn't return nakshatraLord
   data.NAKSHATRA_LORD = birthData.nakshatraLord || getNakshatraLord(nakshatra) || '';
   data.NAKSHATRA_MEANING = getNakshatraMeaning(nakshatra);
@@ -1334,21 +1325,6 @@ function getRashiHindi(rashi) {
     Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन'
   };
   return hindiNames[rashi] || '';
-}
-
-function getNakshatraHindi(nakshatra) {
-  const hindiNames = {
-    Ashwini: 'अश्विनी', Bharani: 'भरणी', Krittika: 'कृत्तिका', Rohini: 'रोहिणी',
-    Mrigashira: 'मृगशिरा', Ardra: 'आर्द्रा', Punarvasu: 'पुनर्वसु', Pushya: 'पुष्य',
-    Ashlesha: 'आश्लेषा', Magha: 'मघा', 'Purva Phalguni': 'पूर्वा फाल्गुनी',
-    'Uttara Phalguni': 'उत्तरा फाल्गुनी', Hasta: 'हस्त', Chitra: 'चित्रा',
-    Swati: 'स्वाति', Vishakha: 'विशाखा', Anuradha: 'अनुराधा', Jyeshtha: 'ज्येष्ठा',
-    Moola: 'मूला', 'Purva Ashadha': 'पूर्वाषाढ़ा', 'Uttara Ashadha': 'उत्तराषाढ़ा',
-    Shravana: 'श्रवण', Dhanishta: 'धनिष्ठा', Shatabhisha: 'शतभिषा',
-    'Purva Bhadrapada': 'पूर्वा भाद्रपद', 'Uttara Bhadrapada': 'उत्तरा भाद्रपद', Revati: 'रेवती'
-  };
-  const cleanName = nakshatra ? nakshatra.trim() : '';
-  return hindiNames[cleanName] || hindiNames[cleanName.replace(/\s/g, '')] || '';
 }
 
 function getRashiLord(rashi) {

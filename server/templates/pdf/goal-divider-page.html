@@ -1,67 +1,369 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ssumitra Report - Goal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
-      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
-      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
-      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif;
-      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
-    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
-    .page-content { padding: var(--space-xl); position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: center; min-height: 1000px; }
-    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
-    .goal-header { text-align: center; padding: var(--space-xl) var(--space-lg); background: linear-gradient(135deg, var(--soft-gold), rgba(107, 91, 149, 0.15)); border: 1px solid rgba(201, 169, 98, 0.25); border-radius: 24px; }
-    .goal-icon { font-size: 64px; margin-bottom: var(--space-md); }
-    .goal-title { font-family: var(--font-display); font-weight: 300; font-size: 48px; color: var(--text-primary); margin-bottom: var(--space-xs); letter-spacing: 2px; }
-    .goal-subtitle { font-size: 14px; color: var(--text-muted); letter-spacing: 1px; }
-    .goal-stats { display: flex; justify-content: center; gap: var(--space-xl); margin-top: var(--space-lg); }
-    .goal-stat { text-align: center; }
-    .goal-stat-value { font-family: var(--font-display); font-size: 42px; font-weight: 300; color: var(--bright-gold); }
-    .goal-stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
-    .goal-planets { display: flex; justify-content: center; gap: var(--space-sm); margin-top: var(--space-lg); }
-    .goal-planet { display: flex; align-items: center; gap: var(--space-xs); padding: 8px 16px; background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.15); border-radius: 20px; font-size: 13px; color: var(--text-secondary); }
-    .goal-planet-symbol { color: var(--gold); font-size: 16px; }
-    .text-center { text-align: center; }
-    .mt-lg { margin-top: var(--space-lg); }
-    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
-    .footer-quote { font-family: var(--font-display); font-style: italic; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Section Divider</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Premium Cosmic Palette */
+            --deep-navy: #0f0f23;
+            --cosmic-blue: #1a1a3e;
+            --midnight: #141432;
+            --deep-purple: #1a1a3e;
+            --royal-purple: #2a2a5e;
+            --midnight-blue: #0f0f23;
+            
+            /* Accent Colors */
+            --gold: #d4a574;
+            --bright-gold: #f4c87a;
+            --gold-light: #e8d5a3;
+            --cosmic-purple: #6b5b95;
+            
+            /* Text Colors */
+            --cream: #f8f6f3;
+            --soft-white: #fefefe;
+            --text-light: #e8e6e3;
+            --text-muted: #9a9a9a;
+            --text-dark: #1A1A2E;
+        }
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background: var(--deep-purple);
+            color: var(--cream);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .page {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(160deg, var(--midnight-blue) 0%, var(--deep-purple) 40%, var(--royal-purple) 100%);
+        }
+        
+        /* Background Pattern */
+        .bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.06;
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 50px,
+                    var(--gold) 50px,
+                    var(--gold) 51px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 50px,
+                    var(--gold) 50px,
+                    var(--gold) 51px
+                );
+        }
+        
+        /* Decorative Circle */
+        .deco-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            height: 450px;
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            opacity: 0.15;
+        }
+        
+        .deco-circle::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            left: -40px;
+            right: -40px;
+            bottom: -40px;
+            border: 1px dashed var(--gold);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+        
+        /* Corner Decorations */
+        .corner {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+        }
+        
+        .corner.top-left {
+            top: 40px;
+            left: 40px;
+            border-top: 2px solid var(--gold);
+            border-left: 2px solid var(--gold);
+        }
+        
+        .corner.top-right {
+            top: 40px;
+            right: 40px;
+            border-top: 2px solid var(--gold);
+            border-right: 2px solid var(--gold);
+        }
+        
+        .corner.bottom-left {
+            bottom: 40px;
+            left: 40px;
+            border-bottom: 2px solid var(--gold);
+            border-left: 2px solid var(--gold);
+        }
+        
+        .corner.bottom-right {
+            bottom: 40px;
+            right: 40px;
+            border-bottom: 2px solid var(--gold);
+            border-right: 2px solid var(--gold);
+        }
+        
+        /* Main Content */
+        .content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px;
+            z-index: 10;
+        }
+        
+        /* Goal Icon */
+        .goal-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(212, 175, 55, 0.15);
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            margin-bottom: 30px;
+        }
+        
+        /* Section Label */
+        .section-label {
+            font-size: 12px;
+            letter-spacing: 6px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        
+        /* Goal Title */
+        .goal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 60px;
+            font-weight: 600;
+            color: var(--soft-white);
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .divider-line {
+            width: 80px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold));
+        }
+        
+        .divider-line.right {
+            background: linear-gradient(90deg, var(--gold), transparent);
+        }
+        
+        .divider-star {
+            color: var(--gold);
+            font-size: 16px;
+        }
+        
+        /* Goal Description */
+        .goal-description {
+            font-size: 16px;
+            color: var(--gold-light);
+            max-width: 500px;
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+        
+        /* Stats Preview */
+        .stats-preview {
+            display: flex;
+            gap: 40px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 36px;
+            font-weight: 600;
+            color: var(--gold);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--cream);
+            letter-spacing: 1px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        
+        /* Key Planets */
+        .key-planets {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+        }
+        
+        .key-planets-title {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        
+        .planet-tags {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .planet-tag {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--cream);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .planet-tag .symbol {
+            font-size: 14px;
+        }
+        
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+        
+        .footer-text {
+            font-size: 10px;
+            color: var(--gold-light);
+            opacity: 0.6;
+            letter-spacing: 2px;
+        }
+    </style>
 </head>
 <body>
-  <div class="page">
-    <div class="page-content">
-      <div class="goal-header">
-        <div class="goal-icon">{{GOAL_ICON}}</div>
-        <h1 class="goal-title">{{GOAL}}</h1>
-        <div class="goal-subtitle">{{GOAL_DESCRIPTION}}</div>
+    <div class="page">
+        <!-- Background -->
+        <div class="bg-pattern"></div>
+        <div class="deco-circle"></div>
         
-        <div class="goal-stats">
-          <div class="goal-stat"><div class="goal-stat-value">{{BEST_CITIES_COUNT}}</div><div class="goal-stat-label">Best Cities</div></div>
-          <div class="goal-stat"><div class="goal-stat-value">{{AVOID_CITIES_COUNT}}</div><div class="goal-stat-label">Cities to Avoid</div></div>
-          <div class="goal-stat"><div class="goal-stat-value">{{POWER_ZONES_COUNT}}</div><div class="goal-stat-label">Power Zones</div></div>
+        <!-- Corners -->
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="goal-icon">{{GOAL_ICON}}</div>
+            
+            <div class="section-label">Your Astrocartography Analysis For</div>
+            
+            <h1 class="goal-title">{{GOAL}}</h1>
+            
+            <div class="divider">
+                <span class="divider-line"></span>
+                <span class="divider-star">✦</span>
+                <span class="divider-line right"></span>
+            </div>
+            
+            <p class="goal-description">
+                {{GOAL_DESCRIPTION}}
+            </p>
+            
+            <div class="stats-preview">
+                <div class="stat-item">
+                    <div class="stat-value">{{BEST_CITIES_COUNT}}</div>
+                    <div class="stat-label">Best Cities</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{AVOID_CITIES_COUNT}}</div>
+                    <div class="stat-label">Cities to Avoid</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{POWER_ZONES_COUNT}}</div>
+                    <div class="stat-label">Power Zones</div>
+                </div>
+            </div>
+            
+            <div class="key-planets">
+                <div class="key-planets-title">Key Planetary Influences</div>
+                <div class="planet-tags">
+                    <span class="planet-tag"><span class="symbol">{{PLANET1_SYMBOL}}</span> {{PLANET1_NAME}}</span>
+                    <span class="planet-tag"><span class="symbol">{{PLANET2_SYMBOL}}</span> {{PLANET2_NAME}}</span>
+                    <span class="planet-tag"><span class="symbol">{{PLANET3_SYMBOL}}</span> {{PLANET3_NAME}}</span>
+                    <span class="planet-tag"><span class="symbol">{{PLANET4_SYMBOL}}</span> {{PLANET4_NAME}}</span>
+                </div>
+            </div>
         </div>
         
-        <div class="goal-planets">{{GOAL_PLANETS}}</div>
-      </div>
-      
-      <p class="body-text text-center mt-lg">{{GOAL_EXPLANATION}}</p>
+        <!-- Footer -->
+        <div class="page-footer">
+            <div class="footer-text">Ssumitra • {{USER_NAME}} • Page {{PAGE_NUM}}</div>
+        </div>
     </div>
-    
-    <div class="page-footer">
-      <span>© Ssumitra {{YEAR}}</span>
-      <span class="footer-quote">"Abundance flows where energy goes."</span>
-      <span>{{GOAL}} Analysis</span>
-    </div>
-  </div>
 </body>
 </html>
