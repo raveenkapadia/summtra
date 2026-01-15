@@ -199,3 +199,131 @@ describe('PDF Generation - Endpoint Validation', () => {
     expect(response.body.userName).toBe('Raveen Kapadia');
   });
 });
+
+describe('PDF Generation - Scope Validation', () => {
+  const express = require('express');
+  const request = require('supertest');
+  
+  let app;
+  
+  beforeAll(() => {
+    app = express();
+    app.use(express.json());
+    
+    app.post('/api/test-pdf', (req, res) => {
+      const { name, birthDate, birthTime, birthPlace, lat, lng, scope } = req.body;
+      
+      const requiredFields = ['name', 'birthDate', 'birthTime', 'birthPlace'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          missing: missingFields
+        });
+      }
+      
+      if (!lat || !lng) {
+        return res.status(400).json({
+          error: 'Missing required coordinates'
+        });
+      }
+      
+      const validScopes = ['India', 'International', 'Global', 'Both'];
+      
+      if (!scope) {
+        return res.status(400).json({
+          error: 'Missing required field: scope',
+          valid: validScopes
+        });
+      }
+      
+      if (!validScopes.includes(scope)) {
+        return res.status(400).json({
+          error: 'Invalid scope. Must be: India, International, Global, or Both',
+          valid: validScopes
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        userName: name,
+        scope: scope
+      });
+    });
+  });
+
+  test('should use International scope when specified', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({
+        name: 'Test User',
+        birthDate: '01/01/1990',
+        birthTime: '12:00 PM',
+        birthPlace: 'Delhi',
+        lat: 28.6139,
+        lng: 77.2090,
+        reportType: 'Single',
+        scope: 'International',
+        goal: 'Wealth'
+      });
+    
+    expect(response.body.scope).toBe('International');
+  });
+  
+  test('should NOT silently default to India', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({
+        name: 'Test User',
+        birthDate: '01/01/1990',
+        birthTime: '12:00 PM',
+        birthPlace: 'Delhi',
+        lat: 28.6139,
+        lng: 77.2090,
+        reportType: 'Single',
+        scope: 'Global',
+        goal: 'Wealth'
+      });
+    
+    expect(response.body.scope).not.toBe('India');
+    expect(response.body.scope).toBe('Global');
+  });
+  
+  test('should reject invalid scope', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({
+        name: 'Test User',
+        birthDate: '01/01/1990',
+        birthTime: '12:00 PM',
+        birthPlace: 'Delhi',
+        lat: 28.6139,
+        lng: 77.2090,
+        reportType: 'Single',
+        scope: 'InvalidScope',
+        goal: 'Wealth'
+      });
+    
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('Invalid scope');
+  });
+  
+  test('should reject missing scope', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({
+        name: 'Test User',
+        birthDate: '01/01/1990',
+        birthTime: '12:00 PM',
+        birthPlace: 'Delhi',
+        lat: 28.6139,
+        lng: 77.2090,
+        reportType: 'Single',
+        goal: 'Wealth'
+      });
+    
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('Missing required field: scope');
+  });
+});

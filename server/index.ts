@@ -615,24 +615,35 @@ async function startServer() {
         });
       }
       
-      // Validate report parameters with defaults
+      // ===== DATA INTEGRITY: Validate report parameters - NO silent defaults for scope =====
       const validReportTypes = ['Single', 'Complete'];
-      const validScopes = ['India', 'International', 'Both'];
+      const validScopes = ['India', 'International', 'Global', 'Both'];
       const validGoals = ['Career', 'Wealth', 'Love', 'Education', 'Settlement', 'Complete'];
       
+      // Scope is REQUIRED - no silent defaulting to India
+      if (!scope) {
+        return res.status(400).json({
+          error: 'Missing required field: scope',
+          valid: validScopes,
+          usage: 'POST /api/test-pdf with scope: "India", "International", "Global", or "Both"'
+        });
+      }
+      
       const finalReportType = reportType || 'Single';
-      const finalScope = scope || 'India';
+      const finalScope = scope; // Use exactly what user provided - NO defaults
       const finalGoal = goal || 'Career';
       
       if (!validReportTypes.includes(finalReportType)) {
         return res.status(400).json({ error: 'Invalid reportType', valid: validReportTypes });
       }
       if (!validScopes.includes(finalScope)) {
-        return res.status(400).json({ error: 'Invalid scope', valid: validScopes });
+        return res.status(400).json({ error: 'Invalid scope. Must be: India, International, Global, or Both', valid: validScopes });
       }
       if (!validGoals.includes(finalGoal)) {
         return res.status(400).json({ error: 'Invalid goal', valid: validGoals });
       }
+      
+      console.log(`[PDF START] Scope requested: ${finalScope}`);
       
       const birthData = {
         name,
@@ -683,13 +694,15 @@ async function startServer() {
       const { generateTestPDF } = require('./services/pdfAssembler.js');
       
       const reportType = req.params.reportType || 'Single';
-      const scope = req.params.scope || 'India';
+      const scope = req.params.scope; // NO default - use exactly what URL says
       const goal = req.params.goal || 'Career';
       
       // Validate parameters
       const validReportTypes = ['Single', 'Complete'];
-      const validScopes = ['India', 'International', 'Both'];
+      const validScopes = ['India', 'International', 'Global', 'Both'];
       const validGoals = ['Career', 'Wealth', 'Love', 'Education', 'Settlement', 'Complete'];
+      
+      console.log(`[PDF START] Scope requested: ${scope}`);
       
       if (!validReportTypes.includes(reportType)) {
         return res.status(400).json({
@@ -1032,7 +1045,19 @@ async function startServer() {
       };
       
       const goal = (req.query.goal as string) || 'Career';
-      const scope = (req.query.scope as string) || 'India';
+      const scope = (req.query.scope as string);
+      
+      // Scope is required for validation endpoint
+      const validScopes = ['India', 'International', 'Global', 'Both'];
+      if (!scope || !validScopes.includes(scope)) {
+        return res.status(400).json({
+          error: 'Missing or invalid scope parameter',
+          valid: validScopes,
+          usage: '/api/validate-report?scope=India&name=...&date=...'
+        });
+      }
+      
+      console.log(`[VALIDATE] Scope requested: ${scope}`);
       
       console.log('\n=== VALIDATION REPORT ===');
       console.log(`Birth: ${birthData.name}, ${birthData.date} ${birthData.time}`);
