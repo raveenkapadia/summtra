@@ -15,6 +15,7 @@ import {
   generateVedicTraitsData,
   prepareAvoidCityData,
   getPowerZonesCount,
+  formatDashaDate,
   PLANET_DATA
 } from './templateProcessor.js';
 
@@ -1160,16 +1161,35 @@ export class PDFAssembler {
       ? dashaSequence[(currentAntarIndex + 1) % dashaSequence.length] 
       : 'Saturn';
     
+    const goal = this.options.goal || 'Wealth';
+    const goalWindowBest = {
+      Career: 'Career advancement, promotions, recognition',
+      Wealth: 'Financial growth, investments, prosperity',
+      Love: 'Relationships, partnerships, emotional bonds',
+      Education: 'Learning, certifications, academic pursuits',
+      Settlement: 'Relocation, property, establishing roots',
+      Complete: 'All-round growth and opportunities'
+    };
+    
     const dashaData = {
       ...this.baseData,
       MAHADASHA: mahadasha,
+      CURRENT_DASHA_LORD: mahadasha,
       ANTARDASHA: antardasha,
       PRATYANTAR: pratyantar,
       CURRENT_THEME: this.getDashaTheme(mahadasha),
+      DASHA_THEME: this.getDashaTheme(mahadasha),
+      CURRENT_DASHA_END: formatDashaDate(rawDasha?.sub_minor?.end) || formattedAntardashaEnd,
       ANTARDASHA_END: formattedAntardashaEnd,
       MAHADASHA_PERIOD: calculateMahadashaPeriod() || this.birthData.mahadashaPeriod || '2014 - 2031',
       NEXT_ANTARDASHA: nextAntardasha,
-      NEXT_ANTARDASHA_THEME: this.getDashaTheme(nextAntardasha)
+      NEXT_ANTARDASHA_THEME: this.getDashaTheme(nextAntardasha),
+      CURRENT_WINDOW_TITLE: `${mahadasha}-${antardasha}`,
+      CURRENT_WINDOW_DATES: formattedAntardashaEnd ? `Now until ${formattedAntardashaEnd}` : 'Current Period',
+      CURRENT_WINDOW_BEST: goalWindowBest[goal] || goalWindowBest.Complete,
+      UPCOMING_WINDOW_TITLE: `${mahadasha}-${nextAntardasha}`,
+      UPCOMING_WINDOW_DATES: `After ${formattedAntardashaEnd || 'current period'}`,
+      UPCOMING_WINDOW_BEST: this.getNextWindowBest(nextAntardasha, goal)
     };
     
     console.log(`   📅 Dasha Timeline: ${mahadasha}-${antardasha}-${pratyantar}, ends ${formattedAntardashaEnd}`);
@@ -1192,6 +1212,22 @@ export class PDFAssembler {
       'Ketu': 'Spirituality, Detachment & Past-life Karma'
     };
     return themes[dashaLord] || 'Personal Growth & Transformation';
+  }
+  
+  getNextWindowBest(planet, goal) {
+    const planetStrengths = {
+      Sun: { Career: 'Leadership roles, authority positions', Wealth: 'Government contracts, gold investments', default: 'Self-expression, recognition' },
+      Moon: { Love: 'Emotional connections, family bonds', Settlement: 'Home buying, domestic harmony', default: 'Comfort, emotional wellbeing' },
+      Mars: { Career: 'Competitive fields, technical roles', Wealth: 'Real estate, construction', default: 'Physical energy, initiatives' },
+      Mercury: { Education: 'Academic pursuits, skill development', Career: 'Communication roles, networking', default: 'Learning, commerce' },
+      Jupiter: { Wealth: 'Investments, abundance, expansion', Education: 'Higher education, spiritual studies', default: 'Growth, wisdom, good fortune' },
+      Venus: { Love: 'Romantic relationships, partnerships', Wealth: 'Arts, luxury goods, finance', default: 'Harmony, beauty, pleasure' },
+      Saturn: { Career: 'Long-term positions, management', Settlement: 'Property, permanent establishments', default: 'Discipline, structure, karma' },
+      Rahu: { Career: 'Unconventional paths, foreign opportunities', Wealth: 'Technology, stocks, crypto', default: 'Innovation, ambition' },
+      Ketu: { Education: 'Research, occult studies', default: 'Spiritual growth, letting go' }
+    };
+    const p = planetStrengths[planet] || planetStrengths.Jupiter;
+    return p[goal] || p.default;
   }
   
   async addGlossaryPages() {
@@ -1255,8 +1291,8 @@ export class PDFAssembler {
             const tempFile = path.join(tempDir, `page_${i}.html`);
             fs.writeFileSync(tempFile, pageData.html, 'utf8');
             
-            await page.goto(`file://${tempFile}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
-            await new Promise(r => setTimeout(r, 200));
+            await page.goto(`file://${tempFile}`, { waitUntil: 'networkidle0', timeout: 30000 });
+            await new Promise(r => setTimeout(r, 500));
             
             const pdfBuffer = await page.pdf({
               format: 'A4',
