@@ -1,0 +1,289 @@
+Good investigation! You found the root cause. Now let's fix this properly for BOTH test and production environments.
+
+## REQUIRED FIXES:
+
+### 1. REMOVE HARDCODED DEFAULTS (CRITICAL)
+Delete or comment out the hardcoded `defaultBirthData` object in pdfAssembler.js. 
+PDF generation should FAIL if user data is missing, not silently use wrong data.
+
+Replace:
+```javascript
+const defaultBirthData = {
+  name: 'Arjun Sharma',
+  birthDate: '15/08/1990',
+  ...
+}
+```
+
+With:
+```javascript
+if (!birthData || !birthData.name || !birthData.birthDate) {
+  throw new Error('CRITICAL: User birth data is required for PDF generation');
+}
+```
+
+### 2. CREATE POST ENDPOINT FOR TESTING
+Yes, please create a POST endpoint:
+```javascript
+// POST /api/test-pdf
+app.post('/api/test-pdf', async (req, res) => {
+  const { 
+    name, 
+    birthDate, 
+    birthTime, 
+    birthPlace, 
+    lat, 
+    lng,
+    reportType,
+    scope,
+    goal 
+  } = req.body;
+  
+  // VALIDATION - Reject if missing required fields
+  if (!name || !birthDate || !birthTime || !birthPlace) {
+    return res.status(400).json({ 
+      error: 'Missing required fields: name, birthDate, birthTime, birthPlace' 
+    });
+  }
+  
+  // Generate PDF with validated data
+  ...
+});
+```
+
+### 3. ADD DATA INTEGRITY CHECK IN generateTestPDF()
+Before generating PDF, verify user data matches throughout:
+```javascript
+async function generateTestPDF(reportType, scope, goal, birthData) {
+  // INPUT VALIDATION
+  const requiredFields = ['name', 'birthDate', 'birthTime', 'birthPlace', 'lat', 'lng'];
+  for (const field of requiredFields) {
+    if (!birthData[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+  
+  console.log(`[PDF Generation] Starting for: ${birthData.name}, DOB: ${birthData.birthDate}`);
+  
+  // ... rest of generation
+  
+  // FINAL VERIFICATION before returning PDF
+  console.log(`[PDF Generation] Completed for: ${birthData.name}`);
+}
+```
+
+### 4. ADD LOGGING FOR AUDIT TRAIL
+Add logging at key points:
+```javascript
+// When PDF generation starts
+console.log(`[PDF START] User: ${birthData.name}, Goal: ${goal}, Scope: ${scope}`);
+
+// When template variables are populated
+console.log(`[PDF TEMPLATE] Populated USER_NAME: ${templateData.USER_NAME}`);
+
+// When PDF is complete
+console.log(`[PDF COMPLETE] Generated ${pageCount} pages for ${birthData.name}`);
+```
+
+### 5. FOR PRODUCTION - VERIFY USER SESSION
+In production endpoints, user data should come from authenticated session, NOT query params:
+```javascript
+app.post('/api/generate-report', authMiddleware, async (req, res) => {
+  // Get user from authenticated session
+  const user = await User.findById(req.user.id);
+  
+  if (!user || !user.birthData) {
+    return res.status(400).json({ error: 'User birth data not found' });
+  }
+  
+  // Use verified user data
+  const birthData = {
+    name: user.name,
+    birthDate: user.birthData.date,
+    birthTime: user.birthData.time,
+    birthPlace: user.birthData.place,
+    lat: user.birthData.lat,
+    lng: user.birthData.lng
+  };
+  
+  // Generate PDF
+  ...
+});
+```
+
+---
+
+## 🧪 TEST REQUIREMENTS
+
+### 6. RUN ALL EXISTING TEST CASES
+Before deploying any changes, run the full test suite to ensure no regression:
+```bash
+npm test
+```
+
+Show me the test results - ALL tests must pass. If any fail, do NOT proceed until fixed.
+
+### 7. ADD NEW TEST CASES FOR DATA INTEGRITY
+
+Please create these new test cases in the test file:
+```javascript
+// tests/pdfGeneration.test.js
+
+describe('PDF Generation - Data Integrity', () => {
+  
+  // TEST 1: Should reject if user data is missing
+  test('should throw error when birthData is null', async () => {
+    await expect(generateTestPDF('Single', 'India', 'Wealth', null))
+      .rejects.toThrow('User birth data is required');
+  });
+
+  // TEST 2: Should reject if name is missing
+  test('should throw error when name is missing', async () => {
+    const incompleteData = {
+      birthDate: '15/11/1982',
+      birthTime: '8:00 AM',
+      birthPlace: 'Ahmedabad'
+    };
+    await expect(generateTestPDF('Single', 'India', 'Wealth', incompleteData))
+      .rejects.toThrow('Missing required field: name');
+  });
+
+  // TEST 3: Should reject if birthDate is missing
+  test('should throw error when birthDate is missing', async () => {
+    const incompleteData = {
+      name: 'Raveen Kapadia',
+      birthTime: '8:00 AM',
+      birthPlace: 'Ahmedabad'
+    };
+    await expect(generateTestPDF('Single', 'India', 'Wealth', incompleteData))
+      .rejects.toThrow('Missing required field: birthDate');
+  });
+
+  // TEST 4: Should reject if coordinates are missing
+  test('should throw error when lat/lng is missing', async () => {
+    const incompleteData = {
+      name: 'Raveen Kapadia',
+      birthDate: '15/11/1982',
+      birthTime: '8:00 AM',
+      birthPlace: 'Ahmedabad'
+      // lat and lng missing
+    };
+    await expect(generateTestPDF('Single', 'India', 'Wealth', incompleteData))
+      .rejects.toThrow('Missing required field: lat');
+  });
+
+  // TEST 5: Generated PDF should contain correct user name
+  test('should generate PDF with correct user name', async () => {
+    const userData = {
+      name: 'Test User ABC',
+      birthDate: '01/01/1990',
+      birthTime: '12:00 PM',
+      birthPlace: 'Delhi, India',
+      lat: 28.6139,
+      lng: 77.2090
+    };
+    const result = await generateTestPDF('Single', 'India', 'Wealth', userData);
+    
+    // Verify the returned data contains correct user
+    expect(result.userName).toBe('Test User ABC');
+    expect(result.birthDate).toBe('01/01/1990');
+  });
+
+  // TEST 6: Should NOT use hardcoded defaults
+  test('should not have hardcoded default user data', async () => {
+    const userData = {
+      name: 'Unique Test Name 12345',
+      birthDate: '25/12/1985',
+      birthTime: '3:30 PM',
+      birthPlace: 'Chennai, India',
+      lat: 13.0827,
+      lng: 80.2707
+    };
+    const result = await generateTestPDF('Single', 'India', 'Wealth', userData);
+    
+    // Ensure it's NOT using Arjun Sharma (the old hardcoded default)
+    expect(result.userName).not.toBe('Arjun Sharma');
+    expect(result.userName).toBe('Unique Test Name 12345');
+  });
+
+  // TEST 7: POST endpoint validation
+  test('POST /api/test-pdf should reject missing fields', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({ name: 'Test' }); // Missing other required fields
+    
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('Missing required fields');
+  });
+
+  // TEST 8: POST endpoint should accept valid data
+  test('POST /api/test-pdf should accept complete data', async () => {
+    const response = await request(app)
+      .post('/api/test-pdf')
+      .send({
+        name: 'Raveen Kapadia',
+        birthDate: '15/11/1982',
+        birthTime: '8:00 AM',
+        birthPlace: 'Ahmedabad, Gujarat, India',
+        lat: 23.0225,
+        lng: 72.5714,
+        reportType: 'Single',
+        scope: 'India',
+        goal: 'Wealth'
+      });
+    
+    expect(response.status).toBe(200);
+  });
+
+});
+```
+
+### 8. ADD THESE TO EXISTING TEST COUNT
+You mentioned we have ~145 test cases planned. Add these 8 new data integrity tests:
+
+| Category | Existing | New | Total |
+|----------|----------|-----|-------|
+| Input Validation | ~30 | 0 | 30 |
+| Zodiac Signs | 12 | 0 | 12 |
+| Scoring Logic | ~50 | 0 | 50 |
+| Error Handling | ~30 | 0 | 30 |
+| **Data Integrity** | 0 | **8** | **8** |
+| Edge Cases | ~23 | 0 | 23 |
+| **TOTAL** | ~145 | **8** | **153** |
+
+---
+
+## AFTER FIXES, PLEASE:
+
+1. Run ALL existing tests - show results
+2. Run the 8 NEW data integrity tests - show results
+3. Generate a NEW test PDF using POST endpoint with:
+```json
+{
+  "name": "Raveen Kapadia",
+  "birthDate": "15/11/1982",
+  "birthTime": "8:00 AM",
+  "birthPlace": "Ahmedabad, Gujarat, India",
+  "lat": 23.0225,
+  "lng": 72.5714,
+  "reportType": "Single",
+  "scope": "India",
+  "goal": "Wealth"
+}
+```
+
+4. Share the console logs showing user data flow
+5. Confirm the PDF shows "Raveen Kapadia" with correct birth details
+
+---
+
+## WHY THIS MATTERS:
+
+| Scenario | Risk Without Fix |
+|----------|------------------|
+| Test endpoint | Wrong user data, invalid testing |
+| Production | User A receives User B's birth chart (privacy violation) |
+| Paid reports | Customer pays for report, gets someone else's data |
+| Legal | GDPR violation if personal data is mixed |
+
+This is a DATA INTEGRITY issue - the #1 priority before any design fixes.
