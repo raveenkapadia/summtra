@@ -1435,46 +1435,60 @@ const PLANET_COLORS = {
   'Chiron': '#FFA07A', 'Vertex': '#87CEEB', 'PartOfFortune': '#F0E68C'
 };
 
-export async function generateTestPDF(reportType, scope, goal, customBirthData = null, options = {}) {
+export async function generateTestPDF(reportType, scope, goal, birthData, options = {}) {
   console.time('⏱️ Total PDF Generation');
+  
+  // ===== DATA INTEGRITY: STRICT INPUT VALIDATION =====
+  // PDF generation MUST fail if user data is missing - never use hardcoded defaults
+  if (!birthData) {
+    throw new Error('CRITICAL: User birth data is required for PDF generation. birthData cannot be null.');
+  }
+  
+  const requiredFields = ['name', 'birthDate', 'birthTime', 'birthPlace'];
+  for (const field of requiredFields) {
+    if (!birthData[field]) {
+      throw new Error(`Missing required field: ${field}. All birth data fields are mandatory.`);
+    }
+  }
+  
+  // Validate coordinates - accept lat/lng or latitude/longitude
+  const lat = birthData.lat || birthData.latitude;
+  const lng = birthData.lng || birthData.longitude;
+  if (!lat || !lng) {
+    throw new Error('Missing required field: lat/lng coordinates. Both latitude and longitude are required.');
+  }
+  
+  // ===== AUDIT LOG: PDF GENERATION START =====
+  console.log(`\n[PDF START] User: ${birthData.name}, DOB: ${birthData.birthDate}, Goal: ${goal}, Scope: ${scope}`);
+  console.log(`[PDF START] Birth: ${birthData.birthTime} at ${birthData.birthPlace} (${lat}, ${lng})`);
+  
   const useAI = options.useAI || false;
   const useRealAPI = options.useRealAPI !== false;
   
-  const defaultBirthData = {
-    name: 'Arjun Sharma',
-    birthDate: '15/08/1990',
-    birthTime: '10:30 AM',
-    birthPlace: 'Mumbai, Maharashtra, India',
-    latitude: '19.076',
-    longitude: '72.8777',
-    rashi: 'Simha (Leo)',
-    rashiLord: 'Sun',
-    nakshatra: 'Magha',
-    nakshatraLord: 'Ketu',
-    nakshatraPada: 2,
-    lagna: 'Tula (Libra)',
-    lagnaLord: 'Venus',
-    sunSign: 'Leo',
-    currentDashaLord: 'Jupiter',
-    currentDashaEnd: '2027-03-15',
-    antardashaTimeline: JSON.stringify([
-      { mahadasha: 'Jupiter', antardasha: 'Saturn', startDate: '2024-01', endDate: '2026-06', theme: 'Career consolidation', isCurrent: true },
-      { mahadasha: 'Jupiter', antardasha: 'Mercury', startDate: '2026-06', endDate: '2028-09', theme: 'Educational pursuits' },
-      { mahadasha: 'Jupiter', antardasha: 'Ketu', startDate: '2028-09', endDate: '2029-08', theme: 'Spiritual growth' }
-    ])
+  // Initialize birth data with user-provided values (NO hardcoded defaults for user identity)
+  let testBirthData = {
+    name: birthData.name,
+    birthDate: birthData.birthDate,
+    birthTime: birthData.birthTime,
+    birthPlace: birthData.birthPlace,
+    latitude: String(lat),
+    longitude: String(lng),
+    // Vedic defaults - will be overwritten by API if available
+    rashi: birthData.rashi || 'Unknown',
+    rashiLord: birthData.rashiLord || 'Unknown',
+    nakshatra: birthData.nakshatra || 'Unknown',
+    nakshatraLord: birthData.nakshatraLord || 'Unknown',
+    nakshatraPada: birthData.nakshatraPada || 1,
+    lagna: birthData.lagna || 'Unknown',
+    lagnaLord: birthData.lagnaLord || 'Unknown',
+    sunSign: birthData.sunSign || 'Unknown',
+    currentDashaLord: birthData.currentDashaLord || 'Unknown',
+    currentDashaEnd: birthData.currentDashaEnd || null,
+    antardashaTimeline: birthData.antardashaTimeline || null
   };
   
-  let testBirthData = customBirthData ? {
-    ...defaultBirthData,
-    name: customBirthData.name || 'User',
-    birthDate: customBirthData.birthDate,
-    birthTime: customBirthData.birthTime,
-    birthPlace: customBirthData.birthPlace,
-    latitude: customBirthData.latitude,
-    longitude: customBirthData.longitude
-  } : defaultBirthData;
-  
-  if (customBirthData && process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
+  // Fetch Vedic profile from API if credentials available
+  if (process.env.ASTROLOGY_API_KEY && process.env.ASTROLOGY_API_USER_ID) {
     console.log('   🔮 Fetching Vedic profile from AstrologyAPI...');
     console.time('⏱️ Vedic API Call');
     try {
@@ -1644,11 +1658,21 @@ export async function generateTestPDF(reportType, scope, goal, customBirthData =
   console.timeEnd('⏱️ PDF Assembly');
   console.timeEnd('⏱️ Total PDF Generation');
   
+  // ===== AUDIT LOG: PDF GENERATION COMPLETE =====
+  console.log(`\n[PDF COMPLETE] Generated ${assembler.pages.length} pages for: ${testBirthData.name}`);
+  console.log(`[PDF COMPLETE] File: ${filename}`);
+  console.log(`[PDF COMPLETE] Verified User Data: ${testBirthData.name}, ${testBirthData.birthDate}, ${testBirthData.birthPlace}`);
+  
   return {
     path: outputPath,
     filename: filename,
     pageCount: assembler.pages.length,
-    url: `/test-pdfs/${filename}`
+    url: `/test-pdfs/${filename}`,
+    // Return user data for verification
+    userName: testBirthData.name,
+    birthDate: testBirthData.birthDate,
+    birthTime: testBirthData.birthTime,
+    birthPlace: testBirthData.birthPlace
   };
 }
 
