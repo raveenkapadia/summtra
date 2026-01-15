@@ -1,728 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-            
-            /* Score Colors */
-            --score-excellent: #4ade80;
-            --score-good: #fbbf24;
-            --score-moderate: #fb923c;
-            --score-caution: #f87171;
-            
-            /* Legacy Colors */
-            --success: #4ade80;
-            --warning: #fbbf24;
-            --danger: #f87171;
-        }
-        
-        body {
-            font-family: 'Raleway', sans-serif;
-            background: var(--cream);
-            color: var(--text-dark);
-        }
-        
-        .page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            overflow: hidden;
-            background: var(--cream);
-        }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        
-        .header-divider {
-            width: 1px;
-            height: 20px;
-            background: var(--gold);
-            opacity: 0.4;
-        }
-        
-        .header-section {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--cream);
-            text-transform: uppercase;
-        }
-        
-        .header-right {
-            text-align: right;
-        }
-        
-        .page-number {
-            font-size: 10px;
-            color: var(--gold-light);
-        }
-        
-        /* City Hero Section */
-        .city-hero {
-            position: relative;
-            height: 160px;
-            background: linear-gradient(135deg, var(--midnight-blue) 0%, var(--deep-purple) 100%);
-            overflow: hidden;
-        }
-        
-        .city-hero-pattern {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            opacity: 0.1;
-            background-image: 
-                radial-gradient(circle at 20% 50%, var(--gold) 1px, transparent 1px),
-                radial-gradient(circle at 80% 30%, var(--gold) 1px, transparent 1px),
-                radial-gradient(circle at 60% 70%, var(--gold) 1px, transparent 1px);
-            background-size: 100px 100px;
-        }
-        
-        .city-hero-content {
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            padding: 25px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .city-info {
-            flex: 1;
-        }
-        
-        .city-rank {
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        
-        .city-name {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 42px;
-            font-weight: 600;
-            color: var(--soft-white);
-            margin-bottom: 5px;
-        }
-        
-        .city-country {
-            font-size: 14px;
-            color: var(--gold-light);
-            letter-spacing: 1px;
-        }
-        
-        .score-circle {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
-        }
-        
-        .score-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--deep-purple);
-            line-height: 1;
-        }
-        
-        .score-label {
-            font-size: 9px;
-            color: var(--deep-purple);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 3px;
-        }
-        
-        /* Content Area */
-        .content-area {
-            padding: 25px 40px;
-        }
-        
-        /* Two Column Layout */
-        .two-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 20px;
-        }
-        
-        /* Info Card */
-        .info-card {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 20px;
-            border: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .card-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--royal-purple) 0%, var(--deep-purple) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: var(--gold);
-        }
-        
-        .card-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        /* Planetary Lines List */
-        .lines-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .line-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            background: var(--cream);
-            border-radius: 4px;
-        }
-        
-        .line-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        
-        .line-name {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-        
-        .line-meaning {
-            font-size: 10px;
-            color: #666;
-            margin-left: auto;
-        }
-        
-        /* Status Indicators */
-        .status-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .status-label {
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .status-value {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-icon {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: white;
-        }
-        
-        .status-success { background: var(--success); }
-        .status-warning { background: var(--warning); }
-        .status-neutral { background: #9CA3AF; }
-        
-        /* Verdict Section */
-        .verdict-section {
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.25);
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .verdict-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-        
-        .verdict-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        .verdict-badge {
-            padding: 6px 16px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            color: var(--deep-purple);
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            border-radius: 20px;
-        }
-        
-        .verdict-text {
-            font-size: 13px;
-            line-height: 1.7;
-            color: var(--text-dark);
-        }
-        
-        /* Timing Section */
-        .timing-section {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 20px;
-            border: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .timing-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .timing-icon {
-            font-size: 20px;
-        }
-        
-        .timing-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        .timing-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .timing-box {
-            padding: 12px;
-            background: var(--cream);
-            border-radius: 4px;
-            text-align: center;
-        }
-        
-        .timing-label {
-            font-size: 9px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-        
-        .timing-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        .timing-note {
-            grid-column: span 2;
-            padding: 12px;
-            background: rgba(212, 175, 55, 0.1);
-            border-radius: 4px;
-            font-size: 11px;
-            color: var(--text-dark);
-            line-height: 1.5;
-        }
-        
-        .timing-note strong {
-            color: var(--royal-purple);
-        }
-        
-        /* Footer */
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(45, 27, 78, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .footer-left {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        .footer-center {
-            font-size: 9px;
-            color: var(--royal-purple);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .footer-right {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        /* Planet Colors */
-        .jupiter-dot { background: #FFD700; }
-        .venus-dot { background: #FF69B4; }
-        .mercury-dot { background: #4ECDC4; }
-        .saturn-dot { background: #4A5568; }
-        .sun-dot { background: #FF6B35; }
-        .moon-dot { background: #C0C0C0; }
-        .mars-dot { background: #DC143C; }
-        .rahu-dot { background: #8B5CF6; }
-        
-        /* Orb Section Styles */
-        .orb-section {
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(45, 27, 78, 0.15);
-        }
-        .orb-item {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 4px 8px;
-            margin-bottom: 8px;
-        }
-        .orb-line-name {
-            font-weight: 600;
-            color: var(--royal-purple);
-            font-size: 12px;
-        }
-        .orb-distance {
-            font-size: 10px;
-            color: #666;
-            text-align: right;
-        }
-        .orb-bar {
-            font-family: monospace;
-            font-size: 11px;
-            letter-spacing: -1px;
-            color: var(--gold);
-        }
-        .orb-strength {
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--success);
-            text-align: right;
-        }
-        .orb-note {
-            font-size: 9px;
-            color: #888;
-            font-style: italic;
-        }
-        
-        /* Paran Section Styles */
-        .paran-section {
-            margin-top: 8px;
-        }
-        .paran-label {
-            font-size: 9px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        .paran-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .paran-tag {
-            padding: 3px 8px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            border-radius: 10px;
-            font-size: 9px;
-            color: var(--deep-purple);
-            font-weight: 500;
-        }
-        
-        /* Score Breakdown Styles */
-        .score-breakdown {
-            font-size: 11px;
-        }
-        .score-category {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(45, 27, 78, 0.06);
-            padding: 6px 8px;
-            margin: 8px 0 4px 0;
-            border-radius: 4px;
-        }
-        .score-category:first-child {
-            margin-top: 0;
-        }
-        .category-label {
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        .category-score {
-            font-weight: 700;
-            color: var(--royal-purple);
-        }
-        .score-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 8px 4px 16px;
-            font-size: 10px;
-            color: #555;
-        }
-        .score-item span:last-child {
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - City Detail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --cosmic-purple: #6b5b95; --soft-purple: rgba(107, 91, 149, 0.2);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --score-excellent: #4ade80; --score-good: #c9a962; --score-moderate: #fb923c; --score-caution: #f87171;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif; --font-hindi: 'Noto Sans Devanagari', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .subsection-title { font-family: var(--font-body); font-weight: 600; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: var(--space-sm); }
+    .city-detail-header { text-align: center; padding-bottom: var(--space-md); border-bottom: 1px solid rgba(201, 169, 98, 0.1); margin-bottom: var(--space-md); }
+    .city-detail-rank { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: var(--space-xs); }
+    .city-detail-name { font-family: var(--font-display); font-weight: 300; font-size: 42px; color: var(--text-primary); margin-bottom: 4px; }
+    .city-detail-country { font-size: 16px; color: var(--text-muted); }
+    .verdict-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: var(--space-sm); }
+    .verdict-badge.excellent { background: rgba(74, 222, 128, 0.15); color: var(--score-excellent); }
+    .verdict-badge.favorable { background: var(--soft-gold); color: var(--gold); }
+    .verdict-badge.moderate { background: rgba(251, 146, 60, 0.15); color: var(--score-moderate); }
+    .verdict-badge.caution { background: rgba(248, 113, 113, 0.15); color: var(--score-caution); }
+    .score-hero { text-align: center; padding: var(--space-md) 0; }
+    .score-percentage { font-family: var(--font-display); font-weight: 300; font-size: 72px; color: var(--bright-gold); line-height: 1; }
+    .score-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-top: var(--space-xs); }
+    .score-cards { display: flex; justify-content: center; gap: var(--space-md); margin-top: var(--space-md); }
+    .score-card { background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.1); border-radius: 16px; padding: var(--space-md) var(--space-lg); min-width: 160px; text-align: center; }
+    .score-card-header { display: flex; align-items: center; justify-content: center; gap: var(--space-xs); margin-bottom: var(--space-sm); }
+    .score-card-icon { font-size: 18px; color: var(--gold); }
+    .score-card-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    .score-card-value { font-family: var(--font-display); font-size: 32px; color: var(--text-primary); }
+    .score-card-max { font-size: 16px; color: var(--text-muted); }
+    .score-card-stars { margin-top: var(--space-xs); font-size: 14px; letter-spacing: 2px; }
+    .star-filled { color: var(--gold); }
+    .star-empty { color: var(--midnight); }
+    .score-progress { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; margin-top: var(--space-sm); overflow: hidden; }
+    .score-progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--bright-gold)); border-radius: 3px; }
+    .section-divider { display: flex; align-items: center; justify-content: center; margin: var(--space-md) 0; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent); }
+    .section-divider-icon { margin: 0 var(--space-md); color: var(--gold); font-size: 16px; opacity: 0.7; }
+    .planetary-influence { background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.1); border-radius: 16px; padding: var(--space-md); margin-bottom: var(--space-md); }
+    .influence-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .influence-icon { font-size: 20px; color: var(--gold); }
+    .influence-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    .influence-line { display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm) 0; }
+    .influence-planet { font-family: var(--font-display); font-size: 18px; color: var(--text-primary); }
+    .influence-distance { font-size: 14px; color: var(--text-muted); }
+    .influence-direction { font-size: 13px; color: var(--gold); }
+    .orb-strength { margin-top: var(--space-sm); }
+    .orb-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+    .orb-bar { height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+    .orb-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold), var(--bright-gold)); }
+    .paran-lines { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+    .paran-tag { padding: 6px 14px; background: var(--soft-purple); border-radius: 20px; font-size: 12px; color: var(--text-secondary); }
+    .verdict-section { background: linear-gradient(135deg, var(--soft-gold), transparent); border-left: 3px solid var(--gold); padding: var(--space-md); margin: var(--space-md) 0; border-radius: 0 12px 12px 0; }
+    .verdict-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: var(--space-sm); }
+    .verdict-text { font-family: var(--font-display); font-size: 18px; font-weight: 400; line-height: 1.7; color: var(--text-primary); }
+    .mt-md { margin-top: var(--space-md); }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">City Analysis • {{GOAL}}</div>
-            </div>
-            <div class="header-right">
-                <div class="page-number">Page {{PAGE_NUM}}</div>
-            </div>
-        </div>
+  <div class="page">
+    <div class="page-content">
+      <div class="city-detail-header">
+        <div class="city-detail-rank">#{{CITY_RANK}} Recommended City</div>
+        <h1 class="city-detail-name">{{CITY_NAME}}</h1>
+        <div class="city-detail-country">{{CITY_COUNTRY}}</div>
+        <span class="verdict-badge {{CITY_VERDICT}}">✦ {{CITY_VERDICT}}</span>
+      </div>
+      
+      <div class="score-hero">
+        <div class="score-percentage">{{CITY_SCORE}}%</div>
+        <div class="score-label">Cosmic Alignment</div>
         
-        <!-- City Hero -->
-        <div class="city-hero">
-            <div class="city-hero-pattern"></div>
-            <div class="city-hero-content">
-                <div class="city-info">
-                    <div class="city-rank">#{{CITY_RANK}} Recommended City</div>
-                    <h1 class="city-name">{{CITY_NAME}}</h1>
-                    <div class="city-country">{{CITY_COUNTRY}}</div>
-                </div>
-                <div class="score-circle">
-                    <div class="score-value">{{CITY_SCORE}}%</div>
-                    <div class="score-label">Match Score</div>
-                </div>
-            </div>
+        <div class="score-cards">
+          <div class="score-card">
+            <div class="score-card-header"><span class="score-card-icon">☉</span><span class="score-card-title">Western</span></div>
+            <div class="score-card-value">{{WESTERN_SCORE}}<span class="score-card-max">/50</span></div>
+            <div class="score-card-stars">{{WESTERN_STARS}}</div>
+            <div class="score-progress"><div class="score-progress-fill" style="width: {{WESTERN_PERCENT}}%"></div></div>
+          </div>
+          <div class="score-card">
+            <div class="score-card-header"><span class="score-card-icon">ॐ</span><span class="score-card-title">Vedic</span></div>
+            <div class="score-card-value">{{VEDIC_SCORE}}<span class="score-card-max">/50</span></div>
+            <div class="score-card-stars">{{VEDIC_STARS}}</div>
+            <div class="score-progress"><div class="score-progress-fill" style="width: {{VEDIC_PERCENT}}%"></div></div>
+          </div>
         </div>
-        
-        <!-- Content -->
-        <div class="content-area">
-            <!-- Two Columns -->
-            <div class="two-columns">
-                <!-- Planetary Line Influence Card -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <div class="card-icon">☍</div>
-                        <div class="card-title">Planetary Line Influence</div>
-                    </div>
-                    <div class="orb-section">
-                        <div class="orb-item">
-                            <div class="orb-line-name">{{NEAREST_LINE}}</div>
-                            <div class="orb-distance">{{LINE_DISTANCE_KM}}km {{LINE_DIRECTION}}</div>
-                            <div class="orb-bar">{{ORB_BARS}}</div>
-                            <div class="orb-strength">{{ORB_STRENGTH}} Orb</div>
-                        </div>
-                        <div class="orb-note">Lines influence areas within 700km (orb of influence)</div>
-                    </div>
-                    <div class="paran-section">
-                        <!-- BUG 10 Fix: Use CITY_LATITUDE_DISPLAY for proper N/S formatting -->
-                        <div class="paran-label">PARAN LINES at {{CITY_LATITUDE_DISPLAY}}</div>
-                        <div class="paran-list">{{PARAN_TAGS}}</div>
-                        <div class="orb-note" style="margin-top: 6px;">Parans are planetary alignments at this latitude that amplify nearby line energies</div>
-                    </div>
-                </div>
-                
-                <!-- Score Breakdown Card -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <div class="card-icon">📊</div>
-                        <div class="card-title">Score Breakdown</div>
-                    </div>
-                    <!-- PHASE 4 B4: Score breakdown with star ratings -->
-                    <div class="score-breakdown">
-                        <div class="score-category">
-                            <div class="category-label">☉ WESTERN {{WESTERN_STARS}}</div>
-                            <div class="category-score">{{WESTERN_SCORE}}/50</div>
-                        </div>
-                        <div class="score-item">
-                            <span>Line Proximity</span>
-                            <span>{{LINE_PROXIMITY_SCORE}}/25</span>
-                        </div>
-                        {{PLANET_BOOST_ROW}}
-                        <div class="score-item">
-                            <span>Paran Lines</span>
-                            <span>{{PARAN_SCORE}}/25</span>
-                        </div>
-                        <div class="score-category">
-                            <div class="category-label">ॐ VEDIC {{VEDIC_STARS}}</div>
-                            <div class="category-score">{{VEDIC_SCORE}}/50</div>
-                        </div>
-                        <div class="score-item">
-                            <span>Nakshatra + Rashi</span>
-                            <span>{{NAKSHATRA_RASHI_SCORE}}/20</span>
-                        </div>
-                        <div class="score-item">
-                            <span>Lagna-Vastu</span>
-                            <span>{{LAGNA_VASTU_SCORE}}/15</span>
-                        </div>
-                        <div class="score-item">
-                            <span>Dasha Timing</span>
-                            <span>{{DASHA_SCORE}}/15</span>
-                        </div>
-                        {{DIRECTION_ADJUSTMENT_ROW}}
-                        <div class="score-category" style="background: var(--deep-purple); margin-top: 8px;">
-                            <div class="category-label" style="color: var(--gold);">TOTAL</div>
-                            <div class="category-score" style="color: var(--gold); font-size: 14px;">{{SCORE_TOTAL_CALC}}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Verdict Section -->
-            <div class="verdict-section">
-                <div class="verdict-header">
-                    <div class="verdict-title">✦ Our Verdict</div>
-                    <div class="verdict-badge">{{CITY_VERDICT}}</div>
-                </div>
-                <p class="verdict-text">
-                    {{CITY_INTERPRETATION}}
-                </p>
-            </div>
-            
-            <!-- Timing Section -->
-            <div class="timing-section">
-                <div class="timing-header">
-                    <span class="timing-icon">⏰</span>
-                    <div class="timing-title">Optimal Timing for Relocation</div>
-                </div>
-                <div class="timing-content">
-                    <div class="timing-box">
-                        <div class="timing-label">Current Dasha</div>
-                        <div class="timing-value">{{CURRENT_DASHA_LORD}}</div>
-                    </div>
-                    <div class="timing-box">
-                        <div class="timing-label">Current Period Ends</div>
-                        <div class="timing-value">{{CURRENT_DASHA_END}}</div>
-                    </div>
-                    <div class="timing-box">
-                        <div class="timing-label">Active Lines</div>
-                        <div class="timing-value">{{CITY_ACTIVE_LINES}}</div>
-                    </div>
-                    <div class="timing-box">
-                        <div class="timing-label">Nakshatra Aligned</div>
-                        <div class="timing-value">{{CITY_NAKSHATRA_MATCH}}</div>
-                    </div>
-                    <!-- PHASE 4 B2: Personalized timing insight with Mahadasha theme -->
-                    <div class="timing-note">
-                        <strong>💡 Timing Insight:</strong> {{PERSONALIZED_TIMING_INSIGHT}}
-                    </div>
-                </div>
-            </div>
+      </div>
+      
+      <div class="section-divider"><span class="section-divider-icon">✦</span></div>
+      
+      <div class="planetary-influence">
+        <div class="influence-header"><span class="influence-icon">☍</span><span class="influence-title">Planetary Line Influence</span></div>
+        <div class="influence-line">
+          <span class="influence-planet">{{NEAREST_LINE}}</span>
+          <span class="influence-distance">{{LINE_DISTANCE_KM}} km</span>
+          <span class="influence-direction">{{LINE_DIRECTION}}</span>
         </div>
-        
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
-            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        <div class="orb-strength">
+          <div class="orb-label"><span>Orb Strength</span><span>{{ORB_STRENGTH}}</span></div>
+          <div class="orb-bar"><div class="orb-fill" style="width: {{ORB_PERCENT}}%"></div></div>
         </div>
+        <div class="subsection-title mt-md">Paran Lines at {{CITY_LATITUDE_DISPLAY}}</div>
+        <div class="paran-lines">{{PARAN_TAGS}}</div>
+      </div>
+      
+      <div class="verdict-section">
+        <div class="verdict-title">✦ Our Verdict</div>
+        <p class="verdict-text">{{CITY_INTERPRETATION}}</p>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"Geography is destiny."</span>
+      <span>{{CITY_NAME}}</span>
+    </div>
+  </div>
 </body>
 </html>

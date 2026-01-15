@@ -1,321 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glossary - Page 2</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-        }
-        
-        body {
-            font-family: 'Raleway', sans-serif;
-            background: var(--cream);
-            color: var(--text-dark);
-        }
-        
-        .page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            overflow: hidden;
-            background: var(--cream);
-        }
-        
-        .page-header {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        
-        .header-divider {
-            width: 1px;
-            height: 20px;
-            background: var(--gold);
-            opacity: 0.4;
-        }
-        
-        .header-section {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--cream);
-            text-transform: uppercase;
-        }
-        
-        .page-number {
-            font-size: 10px;
-            color: var(--gold-light);
-        }
-        
-        /* BUG 15 Fix: Apply same spacing as glossary-page.html to prevent Hindi truncation */
-        .content {
-            padding: 20px 40px;
-        }
-        
-        .section-label {
-            font-size: 10px;
-            letter-spacing: 4px;
-            color: var(--royal-purple);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        
-        .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 18px;
-        }
-        
-        .glossary-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .glossary-item {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 12px;
-            border: 1px solid rgba(45, 27, 78, 0.08);
-            border-left: 3px solid var(--gold);
-        }
-        
-        .glossary-term {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 4px;
-            /* BUG 15 Fix: Prevent Hindi text truncation */
-            white-space: nowrap;
-            overflow: visible;
-        }
-        
-        .glossary-term .hindi {
-            font-family: 'Noto Sans Devanagari', sans-serif;
-            font-size: 11px;
-            color: var(--royal-purple);
-            font-weight: 400;
-            margin-left: 4px;
-            /* BUG 15 Fix: Ensure full Hindi text displays */
-            display: inline;
-            white-space: nowrap;
-        }
-        
-        .glossary-definition {
-            font-size: 10px;
-            line-height: 1.4;
-            color: #555;
-        }
-        
-        .category-header {
-            grid-column: span 2;
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            border-radius: 6px;
-            padding: 10px 18px;
-            margin-top: 8px;
-        }
-        
-        .category-header:first-child {
-            margin-top: 0;
-        }
-        
-        .category-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--gold);
-            letter-spacing: 1px;
-        }
-        
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(45, 27, 78, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .footer-left, .footer-right {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        .footer-center {
-            font-size: 9px;
-            color: var(--royal-purple);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - Glossary 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --cosmic-purple: #6b5b95; --soft-purple: rgba(107, 91, 149, 0.2);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif; --font-hindi: 'Noto Sans Devanagari', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .section-label { font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); }
+    .section-title { font-family: var(--font-display); font-weight: 500; font-size: 28px; color: var(--text-primary); margin-bottom: var(--space-md); }
+    .glossary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-top: var(--space-lg); }
+    .glossary-item { background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.1); border-radius: 12px; padding: var(--space-md); }
+    .glossary-term { font-family: var(--font-display); font-size: 18px; color: var(--gold); margin-bottom: var(--space-xs); }
+    .glossary-hindi { font-family: var(--font-hindi); font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-xs); }
+    .glossary-def { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .closing-box { background: linear-gradient(135deg, var(--soft-gold), var(--soft-purple)); border: 1px solid rgba(201, 169, 98, 0.25); border-radius: 20px; padding: var(--space-lg); margin-top: var(--space-lg); text-align: center; }
+    .closing-title { font-family: var(--font-display); font-size: 24px; color: var(--text-primary); margin-bottom: var(--space-sm); }
+    .closing-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .closing-cta { display: inline-block; margin-top: var(--space-md); padding: 12px 28px; background: var(--gold); color: var(--deep-navy); border-radius: 24px; font-weight: 600; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">Reference</div>
-            </div>
-            <div class="page-number">Page {{PAGE_NUM}}</div>
+  <div class="page">
+    <div class="page-content">
+      <div class="section-label">Reference (Continued)</div>
+      <h1 class="section-title">Glossary of Terms</h1>
+      
+      <div class="glossary-grid">
+        <div class="glossary-item">
+          <div class="glossary-term">AC Line (Ascendant)</div>
+          <div class="glossary-def">Where a planet was rising on the eastern horizon. Impacts personal identity and how others perceive you.</div>
         </div>
-        
-        <div class="content">
-            <div class="section-label">Terms & Definitions</div>
-            <h1 class="section-title">Glossary (continued)</h1>
-            
-            <div class="glossary-grid">
-                <div class="category-header">
-                    <div class="category-title">Planetary Influences</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Sun <span class="hindi">(सूर्य)</span></div>
-                    <div class="glossary-definition">Represents self-expression, vitality, authority, and recognition. Strong near MC lines for career prominence.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Moon <span class="hindi">(चंद्र)</span></div>
-                    <div class="glossary-definition">Governs emotions, comfort, and nurturing. Strongest near IC lines for feeling at home.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Mercury <span class="hindi">(बुध)</span></div>
-                    <div class="glossary-definition">Rules communication, learning, and commerce. Beneficial for education and business dealings.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Venus <span class="hindi">(शुक्र)</span></div>
-                    <div class="glossary-definition">Planet of love, beauty, and pleasure. Enhances relationships and creative pursuits.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Mars <span class="hindi">(मंगल)</span></div>
-                    <div class="glossary-definition">Energy, drive, and assertion. Can bring success through action but may cause conflicts.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Jupiter <span class="hindi">(गुरु)</span></div>
-                    <div class="glossary-definition">The great benefic. Brings expansion, luck, wisdom, and prosperity wherever its lines fall.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Saturn <span class="hindi">(शनि)</span></div>
-                    <div class="glossary-definition">Discipline, structure, and lessons. Can bring long-term success through hard work and patience.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Rahu <span class="hindi">(राहु)</span></div>
-                    <div class="glossary-definition">North lunar node. Represents ambition, worldly desires, and unconventional paths to success.</div>
-                </div>
-                
-                <div class="category-header">
-                    <div class="category-title">Report Scoring Terms</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Astro Score</div>
-                    <div class="glossary-definition">Weighted score based on planetary line proximity, type, and goal relevance (0-100 scale).</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Direction Match</div>
-                    <div class="glossary-definition">Whether the city's direction from your birth place aligns with Nakshatra-based favorable directions.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Vastu Score</div>
-                    <div class="glossary-definition">Rating based on the city's directional alignment with Lagna-based Vastu principles.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Combined Verdict</div>
-                    <div class="glossary-definition">Final recommendation combining astrocartography, Vedic, and Vastu factors with timing analysis.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Timing Window</div>
-                    <div class="glossary-definition">Optimal periods for relocation based on current Dasha and planetary transits.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Best Cities</div>
-                    <div class="glossary-definition">Cities with highest combined scores for your specific life goal, ranked by overall benefit.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Avoid Cities</div>
-                    <div class="glossary-definition">Cities with challenging planetary influences for your goal. May require extra effort or caution.</div>
-                </div>
-                
-                <div class="glossary-item">
-                    <div class="glossary-term">Goal-Specific Score</div>
-                    <div class="glossary-definition">Customized rating emphasizing planets most relevant to your chosen life goal (Career, Love, etc.).</div>
-                </div>
-            </div>
+        <div class="glossary-item">
+          <div class="glossary-term">DC Line (Descendant)</div>
+          <div class="glossary-def">Where a planet was setting on the western horizon. Influences relationships and partnerships.</div>
         </div>
-        
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
-            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        <div class="glossary-item">
+          <div class="glossary-term">MC Line (Midheaven)</div>
+          <div class="glossary-def">Where a planet was at its highest point. Affects career, public image, and reputation.</div>
         </div>
+        <div class="glossary-item">
+          <div class="glossary-term">IC Line (Imum Coeli)</div>
+          <div class="glossary-def">Where a planet was at its lowest point. Relates to home, family, and inner foundations.</div>
+        </div>
+        <div class="glossary-item">
+          <div class="glossary-term">Yogakaraka</div>
+          <div class="glossary-hindi">योगकारक</div>
+          <div class="glossary-def">A planet ruling both a Kendra (angular) and Trikona (trine) house, bringing exceptional benefits.</div>
+        </div>
+        <div class="glossary-item">
+          <div class="glossary-term">Vimshottari Dasha</div>
+          <div class="glossary-hindi">विंशोत्तरी दशा</div>
+          <div class="glossary-def">The 120-year planetary cycle system used in Vedic astrology to time life events.</div>
+        </div>
+      </div>
+      
+      <div class="closing-box">
+        <div class="closing-title">Thank You</div>
+        <p class="closing-text">We hope this report helps guide your journey. Remember: astrology reveals potential, but your choices create reality. May the stars light your path.</p>
+        <a href="https://ssumitra.com" class="closing-cta">Explore More Reports</a>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"Your journey is written in the stars."</span>
+      <span>End of Report</span>
+    </div>
+  </div>
 </body>
 </html>

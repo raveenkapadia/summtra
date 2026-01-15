@@ -1,347 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Understanding Your Planetary Influences</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        @page { size: A4; margin: 0; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-        }
-        body { font-family: 'Raleway', sans-serif; background: var(--cream); color: var(--text-dark); }
-        .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; background: var(--cream); }
-        
-        .page-header {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            padding: 18px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .header-logo { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
-        .header-divider { width: 1px; height: 20px; background: var(--gold); opacity: 0.4; }
-        .header-section { font-size: 10px; letter-spacing: 2px; color: var(--cream); text-transform: uppercase; }
-        .page-number { font-size: 10px; color: var(--gold-light); }
-        
-        .content { padding: 25px 40px; }
-        
-        .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 26px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .info-box {
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.04) 0%, rgba(74, 28, 107, 0.08) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 8px;
-            padding: 18px 22px;
-            margin-bottom: 16px;
-        }
-        
-        .box-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .box-title-icon { font-size: 16px; }
-        
-        .line-list {
-            font-size: 11px;
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-        
-        .line-list-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px dashed rgba(45, 27, 78, 0.1);
-        }
-        
-        .line-list-item:last-child { border-bottom: none; }
-        
-        .line-name { font-weight: 500; color: var(--royal-purple); }
-        .line-region { color: #666; font-size: 10px; }
-        
-        .methodology-box {
-            background: var(--soft-white);
-            border: 1px solid rgba(45, 27, 78, 0.15);
-            border-radius: 8px;
-            padding: 18px 22px;
-            margin-bottom: 16px;
-        }
-        
-        .score-table {
-            width: 100%;
-            font-size: 10px;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        .score-table th {
-            text-align: left;
-            padding: 6px 10px;
-            background: var(--deep-purple);
-            color: var(--gold);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .score-table th:last-child { text-align: right; }
-        
-        .score-table td {
-            padding: 6px 10px;
-            border-bottom: 1px solid rgba(45, 27, 78, 0.1);
-        }
-        
-        .score-table td:last-child { text-align: right; font-weight: 600; color: var(--royal-purple); }
-        
-        .score-table tr.category-header td {
-            background: rgba(45, 27, 78, 0.05);
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        .why-works-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        
-        .why-works-item {
-            display: flex;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(45, 27, 78, 0.03);
-            border-radius: 6px;
-        }
-        
-        .why-works-icon {
-            width: 24px;
-            height: 24px;
-            background: var(--gold);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
-        
-        .why-works-text {
-            font-size: 10px;
-            line-height: 1.4;
-        }
-        
-        .why-works-text strong {
-            display: block;
-            color: var(--deep-purple);
-            margin-bottom: 2px;
-        }
-        
-        .parans-section {
-            margin-top: 12px;
-        }
-        
-        .paran-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        
-        .paran-tag {
-            padding: 4px 10px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            border-radius: 12px;
-            font-size: 10px;
-            color: var(--deep-purple);
-            font-weight: 500;
-        }
-        
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(45, 27, 78, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .footer-left, .footer-right { font-size: 9px; color: #999; }
-        .footer-center { font-size: 9px; color: var(--royal-purple); letter-spacing: 2px; text-transform: uppercase; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - Scoring Methodology</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .section-label { font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); }
+    .section-title { font-family: var(--font-display); font-weight: 500; font-size: 28px; color: var(--text-primary); margin-bottom: var(--space-md); }
+    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+    .methodology-table { width: 100%; margin: var(--space-lg) 0; }
+    .methodology-row { display: flex; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .methodology-row.header { color: var(--gold); font-weight: 600; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+    .methodology-component { flex: 2; color: var(--text-secondary); }
+    .methodology-points { flex: 1; text-align: right; font-family: var(--font-display); font-size: 20px; color: var(--text-primary); }
+    .methodology-sub { padding-left: var(--space-md); font-size: 13px; color: var(--text-muted); }
+    .methodology-total { background: var(--soft-gold); border: 1px solid rgba(201, 169, 98, 0.3); border-radius: 12px; margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+    .methodology-total .methodology-component { color: var(--gold); font-weight: 600; }
+    .methodology-total .methodology-points { font-size: 24px; color: var(--bright-gold); }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">Understanding Your Influences</div>
-            </div>
-            <div class="page-number">Page {{PAGE_NUM}}</div>
+  <div class="page">
+    <div class="page-content">
+      <div class="section-label">Understanding Your Influences</div>
+      <h1 class="section-title">How We Calculate Your Scores</h1>
+      <p class="body-text">Each city receives a score out of 100 based on Western astrocartography and Vedic astrological factors personalized to your birth chart.</p>
+      
+      <div class="methodology-table">
+        <div class="methodology-row header">
+          <div class="methodology-component">Component</div>
+          <div class="methodology-points">Points</div>
         </div>
-        
-        <div class="content">
-            <h1 class="section-title">Understanding Your Planetary Influences</h1>
-            
-            <div class="info-box">
-                <div class="box-title">
-                    <span class="box-title-icon">☉</span>
-                    YOUR PLANETARY LINES - GLOBAL VIEW
-                </div>
-                <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Your major AC/DC/MC/IC lines pass through these regions:</p>
-                <div class="line-list">
-                    {{LINE_PATHS}}
-                </div>
-            </div>
-            
-            <div class="info-box">
-                <div class="box-title">
-                    <span class="box-title-icon">✓</span>
-                    WHY {{SCOPE}} STILL WORKS FOR YOU
-                </div>
-                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Even if direct lines pass elsewhere, {{SCOPE_LOWER}} cities receive strong planetary influences through:</p>
-                
-                <div class="why-works-grid">
-                    <div class="why-works-item">
-                        <div class="why-works-icon">◎</div>
-                        <div class="why-works-text">
-                            <strong>ORB INFLUENCE</strong>
-                            Lines affect areas within 700km. Western cities receive Jupiter-MC orb influence.
-                        </div>
-                    </div>
-                    <div class="why-works-item">
-                        <div class="why-works-icon">◈</div>
-                        <div class="why-works-text">
-                            <strong>PARAN LINES</strong>
-                            Latitude-based influences exist everywhere. Each city has unique parans at its latitude.
-                        </div>
-                    </div>
-                    <div class="why-works-item">
-                        <div class="why-works-icon">ॐ</div>
-                        <div class="why-works-text">
-                            <strong>VEDIC FACTORS</strong>
-                            Your Rashi, Nakshatra, and Lagna create natural compatibility with directions.
-                        </div>
-                    </div>
-                    <div class="why-works-item">
-                        <div class="why-works-icon">⧗</div>
-                        <div class="why-works-text">
-                            <strong>DASHA TIMING</strong>
-                            Your {{MAHADASHA}} Mahadasha amplifies all {{MAHADASHA}}-related influences.
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="methodology-box">
-                <div class="box-title">
-                    <span class="box-title-icon">📊</span>
-                    OUR SCORING METHODOLOGY
-                </div>
-                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Each city receives a score out of 100 based on:</p>
-                
-                <table class="score-table">
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="category-header">
-                            <td>☉ WESTERN ASTROCARTOGRAPHY</td>
-                            <td>50</td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left: 20px;">├─ Line Proximity (Orb distance)</td>
-                            <td>25</td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left: 20px;">└─ Paran Lines (Latitude influences)</td>
-                            <td>25</td>
-                        </tr>
-                        <tr class="category-header">
-                            <td>ॐ VEDIC ASTROLOGY</td>
-                            <td>50</td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left: 20px;">├─ Nakshatra + Rashi compatibility</td>
-                            <td>20</td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left: 20px;">├─ Lagna-Vastu alignment</td>
-                            <td>15</td>
-                        </tr>
-                        <tr>
-                            <td style="padding-left: 20px;">└─ Dasha Timing</td>
-                            <td>15</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <p style="font-size: 10px; color: #888; margin-top: 10px; font-style: italic;">
-                    This balanced approach combines the best of Western and Vedic systems for comprehensive guidance.
-                </p>
-            </div>
-            
-            <div class="info-box parans-section">
-                <div class="box-title">
-                    <span class="box-title-icon">◈</span>
-                    YOUR STRONGEST PARANS
-                </div>
-                <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Latitude-based planetary alignments active in your chart:</p>
-                <div class="paran-list">
-                    {{PARAN_TAGS}}
-                </div>
-            </div>
+        <div class="methodology-row">
+          <div class="methodology-component">☉ Western Astrocartography</div>
+          <div class="methodology-points">50</div>
         </div>
-        
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">{{USER_NAME}} • {{GOAL}} Report</div>
-            <div class="footer-right">Page {{PAGE_NUM}}</div>
+        <div class="methodology-row">
+          <div class="methodology-component methodology-sub">├─ Line Proximity (Orb)</div>
+          <div class="methodology-points">25</div>
         </div>
+        <div class="methodology-row">
+          <div class="methodology-component methodology-sub">└─ Paran Lines</div>
+          <div class="methodology-points">25</div>
+        </div>
+        <div class="methodology-row">
+          <div class="methodology-component">ॐ Vedic Astrology</div>
+          <div class="methodology-points">50</div>
+        </div>
+        <div class="methodology-row">
+          <div class="methodology-component methodology-sub">├─ Nakshatra + Rashi</div>
+          <div class="methodology-points">20</div>
+        </div>
+        <div class="methodology-row">
+          <div class="methodology-component methodology-sub">├─ Lagna-Vastu Direction</div>
+          <div class="methodology-points">15</div>
+        </div>
+        <div class="methodology-row">
+          <div class="methodology-component methodology-sub">└─ Dasha Timing</div>
+          <div class="methodology-points">15</div>
+        </div>
+        <div class="methodology-row methodology-total">
+          <div class="methodology-component">Total Maximum Score</div>
+          <div class="methodology-points">100</div>
+        </div>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"As above, so below."</span>
+      <span>Scoring Methodology</span>
+    </div>
+  </div>
 </body>
 </html>

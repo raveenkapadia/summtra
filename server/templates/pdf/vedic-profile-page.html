@@ -1,528 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Vedic Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-        }
-        
-        body {
-            font-family: 'Raleway', sans-serif;
-            background: var(--cream);
-            color: var(--text-dark);
-        }
-        
-        .page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            overflow: hidden;
-            background: var(--cream);
-        }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        
-        .header-divider {
-            width: 1px;
-            height: 20px;
-            background: var(--gold);
-            opacity: 0.4;
-        }
-        
-        .header-section {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--cream);
-            text-transform: uppercase;
-        }
-        
-        .header-right {
-            text-align: right;
-        }
-        
-        .page-number {
-            font-size: 10px;
-            color: var(--gold-light);
-        }
-        
-        /* Section Title */
-        .section-intro {
-            padding: 30px 40px 25px;
-            text-align: center;
-        }
-        
-        .section-label {
-            font-size: 10px;
-            letter-spacing: 4px;
-            color: var(--royal-purple);
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        
-        .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 10px;
-        }
-        
-        .section-subtitle {
-            font-size: 13px;
-            color: #666;
-            max-width: 480px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        
-        /* Content */
-        .content-area {
-            padding: 0 40px;
-        }
-        
-        /* Three Column Profile Cards */
-        .profile-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .profile-card {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            border-radius: 8px;
-            padding: 25px 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .profile-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.1) 0%, transparent 60%);
-        }
-        
-        .profile-card-content {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .profile-icon {
-            width: 50px;
-            height: 50px;
-            margin: 0 auto 15px;
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: var(--gold);
-        }
-        
-        .profile-label {
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        
-        .profile-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--soft-white);
-            margin-bottom: 5px;
-        }
-        
-        .profile-hindi {
-            font-size: 14px;
-            color: var(--gold-light);
-            margin-bottom: 10px;
-        }
-        
-        .profile-lord {
-            font-size: 10px;
-            color: var(--cream);
-            opacity: 0.8;
-        }
-        
-        /* Meaning Cards */
-        .meaning-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .meaning-card {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 20px;
-            border: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .meaning-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .meaning-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: var(--deep-purple);
-        }
-        
-        .meaning-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .meaning-text {
-            font-size: 11px;
-            line-height: 1.7;
-            color: #555;
-        }
-        
-        /* Nakshatra Detail Section */
-        .nakshatra-section {
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.03) 0%, rgba(74, 28, 107, 0.06) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        
-        .nakshatra-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        .nakshatra-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .nakshatra-badge {
-            padding: 5px 12px;
-            background: var(--gold);
-            color: var(--deep-purple);
-            font-size: 10px;
-            font-weight: 600;
-            border-radius: 15px;
-        }
-        
-        .nakshatra-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-        
-        .nakshatra-item {
-            text-align: center;
-            padding: 15px;
-            background: var(--soft-white);
-            border-radius: 6px;
-        }
-        
-        .nakshatra-item-label {
-            font-size: 9px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        
-        .nakshatra-item-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        /* Key Traits */
-        .traits-section {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 20px;
-            border: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .traits-header {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(45, 27, 78, 0.08);
-        }
-        
-        .traits-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-        
-        .trait-tag {
-            padding: 10px 12px;
-            background: var(--cream);
-            border-radius: 4px;
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-dark);
-            border-left: 3px solid var(--gold);
-        }
-        
-        /* Footer */
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(45, 27, 78, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .footer-left {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        .footer-center {
-            font-size: 9px;
-            color: var(--royal-purple);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .footer-right {
-            font-size: 9px;
-            color: #999;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - Vedic Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --cosmic-purple: #6b5b95; --soft-purple: rgba(107, 91, 149, 0.2);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif; --font-hindi: 'Noto Sans Devanagari', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .section-label { font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); }
+    .section-title { font-family: var(--font-display); font-weight: 500; font-size: 28px; color: var(--text-primary); margin-bottom: var(--space-md); }
+    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .subsection-title { font-family: var(--font-body); font-weight: 600; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: var(--space-sm); }
+    .section-divider { display: flex; align-items: center; justify-content: center; margin: var(--space-lg) 0; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent); }
+    .section-divider-icon { margin: 0 var(--space-md); color: var(--gold); font-size: 16px; opacity: 0.7; }
+    .vedic-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-top: var(--space-lg); }
+    .vedic-card { background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.1); border-radius: 16px; padding: var(--space-md); text-align: center; }
+    .vedic-card-icon { font-size: 28px; margin-bottom: var(--space-sm); color: var(--gold); }
+    .vedic-card-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .vedic-card-value { font-family: var(--font-display); font-size: 24px; color: var(--text-primary); margin-bottom: 4px; }
+    .vedic-card-hindi { font-family: var(--font-hindi); font-size: 16px; color: var(--gold); }
+    .vedic-card-lord { font-size: 12px; color: var(--text-muted); margin-top: var(--space-xs); }
+    .paran-lines { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+    .paran-tag { padding: 6px 14px; background: var(--soft-purple); border-radius: 20px; font-size: 12px; color: var(--text-secondary); }
+    .blueprint-box { background: linear-gradient(135deg, var(--soft-gold), rgba(107, 91, 149, 0.1)); border: 1px solid rgba(201, 169, 98, 0.25); border-radius: 20px; padding: var(--space-lg); margin: var(--space-lg) 0; text-align: center; }
+    .blueprint-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: var(--space-sm); }
+    .blueprint-text { font-family: var(--font-display); font-size: 18px; font-weight: 400; line-height: 1.7; color: var(--text-primary); }
+    .blueprint-highlight { color: var(--gold); font-weight: 500; }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">Vedic Foundation</div>
-            </div>
-            <div class="header-right">
-                <div class="page-number">Page {{PAGE_NUM}}</div>
-            </div>
+  <div class="page">
+    <div class="page-content">
+      <div class="section-label">Your Cosmic Identity</div>
+      <h1 class="section-title">Vedic Astrology Profile</h1>
+      <p class="body-text">Your Vedic profile forms the foundation for understanding how planetary energies interact with different locations.</p>
+      
+      <div class="vedic-cards">
+        <div class="vedic-card">
+          <div class="vedic-card-icon">☽</div>
+          <div class="vedic-card-label">Moon Sign (Rashi)</div>
+          <div class="vedic-card-value">{{RASHI}}</div>
+          <div class="vedic-card-hindi">{{RASHI_HINDI}}</div>
+          <div class="vedic-card-lord">Lord: {{RASHI_LORD}}</div>
         </div>
-        
-        <!-- Section Title -->
-        <div class="section-intro">
-            <div class="section-label">Your Cosmic Identity</div>
-            <h2 class="section-title">Vedic Astrology Profile</h2>
-            <p class="section-subtitle">Your Vedic profile forms the foundation for understanding how planetary energies interact with different locations on Earth.</p>
+        <div class="vedic-card">
+          <div class="vedic-card-icon">✦</div>
+          <div class="vedic-card-label">Birth Star (Nakshatra)</div>
+          <div class="vedic-card-value">{{NAKSHATRA}}</div>
+          <div class="vedic-card-hindi">{{NAKSHATRA_HINDI}}</div>
+          <div class="vedic-card-lord">Pada {{PADA}} • Lord: {{NAKSHATRA_LORD}}</div>
         </div>
-        
-        <!-- Content -->
-        <div class="content-area">
-            <!-- Profile Cards -->
-            <div class="profile-cards">
-                <div class="profile-card">
-                    <div class="profile-card-content">
-                        <div class="profile-icon">☽</div>
-                        <div class="profile-label">Moon Sign (Rashi)</div>
-                        <div class="profile-value">{{RASHI}}</div>
-                        <div class="profile-hindi">{{RASHI_HINDI}}</div>
-                        <div class="profile-lord">Lord: {{RASHI_LORD}}</div>
-                    </div>
-                </div>
-                <div class="profile-card">
-                    <div class="profile-card-content">
-                        <div class="profile-icon">✦</div>
-                        <div class="profile-label">Birth Star (Nakshatra)</div>
-                        <div class="profile-value">{{NAKSHATRA}}</div>
-                        <div class="profile-hindi">Pada {{PADA}}</div>
-                        <div class="profile-lord">Lord: {{NAKSHATRA_LORD}}</div>
-                    </div>
-                </div>
-                <div class="profile-card">
-                    <div class="profile-card-content">
-                        <div class="profile-icon">↑</div>
-                        <div class="profile-label">Ascendant (Lagna)</div>
-                        <div class="profile-value">{{LAGNA}}</div>
-                        <div class="profile-hindi">{{LAGNA_HINDI}}</div>
-                        <div class="profile-lord">Lord: {{LAGNA_LORD}}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Meaning Cards -->
-            <div class="meaning-cards">
-                <div class="meaning-card">
-                    <div class="meaning-header">
-                        <div class="meaning-icon">☽</div>
-                        <div class="meaning-title">Rashi Influence</div>
-                    </div>
-                    <p class="meaning-text">
-                        {{RASHI_MEANING}}
-                    </p>
-                </div>
-                <div class="meaning-card">
-                    <div class="meaning-header">
-                        <div class="meaning-icon">✦</div>
-                        <div class="meaning-title">Nakshatra Influence</div>
-                    </div>
-                    <p class="meaning-text">
-                        {{NAKSHATRA_MEANING}}
-                    </p>
-                </div>
-                <div class="meaning-card">
-                    <div class="meaning-header">
-                        <div class="meaning-icon">↑</div>
-                        <div class="meaning-title">Lagna Influence</div>
-                    </div>
-                    <p class="meaning-text">
-                        {{LAGNA_MEANING}}
-                    </p>
-                </div>
-            </div>
-            
-            <!-- Nakshatra Details -->
-            <div class="nakshatra-section">
-                <div class="nakshatra-header">
-                    <div class="nakshatra-title">
-                        <span>✦</span> {{NAKSHATRA}} Nakshatra Details
-                    </div>
-                    <div class="nakshatra-badge">{{NAKSHATRA_DEITY}}</div>
-                </div>
-                <div class="nakshatra-grid">
-                    <div class="nakshatra-item">
-                        <div class="nakshatra-item-label">Favorable Direction</div>
-                        <div class="nakshatra-item-value">{{NAKSHATRA_DIRECTION}}</div>
-                    </div>
-                    <div class="nakshatra-item">
-                        <div class="nakshatra-item-label">Element</div>
-                        <div class="nakshatra-item-value">{{NAKSHATRA_ELEMENT}}</div>
-                    </div>
-                    <div class="nakshatra-item">
-                        <div class="nakshatra-item-label">Quality</div>
-                        <div class="nakshatra-item-value">{{NAKSHATRA_QUALITY}}</div>
-                    </div>
-                    <div class="nakshatra-item">
-                        <div class="nakshatra-item-label">Symbol</div>
-                        <div class="nakshatra-item-value">{{NAKSHATRA_SYMBOL}}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Key Traits -->
-            <div class="traits-section">
-                <div class="traits-header">Key Personality Traits Based on Your Profile</div>
-                <div class="traits-grid">
-                    <div class="trait-tag">{{TRAIT_1}}</div>
-                    <div class="trait-tag">{{TRAIT_2}}</div>
-                    <div class="trait-tag">{{TRAIT_3}}</div>
-                    <div class="trait-tag">{{TRAIT_4}}</div>
-                    <div class="trait-tag">{{TRAIT_5}}</div>
-                    <div class="trait-tag">{{TRAIT_6}}</div>
-                    <div class="trait-tag">{{TRAIT_7}}</div>
-                    <div class="trait-tag">{{TRAIT_8}}</div>
-                </div>
-            </div>
+        <div class="vedic-card">
+          <div class="vedic-card-icon">↑</div>
+          <div class="vedic-card-label">Ascendant (Lagna)</div>
+          <div class="vedic-card-value">{{LAGNA}}</div>
+          <div class="vedic-card-hindi">{{LAGNA_HINDI}}</div>
+          <div class="vedic-card-lord">Lord: {{LAGNA_LORD}}</div>
         </div>
-        
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
-            <div class="footer-right">Page {{PAGE_NUM}}</div>
-        </div>
+      </div>
+      
+      <div class="section-divider"><span class="section-divider-icon">✦</span></div>
+      
+      <div class="subsection-title">Key Personality Traits</div>
+      <div class="paran-lines">
+        <span class="paran-tag">{{TRAIT_1}}</span>
+        <span class="paran-tag">{{TRAIT_2}}</span>
+        <span class="paran-tag">{{TRAIT_3}}</span>
+        <span class="paran-tag">{{TRAIT_4}}</span>
+        <span class="paran-tag">{{TRAIT_5}}</span>
+        <span class="paran-tag">{{TRAIT_6}}</span>
+        <span class="paran-tag">{{TRAIT_7}}</span>
+        <span class="paran-tag">{{TRAIT_8}}</span>
+      </div>
+      
+      <div class="blueprint-box">
+        <div class="blueprint-label">☉ Favorable Direction</div>
+        <p class="blueprint-text">Your <span class="blueprint-highlight">{{NAKSHATRA}} Nakshatra</span> resonates with the <span class="blueprint-highlight">{{NAKSHATRA_DIRECTION}}</span> direction.</p>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"Know thyself through the cosmic mirror."</span>
+      <span>Vedic Profile</span>
+    </div>
+  </div>
 </body>
 </html>

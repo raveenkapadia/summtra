@@ -1,451 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Planetary Lines Map</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-        }
-        
-        body {
-            font-family: 'Raleway', sans-serif;
-            background: var(--cream);
-            color: var(--text-dark);
-        }
-        
-        .page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            overflow: hidden;
-            background: var(--cream);
-        }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--royal-purple) 100%);
-            padding: 25px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 4px;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        
-        .header-divider {
-            width: 1px;
-            height: 25px;
-            background: var(--gold);
-            opacity: 0.4;
-        }
-        
-        .header-section {
-            font-size: 11px;
-            letter-spacing: 2px;
-            color: var(--cream);
-            text-transform: uppercase;
-        }
-        
-        .header-right {
-            text-align: right;
-        }
-        
-        .user-name-small {
-            font-size: 12px;
-            color: var(--cream);
-            margin-bottom: 3px;
-        }
-        
-        .page-number {
-            font-size: 10px;
-            color: var(--gold-light);
-        }
-        
-        /* Section Title - LAYOUT FIX 6: Reduced padding for larger map */
-        .section-intro {
-            padding: 15px 40px 10px;
-            text-align: center;
-        }
-        
-        .section-label {
-            font-size: 10px;
-            letter-spacing: 4px;
-            color: var(--royal-purple);
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        
-        .section-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 10px;
-        }
-        
-        .section-subtitle {
-            font-size: 13px;
-            color: #666;
-            max-width: 500px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        
-        /* Map Container - LAYOUT FIX 6: Full-page maps */
-        .map-container {
-            padding: 15px 25px;
-        }
-        
-        .map-frame {
-            border: 2px solid var(--deep-purple);
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(45, 27, 78, 0.15);
-        }
-        
-        .map-image {
-            width: 100%;
-            height: 520px;
-            background: #E8E0D5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 14px;
-            object-fit: contain;
-        }
-        
-        .map-caption {
-            background: var(--deep-purple);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .caption-text {
-            font-size: 11px;
-            color: var(--cream);
-        }
-        
-        .caption-scope {
-            font-size: 10px;
-            color: var(--gold);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        /* Planetary Lines Legend */
-        .legend-section {
-            padding: 25px 40px;
-        }
-        
-        .legend-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(45, 27, 78, 0.15);
-        }
-        
-        .legend-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 15px;
-            background: var(--soft-white);
-            border-radius: 4px;
-            border-left: 3px solid var(--line-color);
-        }
-        
-        .legend-line {
-            width: 30px;
-            height: 3px;
-            border-radius: 2px;
-        }
-        
-        .legend-info {
-            flex: 1;
-        }
-        
-        .planet-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 2px;
-        }
-        
-        .line-type {
-            font-size: 10px;
-            color: #888;
-        }
-        
-        .line-present {
-            font-size: 9px;
-            padding: 2px 8px;
-            background: rgba(45, 27, 78, 0.1);
-            color: var(--royal-purple);
-            border-radius: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        /* Your Lines Highlight */
-        .your-lines-section {
-            padding: 0 40px 30px;
-        }
-        
-        .highlight-box {
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.05) 0%, rgba(74, 28, 107, 0.08) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 6px;
-            padding: 25px;
-        }
-        
-        .highlight-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .highlight-icon {
-            width: 24px;
-            height: 24px;
-            background: var(--gold);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: var(--deep-purple);
-        }
-        
-        .your-lines-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .your-line-tag {
-            padding: 8px 16px;
-            background: var(--soft-white);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--deep-purple);
-        }
-        
-        /* Footer */
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 15px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(45, 27, 78, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .footer-left {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        .footer-center {
-            font-size: 9px;
-            color: var(--royal-purple);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .footer-right {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        /* Line Colors */
-        .sun-line { background: #FF6B35; --line-color: #FF6B35; }
-        .moon-line { background: #C0C0C0; --line-color: #C0C0C0; }
-        .mercury-line { background: #4ECDC4; --line-color: #4ECDC4; }
-        .venus-line { background: #FF69B4; --line-color: #FF69B4; }
-        .mars-line { background: #DC143C; --line-color: #DC143C; }
-        .jupiter-line { background: #FFD700; --line-color: #FFD700; }
-        .saturn-line { background: #4A5568; --line-color: #4A5568; }
-        .rahu-line { background: #8B5CF6; --line-color: #8B5CF6; }
-        .ketu-line { background: #F97316; --line-color: #F97316; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .section-label { font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); }
+    .section-title { font-family: var(--font-display); font-weight: 500; font-size: 28px; color: var(--text-primary); margin-bottom: var(--space-md); }
+    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+    .map-container { background: var(--card-bg); border: 1px solid rgba(201, 169, 98, 0.15); border-radius: 16px; padding: var(--space-md); margin: var(--space-lg) 0; }
+    .map-placeholder { height: 650px; background: linear-gradient(135deg, var(--midnight), var(--cosmic-blue)); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .map-placeholder img, .map-placeholder svg { width: 100%; height: 100%; object-fit: contain; }
+    .map-caption { text-align: center; margin-top: var(--space-sm); font-size: 12px; color: var(--text-muted); }
+    .key-lines { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .key-line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .key-line-symbol { color: var(--gold); }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">Your Planetary Map</div>
-            </div>
-            <div class="header-right">
-                <div class="user-name-small">{{USER_NAME}}</div>
-                <div class="page-number">Page {{PAGE_NUM}}</div>
-            </div>
-        </div>
-        
-        <!-- Section Title -->
-        <div class="section-intro">
-            <div class="section-label">Astrocartography Analysis</div>
-            <h2 class="section-title">Your Planetary Lines</h2>
-            <p class="section-subtitle">This map shows the planetary lines calculated from your exact birth time and location. Each line represents the energy of a planet as it intersects with the Earth.</p>
-        </div>
-        
-        <!-- Map -->
-        <div class="map-container">
-            <div class="map-frame">
-                <div class="map-image">
-                    <img src="{{MAP_IMAGE_DATA_URL}}" alt="{{MAP_TITLE}} Map" style="width: 100%; height: 100%; object-fit: contain;" />
-                </div>
-                <div class="map-caption">
-                    <span class="caption-text">Planetary lines calculated for {{BIRTH_DATE}}, {{BIRTH_TIME}} at {{BIRTH_PLACE}}</span>
-                    <span class="caption-scope">{{MAP_VIEW_LABEL}}</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Your Lines Highlight -->
-        <div class="your-lines-section">
-            <div class="highlight-box">
-                <div class="highlight-title">
-                    <span class="highlight-icon">★</span>
-                    Key Planetary Lines in Your Chart
-                </div>
-                <div class="your-lines-list">
-                    <span class="your-line-tag">☉ Sun-MC</span>
-                    <span class="your-line-tag">☽ Moon-DC</span>
-                    <span class="your-line-tag">♃ Jupiter-MC</span>
-                    <span class="your-line-tag">♀ Venus-AC</span>
-                    <span class="your-line-tag">☿ Mercury-MC</span>
-                    <span class="your-line-tag">♄ Saturn-DC</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Legend -->
-        <div class="legend-section">
-            <h3 class="legend-title">Planetary Line Legend</h3>
-            <div class="legend-grid">
-                <div class="legend-item sun-line" style="border-left-color: #FF6B35;">
-                    <div class="legend-line sun-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">☉ Sun</div>
-                        <div class="line-type">Identity & Recognition</div>
-                    </div>
-                </div>
-                <div class="legend-item" style="border-left-color: #C0C0C0;">
-                    <div class="legend-line moon-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">☽ Moon</div>
-                        <div class="line-type">Emotions & Home</div>
-                    </div>
-                </div>
-                <div class="legend-item" style="border-left-color: #FFD700;">
-                    <div class="legend-line jupiter-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">♃ Jupiter</div>
-                        <div class="line-type">Growth & Expansion</div>
-                    </div>
-                </div>
-                <div class="legend-item" style="border-left-color: #FF69B4;">
-                    <div class="legend-line venus-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">♀ Venus</div>
-                        <div class="line-type">Love & Prosperity</div>
-                    </div>
-                </div>
-                <div class="legend-item" style="border-left-color: #4A5568;">
-                    <div class="legend-line saturn-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">♄ Saturn</div>
-                        <div class="line-type">Discipline & Structure</div>
-                    </div>
-                </div>
-                <div class="legend-item" style="border-left-color: #4ECDC4;">
-                    <div class="legend-line mercury-line"></div>
-                    <div class="legend-info">
-                        <div class="planet-name">☿ Mercury</div>
-                        <div class="line-type">Communication & Trade</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">Confidential Report</div>
-            <div class="footer-right">{{USER_NAME}}</div>
-        </div>
+  <div class="page">
+    <div class="page-content">
+      <div class="section-label">{{MAP_LABEL}}</div>
+      <h1 class="section-title">{{MAP_TITLE}}</h1>
+      <p class="body-text">{{MAP_DESCRIPTION}}</p>
+      
+      <div class="map-container">
+        <div class="map-placeholder">{{MAP_SVG}}</div>
+        <div class="map-caption">{{MAP_CAPTION}}</div>
+        <div class="key-lines">{{MAP_KEY_LINES}}</div>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"The world is your celestial canvas."</span>
+      <span>{{MAP_PAGE_LABEL}}</span>
+    </div>
+  </div>
 </body>
 </html>

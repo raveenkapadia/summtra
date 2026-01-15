@@ -1,609 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City to Avoid</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* Premium Cosmic Palette */
-            --deep-navy: #0f0f23;
-            --cosmic-blue: #1a1a3e;
-            --midnight: #141432;
-            --deep-purple: #1a1a3e;
-            --royal-purple: #2a2a5e;
-            --midnight-blue: #0f0f23;
-            
-            /* Accent Colors */
-            --gold: #d4a574;
-            --bright-gold: #f4c87a;
-            --gold-light: #e8d5a3;
-            --cosmic-purple: #6b5b95;
-            
-            /* Text Colors */
-            --cream: #f8f6f3;
-            --soft-white: #fefefe;
-            --text-light: #e8e6e3;
-            --text-muted: #9a9a9a;
-            --text-dark: #1A1A2E;
-            
-            /* Caution Colors */
-            --danger: #991B1B;
-            --danger-light: #FEE2E2;
-            --danger-border: #FECACA;
-            --warning-dark: #92400E;
-        }
-        
-        body {
-            font-family: 'Raleway', sans-serif;
-            background: var(--cream);
-            color: var(--text-dark);
-        }
-        
-        .page {
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            overflow: hidden;
-            background: var(--cream);
-        }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--danger) 0%, #7F1D1D 100%);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            color: #FED7AA;
-            text-transform: uppercase;
-        }
-        
-        .header-divider {
-            width: 1px;
-            height: 20px;
-            background: #FED7AA;
-            opacity: 0.4;
-        }
-        
-        .header-section {
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--danger-light);
-            text-transform: uppercase;
-        }
-        
-        .header-right {
-            text-align: right;
-        }
-        
-        .page-number {
-            font-size: 10px;
-            color: #FED7AA;
-        }
-        
-        /* City Hero Section - Caution Style */
-        .city-hero {
-            position: relative;
-            height: 150px;
-            background: linear-gradient(135deg, #7F1D1D 0%, var(--danger) 100%);
-            overflow: hidden;
-        }
-        
-        .city-hero-pattern {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            opacity: 0.08;
-            background-image: 
-                repeating-linear-gradient(
-                    45deg,
-                    transparent,
-                    transparent 20px,
-                    rgba(255,255,255,0.1) 20px,
-                    rgba(255,255,255,0.1) 40px
-                );
-        }
-        
-        .city-hero-content {
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            padding: 25px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .city-info {
-            flex: 1;
-        }
-        
-        .city-label {
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: #FED7AA;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .caution-icon {
-            width: 20px;
-            height: 20px;
-            background: #FED7AA;
-            color: var(--danger);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .city-name {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 38px;
-            font-weight: 600;
-            color: var(--soft-white);
-            margin-bottom: 5px;
-        }
-        
-        .city-country {
-            font-size: 14px;
-            color: #FECACA;
-            letter-spacing: 1px;
-        }
-        
-        .score-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: var(--danger-light);
-            border: 3px solid #FECACA;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .score-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--danger);
-            line-height: 1;
-        }
-        
-        .score-label {
-            font-size: 8px;
-            color: var(--danger);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 3px;
-        }
-        
-        /* Content Area */
-        .content-area {
-            padding: 25px 40px;
-        }
-        
-        /* Warning Banner */
-        .warning-banner {
-            background: var(--danger-light);
-            border: 1px solid var(--danger-border);
-            border-left: 4px solid var(--danger);
-            border-radius: 0 6px 6px 0;
-            padding: 20px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-        }
-        
-        .warning-icon-large {
-            width: 40px;
-            height: 40px;
-            background: var(--danger);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-        
-        .warning-content {
-            flex: 1;
-        }
-        
-        .warning-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--danger);
-            margin-bottom: 8px;
-        }
-        
-        .warning-text {
-            font-size: 12px;
-            color: #7F1D1D;
-            line-height: 1.6;
-        }
-        
-        /* Two Column Layout */
-        .two-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-        
-        /* Info Card */
-        .info-card {
-            background: var(--soft-white);
-            border-radius: 6px;
-            padding: 20px;
-            border: 1px solid rgba(153, 27, 27, 0.1);
-        }
-        
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(153, 27, 27, 0.1);
-        }
-        
-        .card-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--danger-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: var(--danger);
-        }
-        
-        .card-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--danger);
-        }
-        
-        /* Challenging Lines List */
-        .lines-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .line-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: var(--danger-light);
-            border-radius: 4px;
-            border-left: 3px solid var(--danger);
-        }
-        
-        .line-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        
-        .line-name {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-        
-        .line-issue {
-            font-size: 10px;
-            color: var(--danger);
-            margin-left: auto;
-        }
-        
-        /* Issues Grid */
-        .issues-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .issue-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: var(--cream);
-            border-radius: 4px;
-        }
-        
-        .issue-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--danger);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-        
-        .issue-text {
-            font-size: 12px;
-            color: var(--text-dark);
-        }
-        
-        /* Explanation Section */
-        /* BUG 13 Fix: Reduced padding to prevent Regional Alternative cutoff */
-        .explanation-section {
-            background: var(--soft-white);
-            border: 1px solid rgba(153, 27, 27, 0.1);
-            border-radius: 6px;
-            padding: 18px;
-        }
-        
-        .explanation-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        
-        .explanation-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--deep-purple);
-        }
-        
-        .explanation-text {
-            font-size: 11px;
-            line-height: 1.6;
-            color: var(--text-dark);
-        }
-        
-        .explanation-text strong {
-            color: var(--danger);
-        }
-        
-        /* Alternative Suggestion Box - BUG 13 Fix: Ensure full text displays */
-        .alternative-box {
-            margin-top: 12px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, rgba(45, 27, 78, 0.04) 0%, rgba(74, 28, 107, 0.06) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 6px;
-        }
-        
-        .alternative-header {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--deep-purple);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .alternative-text {
-            font-size: 10px;
-            color: var(--text-dark);
-            line-height: 1.5;
-        }
-        
-        /* Footer */
-        .page-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 40px;
-            background: var(--soft-white);
-            border-top: 1px solid rgba(153, 27, 27, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .footer-left {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        .footer-center {
-            font-size: 9px;
-            color: var(--danger);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .footer-right {
-            font-size: 9px;
-            color: #999;
-        }
-        
-        /* Planet Colors */
-        .saturn-dot { background: #4A5568; }
-        .mars-dot { background: #DC143C; }
-        .rahu-dot { background: #8B5CF6; }
-        .ketu-dot { background: #F97316; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ssumitra Report - Cities to Avoid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-navy: #0a0a1a; --cosmic-blue: #12122a; --midnight: #1a1a35; --card-bg: #1e1e3f;
+      --gold: #c9a962; --bright-gold: #e8d5a3; --soft-gold: rgba(201, 169, 98, 0.15);
+      --cosmic-purple: #6b5b95; --soft-purple: rgba(107, 91, 149, 0.2);
+      --text-primary: #f5f5f5; --text-secondary: #b8b8c8; --text-muted: #8888a0;
+      --score-caution: #f87171;
+      --font-display: 'Cormorant Garamond', serif; --font-body: 'Montserrat', sans-serif;
+      --space-xs: 8px; --space-sm: 16px; --space-md: 24px; --space-lg: 40px; --space-xl: 60px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-body); font-size: 14px; line-height: 1.6; color: var(--text-primary); background: var(--deep-navy); }
+    .page { width: 800px; min-height: 1130px; margin: 0 auto; background: linear-gradient(180deg, var(--deep-navy) 0%, var(--cosmic-blue) 100%); position: relative; overflow: hidden; }
+    .page-content { padding: var(--space-xl); position: relative; z-index: 2; }
+    .section-label { font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); }
+    .section-title { font-family: var(--font-display); font-weight: 500; font-size: 28px; color: var(--text-primary); margin-bottom: var(--space-md); }
+    .body-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .section-divider { display: flex; align-items: center; justify-content: center; margin: var(--space-lg) 0; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.3), transparent); }
+    .section-divider-icon { margin: 0 var(--space-md); color: var(--gold); font-size: 16px; opacity: 0.7; }
+    .caution-card { background: linear-gradient(135deg, rgba(248, 113, 113, 0.08), transparent); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 16px; padding: var(--space-md); margin-bottom: var(--space-md); }
+    .caution-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+    .caution-icon { font-size: 24px; color: var(--score-caution); }
+    .caution-city-name { font-family: var(--font-display); font-size: 22px; color: var(--text-primary); }
+    .caution-country { font-size: 13px; color: var(--text-muted); margin-left: var(--space-xs); }
+    .caution-score { margin-left: auto; font-family: var(--font-display); font-size: 28px; color: var(--score-caution); }
+    .caution-reason { font-size: 13px; color: var(--text-secondary); margin-top: var(--space-sm); line-height: 1.6; }
+    .alternative-box { background: var(--soft-gold); border: 1px solid rgba(201, 169, 98, 0.2); border-radius: 12px; padding: var(--space-sm); margin-top: var(--space-sm); }
+    .alternative-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+    .alternative-city { font-family: var(--font-display); font-size: 16px; color: var(--text-primary); }
+    .verdict-section { background: var(--soft-purple); border-left: 3px solid var(--cosmic-purple); padding: var(--space-md); margin: var(--space-lg) 0; border-radius: 0 12px 12px 0; }
+    .verdict-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--cosmic-purple); margin-bottom: var(--space-sm); }
+    .page-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-xl); border-top: 1px solid rgba(201, 169, 98, 0.1); font-size: 11px; color: var(--text-muted); }
+    .footer-quote { font-family: var(--font-display); font-style: italic; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-left">
-                <div class="header-logo">Ssumitra</div>
-                <div class="header-divider"></div>
-                <div class="header-section">Caution Zone • {{GOAL}}</div>
-            </div>
-            <div class="header-right">
-                <div class="page-number">Page {{PAGE_NUM}}</div>
-            </div>
-        </div>
-        
-        <!-- City Hero -->
-        <div class="city-hero">
-            <div class="city-hero-pattern"></div>
-            <div class="city-hero-content">
-                <div class="city-info">
-                    <div class="city-label">
-                        <span class="caution-icon">!</span>
-                        City to Approach with Caution
-                    </div>
-                    <h1 class="city-name">{{CITY_NAME}}</h1>
-                    <div class="city-country">{{COUNTRY}}</div>
-                </div>
-                <div class="score-circle">
-                    <div class="score-value">{{SCORE}}%</div>
-                    <div class="score-label">Low Match</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Content -->
-        <div class="content-area">
-            <!-- Warning Banner - Softened Language -->
-            <div class="warning-banner">
-                <div class="warning-icon-large">⚠</div>
-                <div class="warning-content">
-                    <div class="warning-title">May Require Extra Effort for {{GOAL}}</div>
-                    <div class="warning-text">
-                        {{AVOID_INTERPRETATION}}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Two Columns -->
-            <div class="two-columns">
-                <!-- Challenging Lines Card -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <div class="card-icon">☍</div>
-                        <div class="card-title">Challenging Planetary Lines</div>
-                    </div>
-                    <div class="lines-list">
-                        <div class="line-item">
-                            <div class="line-dot saturn-dot"></div>
-                            <span class="line-name">Saturn-IC</span>
-                            <span class="line-issue">Restrictions</span>
-                        </div>
-                        <div class="line-item">
-                            <div class="line-dot mars-dot"></div>
-                            <span class="line-name">Mars-DC</span>
-                            <span class="line-issue">Conflicts</span>
-                        </div>
-                        <div class="line-item">
-                            <div class="line-dot rahu-dot"></div>
-                            <span class="line-name">Rahu-IC</span>
-                            <span class="line-issue">Instability</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Issues Card -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <div class="card-icon">✗</div>
-                        <div class="card-title">Key Concerns</div>
-                    </div>
-                    <div class="issues-grid">
-                        <div class="issue-item">
-                            <div class="issue-icon">✗</div>
-                            <span class="issue-text">Direction unfavorable for Lagna</span>
-                        </div>
-                        <div class="issue-item">
-                            <div class="issue-icon">✗</div>
-                            <span class="issue-text">Nakshatra direction misaligned</span>
-                        </div>
-                        <div class="issue-item">
-                            <div class="issue-icon">✗</div>
-                            <span class="issue-text">No supportive Dasha match</span>
-                        </div>
-                        <div class="issue-item">
-                            <div class="issue-icon">✗</div>
-                            <span class="issue-text">Vastu principles not supportive</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Detailed Explanation -->
-            <div class="explanation-section">
-                <div class="explanation-header">
-                    <div class="explanation-title">📋 What This Means For You</div>
-                </div>
-                <p class="explanation-text">
-                    A lower score doesn't mean failure — many people thrive in challenging locations through hard work and awareness. This score indicates you may face more obstacles here compared to your top-recommended cities.
-                    <br><br>
-                    <strong>If you're already established in {{CITY_NAME}}:</strong>
-                    <br>• Focus on timing major decisions with favorable Dasha periods
-                    <br>• Leverage your strengths indicated in the Vedic factors section
-                    <br>• Be aware of potential challenges and plan accordingly
-                    <br><br>
-                    The {{DIRECTION}} direction from your birthplace requires additional effort based on Vastu principles for your Lagna. This doesn't prevent success — it suggests working smarter and being more intentional about your goals.
-                </p>
-                
-                <!-- Alternative Suggestion -->
-                <div class="alternative-box">
-                    <div class="alternative-header">
-                        <span>💡</span> Regional Alternative
-                    </div>
-                    <div class="alternative-text">
-                        For similar opportunities in this region, consider <strong>{{ALT_CITY}}</strong> which offers more favorable planetary alignments for your {{GOAL}} goals while maintaining geographic proximity.
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="page-footer">
-            <div class="footer-left">© Ssumitra {{YEAR}}</div>
-            <div class="footer-center">{{USER_NAME}} • Personal Report</div>
-            <div class="footer-right">Page {{PAGE_NUM}}</div>
-        </div>
+  <div class="page">
+    <div class="page-content">
+      <div class="section-label">Navigate with Awareness</div>
+      <h1 class="section-title">Cities for Conscious Navigation</h1>
+      <p class="body-text">These destinations offer growth through challenge. Success here requires intention, not avoidance.</p>
+      
+      <div class="section-divider"><span class="section-divider-icon">☾</span></div>
+      
+      {{AVOID_CITIES_CARDS}}
+      
+      <div class="verdict-section">
+        <div class="verdict-title">💡 What This Means</div>
+        <p class="body-text">A lower score doesn't mean failure — many people thrive in challenging locations through hard work and awareness. Consider these cities if you're drawn to them, but be prepared for extra effort.</p>
+      </div>
     </div>
+    
+    <div class="page-footer">
+      <span>© Ssumitra {{YEAR}}</span>
+      <span class="footer-quote">"The lotus grows in mud, not marble."</span>
+      <span>Cities to Avoid</span>
+    </div>
+  </div>
 </body>
 </html>
