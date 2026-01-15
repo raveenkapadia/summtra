@@ -915,6 +915,7 @@ export function generateRankingTableData(pageCities, baseData, startRank = 1, al
     data[`CITY${slotNum}_RANK`] = hasCity ? rank : '';
     data[`CITY${slotNum}_RANK_CLASS`] = hasCity ? (rank <= 3 ? 'top3' : 'regular') : 'regular';
     data[`CITY${slotNum}_SCORE_CLASS`] = hasCity ? (score >= 70 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-moderate') : '';
+    data[`CITY${slotNum}_DISPLAY`] = hasCity ? 'flex' : 'none';
     
     // FIX D: Use credibility.western.lineProximity.nearestLine (Lagna-aware from Analysis Engine)
     // This is the SAME source as city pages, ensuring consistency

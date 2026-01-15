@@ -239,34 +239,49 @@ export class PDFAssembler {
   async addPlanetaryLinesPages() {
     const template = loadTemplate('planetary-lines-page.html');
     
-    const planetsPerPage = 3;
-    const totalPages = Math.ceil(PLANET_DATA.length / planetsPerPage);
+    // Show only the 10 main planets (exclude Chiron and North Node for simplicity)
+    const mainPlanets = PLANET_DATA.slice(0, 10);
+    const planetsPerPage = 5;
+    const totalPages = Math.ceil(mainPlanets.length / planetsPerPage);
     
     for (let i = 0; i < totalPages; i++) {
       const startIdx = i * planetsPerPage;
-      const pagePlanets = PLANET_DATA.slice(startIdx, startIdx + planetsPerPage);
+      const pagePlanets = mainPlanets.slice(startIdx, startIdx + planetsPerPage);
+      
+      // Generate dynamic planet cards HTML
+      const planetCardsHTML = pagePlanets.map(planet => {
+        const hindiNames = {
+          Sun: 'सूर्य', Moon: 'चंद्र', Mercury: 'बुध', Venus: 'शुक्र',
+          Mars: 'मंगल', Jupiter: 'गुरु', Saturn: 'शनि',
+          Uranus: 'अरुण', Neptune: 'वरुण', Pluto: 'यम'
+        };
+        const hindiName = hindiNames[planet.name] || '';
+        const description = `${planet.name} lines influence ${planet.keywords.join(', ').toLowerCase()}.`;
+        
+        return `
+          <div class="planet-card">
+            <div class="planet-header">
+              <span class="planet-symbol" style="color: ${planet.color}">${planet.symbol}</span>
+              <div><div class="planet-name">${planet.name}</div><div class="planet-hindi">${hindiName}</div></div>
+            </div>
+            <p class="body-text">${description}</p>
+            <div class="planet-keywords">${planet.keywords.map(k => `<span class="planet-keyword">${k}</span>`).join('')}</div>
+            <div class="planet-lines">
+              <div class="planet-line-type"><span class="planet-line-label">MC</span><br>Career</div>
+              <div class="planet-line-type"><span class="planet-line-label">IC</span><br>Home</div>
+              <div class="planet-line-type"><span class="planet-line-label">AC</span><br>Self</div>
+              <div class="planet-line-type"><span class="planet-line-label">DC</span><br>Others</div>
+            </div>
+          </div>
+        `;
+      }).join('');
       
       const pageData = {
         ...this.baseData,
-        PLANET_CARDS: generatePlanetCards(pagePlanets, startIdx),
+        PLANET_CARDS: planetCardsHTML,
         PLANETS_PAGE: i + 1,
         PLANETS_TOTAL_PAGES: totalPages
       };
-      
-      // Add numbered planet placeholders for each planet on this page
-      pagePlanets.forEach((planet, idx) => {
-        const num = idx + 1;
-        pageData[`PLANET${num}_NAME`] = planet.name;
-        pageData[`PLANET${num}_SYMBOL`] = planet.symbol;
-        pageData[`PLANET${num}_CLASS`] = `planet-${planet.name.toLowerCase()}`;
-        pageData[`PLANET${num}_HEADLINE`] = `${planet.name} lines influence your ${planet.keywords[0]?.toLowerCase() || 'life'}`;
-        pageData[`PLANET${num}_KEY1`] = planet.keywords[0] || '';
-        pageData[`PLANET${num}_KEY2`] = planet.keywords[1] || '';
-        pageData[`PLANET${num}_KEY3`] = planet.keywords[2] || '';
-        pageData[`PLANET${num}_KEY4`] = planet.keywords[3] || '';
-        pageData[`PLANET${num}_DESC`] = `When ${planet.name} lines pass through a location, they enhance ${planet.keywords.join(', ').toLowerCase()}.`;
-        pageData[`PLANET${num}_LINE_CLASS`] = `line-${planet.name.toLowerCase()}`;
-      });
       
       this.pages.push({ html: processTemplate(template, pageData), type: 'planets' });
     }
@@ -356,7 +371,7 @@ export class PDFAssembler {
     const template = loadTemplate('city-ranking-table.html');
     const allBestCities = this.getCitiesForGoal(goal, 'best', regionScope);
     
-    const citiesPerPage = 9;
+    const citiesPerPage = 6;
     const totalPages = Math.ceil(allBestCities.length / citiesPerPage);
     
     for (let i = 0; i < totalPages; i++) {
@@ -1037,7 +1052,7 @@ export class PDFAssembler {
       
       const pageData = prepareAvoidCityData(city, goal, bestCities, this.baseData, allRankedCities);
       pageData.GOAL_ICON = this.getGoalIcon(goal);
-      pageData.AVOID_CITY_CARDS = generateAvoidCityCard(city, i + 1);
+      pageData.AVOID_CITIES_CARDS = generateAvoidCityCard(city, i + 1);
       pageData.AVOID_PAGE = i + 1;
       pageData.AVOID_TOTAL_PAGES = avoidCities.length;
       
